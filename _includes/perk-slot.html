@@ -1,0 +1,84 @@
+{% assign perk_costs = site.data.perk_costs.costs %}
+{% assign perk_cum = site.data.perk_costs.cumulative %}
+<div class="dpad__slot dpad__slot--{{ include.dir }}"{% if include.perk.values %} data-card{% endif %}>
+  {% if include.perk %}
+  <div class="dpad__title-row">
+    {% if include.perk.values %}
+    {%- comment %} Green "+X%" boost badge - LEFT of the title (not after
+    it), same kw--cheap treatment Fabricator uses for its own perk-rank
+    boosts (see fabricator/index.html's "Perk Level N (+X%)" tag). Reuses
+    the exact same data-level-panel/level-stack swap-by-visibility
+    mechanism as the cost table below - no extra JS needed, the existing
+    rank-pip click handler already toggles every [data-level-panel] under
+    the slot, wherever it lives. Blank at rank 0 (No Perk = no boost to
+    show), but still reserves its column width (see CSS) so the title
+    doesn't shift sideways as ranks change. {% endcomment %}
+    <div class="dpad__boost level-stack">
+      <span data-level-panel="0"></span>
+      {%- for v in include.perk.values %}
+      {%- comment %} Now the only place on the card still showing the raw
+      per-rank value, so it also picks up the unknown/estimated modifiers
+      the old value mark used to carry (see e.g. Protector's Damage
+      Resistance - '?' - or Movement Speed - '~10%'). {% endcomment %}
+      <mark class="kw kw--cheap dpad__boost-mark{% if v == 'N/A' or v == '?' %} kw--unknown{% endif %}{% if v contains '~' %} kw--estimated{% endif %}" data-level-panel="{{ forloop.index }}" data-level-hidden{% if v contains '~' %} title="Estimated from the per-rank step - not captured in-game yet"{% endif %}>+{{ v }}</mark>
+      {%- endfor %}
+    </div>
+    {% endif %}
+    <p class="dpad__name"{% if include.perk.description %} title="{{ include.perk.description | strip_html | escape }}"{% endif %}>{{ include.perk.name }}</p>
+  </div>
+  {% assign p_img = '/images/perks/' | append: include.page.slug | append: '-' | append: include.dir | append: '.svg' %}
+  <img class="dpad__icon" src="{{ p_img | relative_url }}" alt="{{ include.perk.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+  <div class="dpad__icon-placeholder" style="display:none;"></div>
+  {% if include.perk.values %}
+  <div class="dpad__value-slot level-stack">
+    {%- comment %} Rank 0 - no ranks bought, so Current and Spend both read
+    0. From rank 1 on: Current is that rank's own step cost, Spend is the
+    running total across every rank bought so far - e.g. rank 2 is Current
+    1,450 / Spend 2,450 (see _data/perk_costs.yml for the per-rank costs
+    and the running cumulative). Max dropped - it never changed (always
+    24,250, the flat cost to fully rank any perk 0-10) so it wasn't
+    actually telling you anything different card to card or rank to rank.
+    Energy icon sits in its own column on the left, no divider next to it
+    (icon isn't really "column data" the way Current/Spend are) - the
+    divider instead sits between Current and Spend (see CSS), the two
+    numbers it actually makes sense to visually separate. dpad__cost-current
+    marks both the header and value cell of that column so the divider
+    lands consistently despite the icon's rowspan shifting which child
+    index is "column 1" between the header row and the value row.
+    {% endcomment %}
+    <table class="dpad__cost-table" data-level-panel="0">
+      <tr>
+        <td class="dpad__cost-icon" rowspan="2"><span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span></td>
+        <th class="dpad__cost-current" scope="col">Current</th>
+        <th scope="col">Spend</th>
+      </tr>
+      <tr>
+        <td class="dpad__cost-current">0</td>
+        <td>0</td>
+      </tr>
+    </table>
+    {%- for v in include.perk.values %}
+    {%- assign ci = forloop.index | minus: 1 %}
+    <table class="dpad__cost-table" data-level-panel="{{ forloop.index }}" data-level-hidden>
+      <tr>
+        <td class="dpad__cost-icon" rowspan="2"><span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span></td>
+        <th class="dpad__cost-current" scope="col">Current</th>
+        <th scope="col">Spend</th>
+      </tr>
+      <tr>
+        <td class="dpad__cost-current">{{ perk_costs[ci] }}</td>
+        <td>{{ perk_cum[ci] }}</td>
+      </tr>
+    </table>
+    {%- endfor %}
+  </div>
+  <div class="dpad__rank-pips" role="group" aria-label="{{ include.perk.name }} rank">
+    {%- for v in include.perk.values %}
+    {%- assign i = forloop.index %}
+    <button type="button" class="class-card__level-pip class-card__level-pip--btn dpad__rank-pip" data-level="{{ i }}" title="Show rank {{ i }}">{{ i }}</button>
+    {%- endfor %}
+  </div>
+  <button type="button" class="class-card__level-pip class-card__level-pip--btn class-card__level-pip--active dpad__no-perk" data-level="0" title="No ranks bought - costs nothing">No Perk</button>
+  {% endif %}
+  {% endif %}
+</div>

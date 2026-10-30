@@ -1,0 +1,28 @@
+---
+title: Weapons
+---
+<div class="section-page">
+  <div class="section-page__header">
+    <h1 class="section-page__title">Weapons</h1>
+  </div>
+
+  <p class="section-page__intro">Every weapon in the exact order of the in-game Weapons menu.
+  For Fabricator prices, see the <a href="{{ '/fabricator/' | relative_url }}">Fabricator</a> page.</p>
+
+  <div class="weapons-index-grid">
+    {%- for w in site.data.weapons.menu %}
+    <div class="weapon-tile xref-target" id="{{ w.slug }}">
+      <span class="weapon-tile__num">{{ forloop.index }}</span>
+      <div class="weapon-tile__img-wrap">
+        {% assign w_img = '/images/weapons/' | append: w.slug | append: '.png' %}
+        <img src="{{ w_img | relative_url }}" alt="{{ w.name }}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+        <div class="weapon-tile__img-placeholder" style="display:none;">&#9876;</div>
+      </div>
+      <div class="weapon-tile__info">
+        <p class="weapon-tile__name">{{ w.name }}</p>
+        <span class="type-badge">{{ w.badge }}</span>
+      </div>
+    </div>
+    {%- endfor %}
+  </div>
+</div>

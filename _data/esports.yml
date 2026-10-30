@@ -1,0 +1,40 @@
+# ── Esports ───────────────────────────────────────────────────────────────
+# STORE > ESPORTS > CHROME STEEL tab, read directly off 4 store screenshots
+# (ref/Store Pages/Esports - Chrome Steel - *.jpg). All EUR 6.99. The
+# BLACK STEEL and WEAPON SKINS tabs exist in-game but weren't screenshotted.
+
+tab: "Chrome Steel"
+price: "EUR 6.99"
+items:
+  - "Chrome Steel Weapon Set"
+  - "Chrome Steel Anya"
+  - "Chrome Steel Baird"
+  - "Chrome Steel Benjamin"
+  - "Chrome Steel Bolter"
+  - "Chrome Steel Clayton"
+  - "Chrome Steel Dom"
+  - "Chrome Steel Elite Drone"
+  - "Chrome Steel Elite Hunter"
+  - "Chrome Steel Fahz"
+  - "Chrome Steel Jermad"
+  - "Chrome Steel Kait"
+  - "Chrome Steel Kantus"
+  - "Chrome Steel Keegan"
+  - "Chrome Steel Lahni"
+  - "Chrome Steel Lizzie"
+  - "Chrome Steel Locust Drone"
+  - "Chrome Steel Mac"
+  - "Chrome Steel Marcus"
+  - "Chrome Steel Onyx Casan"
+  - "Chrome Steel Onyx Vermelo"
+  - "Chrome Steel Paduk"
+  - "Chrome Steel Palace Guard"
+  - "Chrome Steel Queen Myrrah"
+  - "Chrome Steel RAAM"
+  - "Chrome Steel Scion"
+  - "Chrome Steel Sniper"
+  - "Chrome Steel Theron Guard"
+
+other_tabs:
+  - "Black Steel"
+  - "Weapon Skins"

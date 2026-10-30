@@ -1,0 +1,30 @@
+---
+title: Marks
+---
+<div class="section-page">
+  <div class="section-page__header">
+    <h1 class="section-page__title">Marks</h1>
+  </div>
+
+  <p class="section-page__intro">Cosmetic banner Marks from the in-game MARKS menu. This is a
+  <strong>partial catalog</strong> - only {{ site.data.marks.list | size }} marks have been
+  captured so far, and more rows exist below what's been screenshotted. The colored border on
+  each card is the same color shown in-game; two colors (<mark class="kw kw--value">cyan</mark>
+  and <mark class="kw kw--value">magenta</mark>) match rarity text confirmed elsewhere on the
+  site (Rare and Epic), the other two (<mark class="kw kw--value">gold</mark> and
+  <mark class="kw kw--value">blue</mark>) don't have a confirmed rarity name yet.</p>
+
+  <div class="marks-grid">
+    {%- for m in site.data.marks.list %}
+    <div class="mark-tile mark-tile--{{ m.border }} xref-target" id="{{ m.slug }}">
+      <div class="mark-tile__icon-wrap">
+        {% assign m_img = '/images/marks/' | append: m.slug | append: '.png' %}
+        <img src="{{ m_img | relative_url }}" alt="{{ m.name }}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+        <div class="mark-tile__icon-placeholder" style="display:none;">&#127919;</div>
+      </div>
+      <p class="mark-tile__name">{{ m.name }}</p>
+      <span class="type-badge type-badge--mark-{{ m.border }}" title="Border color shown in-game{% if m.rarity != '?' %} - matches the {{ m.rarity }} rarity color used elsewhere on the site{% endif %}">{% if m.rarity != '?' %}{{ m.rarity }}{% else %}{{ m.border | capitalize }} border{% endif %}</span>
+    </div>
+    {%- endfor %}
+  </div>
+</div>

@@ -1,0 +1,2328 @@
+---
+title: Build Creator
+---
+<div class="section-page section-page--wide section-page--build">
+  <!-- Sticky "which class am I building" bar - same .class-page__sticky
+       component individual class pages use (_layouts/class.html), reused
+       as-is here rather than styled fresh, so it looks/behaves identically.
+       There it shows the page's own static category+name; here both are
+       filled in and kept current by JS (updateStickyBar(), below) since the
+       "current class" is just app state on this page, not something Liquid
+       can know ahead of time. Hidden (opacity:0 via CSS, no .is-visible)
+       until both a class is picked AND you've scrolled the Class panel out
+       of view - see the IntersectionObserver on #bc-class-panel near the
+       bottom of the script. -->
+  <div class="class-page__sticky" id="bc-sticky">
+    <span class="class-page__sticky-cat" id="bc-sticky-cat"></span>
+    <span class="class-page__sticky-sep">-</span>
+    <a class="class-page__sticky-name" id="bc-sticky-name" href="#" title="Back to top of the page"></a>
+  </div>
+
+  <div class="section-page__header">
+    <h1 class="section-page__title">Build Creator</h1>
+  </div>
+
+  <p class="section-page__intro">Plan a Horde card loadout for any class. Pick a class below, then
+  pick up to 5 skill cards to fill its loadout - the same 5-slot limit the game itself uses. This
+  tool doesn't gate cards behind an account level (everything a class has is available to try), and
+  cosmetic Heroic weapon-skin unlocks aren't real skill cards so they're left out. Perks are shown
+  for reference only - those are fixed per class in-game, with only their rank as your choice, so
+  there's nothing to build there. Want to browse builds other people have shared instead of
+  building your own? See <a href="{{ '/tools/build-viewer/' | relative_url }}">Build Viewer</a>.</p>
+
+  <!-- ── Class picker ─────────────────────────────────────── -->
+  <section class="wr-panel" id="bc-class-panel">
+    <div class="bc-panel__head">
+      <h2 class="wr-panel__title" style="margin: 0;">Class</h2>
+      <div class="bc-panel__head-actions">
+        <input type="text" id="bc-class-search" class="wr-input" placeholder="Search classes..." style="max-width: 220px;">
+      </div>
+    </div>
+    <div class="wr-cardgrid bc-class-grid" id="bc-class-grid">
+      {%- assign bc_categories = "Assault,Tank,Support,Promotional" | split: "," -%}
+      {%- assign bc_cat_colors = "#c62b0f,#4995ff,#2fb740,#d856d5" | split: "," -%}
+      {%- for cat in bc_categories %}
+      {%- assign cat_classes = site.classes | where: "category", cat | sort: "title" %}
+      {%- assign cat_color = bc_cat_colors[forloop.index0] %}
+      <div class="wr-cardgrid__col bc-class-col" style="--cat-color: {{ cat_color }};">
+        <div class="wr-cardgrid__head">
+          <h4 class="wr-cardgrid__title">{{ cat }}</h4>
+        </div>
+        <div class="bc-class-list">
+          {%- for c in cat_classes %}
+          <button type="button" class="wr-chip bc-class-chip" data-class="{{ c.slug }}" data-name="{{ c.title | downcase }}">
+            <img class="bc-class-chip__icon" src="{{ '/images/classes/icons/' | append: c.slug | append: '.png' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';">
+            <span class="bc-class-chip__name">{{ c.title }}</span>
+            <span class="xref-tip xref-tip--class">
+              <span class="class-mini-preview" style="--cat-color: {{ cat_color }};">
+                <span class="class-mini-preview__head">
+                  <img class="class-mini-preview__icon" src="{{ '/images/classes/icons/' | append: c.slug | append: '.png' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';">
+                  <span class="class-mini-preview__head-text">
+                    <span class="class-mini-preview__cat">{{ cat }}</span>
+                    <span class="class-mini-preview__name">{{ c.title }}</span>
+                  </span>
+                </span>
+                <span class="class-mini-preview__desc">{{ c.description | strip_html }}</span>
+              </span>
+            </span>
+          </button>
+          {%- endfor %}
+        </div>
+        <!-- Per-column fade (not one shared overlay across the whole grid) -
+             each category column has its own $color-surface-2 card
+             background, so the gradient has to fade toward that same color
+             right where it sits, not the page's own $color-surface behind
+             the gaps between columns. Shown/hidden per-column in the JS
+             (updateClassColDisplay), matching that column's own overflow
+             state - a short category with nothing hidden never gets one. -->
+        <span class="bc-class-col__fade" aria-hidden="true" hidden></span>
+      </div>
+      {%- endfor %}
+    </div>
+    <!-- Moved down here (was a small text link up in the head, next to the
+         search box) so "there's more to see" reads as an obvious, full-width
+         bar right under the grid - same toggle/count logic as before, just a
+         bigger target, mirroring the Map Calibrator's own Map picker. -->
+    <button type="button" class="bc-class-panel__toggle-bar" id="bc-class-toggle" aria-expanded="false" hidden></button>
+  </section>
+
+  <!-- Cards (left, wider - the main browsing/picking area) + Build summary
+       (right, narrower - a sidebar that tracks whatever's picked so far,
+       same wr-layout two-column pattern the Weapon/Class Randomizer pages
+       use for their own settings+results split) sit side by side instead of
+       stacked, so the current loadout is visible without scrolling past the
+       whole card pool to see it. -->
+  <div class="wr-layout wr-layout--cards-wide">
+    <!-- ── Card pool for the selected class ────────────────────── -->
+    <section class="wr-panel" id="bc-cards-panel">
+      <div class="bc-panel__head">
+        <h2 class="wr-panel__title" style="margin: 0;">Cards</h2>
+        <div class="bc-panel__head-actions">
+          <input type="text" id="bc-card-search" class="wr-input" placeholder="Search cards..." style="width: 100%;">
+        </div>
+      </div>
+      <p class="wr-hint" id="bc-cards-hint">Pick a class to see its cards.</p>
+      <div class="bc-card-grid" id="bc-card-grid"></div>
+    </section>
+
+    <!-- ── Build summary ──────────────────────────────────────── -->
+    <!-- No .wr-results here (unlike Weapon/Class Randomizer's results
+         panel) - that class's only rule is a top margin meant for a
+         full-width panel sitting BELOW a .wr-layout; this one is a grid
+         column INSIDE .wr-layout instead, where the grid's own gap already
+         spaces it correctly and that margin would just misalign it a few
+         pixels below the Cards panel's top edge. -->
+    <section class="wr-panel" id="bc-build-panel">
+      <h2 class="wr-panel__title">Build</h2>
+      <div id="bc-build-grid"></div>
+      <!-- Optional, purely descriptive - not read by anything on this page
+           itself, just carried along in the Build code below (title=/
+           author=/desc= params) so a build shared this way keeps its name,
+           who made it, and why, rather than showing up as an anonymous pile
+           of cards. All three are blank by default; nothing here is
+           required to build or share a loadout. -->
+      <div class="wr-row bc-meta-row">
+        <label class="wr-label" for="bc-title" style="margin: 0;">Title</label>
+        <input type="text" id="bc-title" class="wr-input" placeholder="Name this build...">
+        <label class="wr-label" for="bc-author" style="margin: 0;">Author</label>
+        <input type="text" id="bc-author" class="wr-input" placeholder="Your name...">
+        <!-- Optional profile link for the author above - off by default
+             (just the plain name, same as before), and deliberately
+             restricted to a real profile URL from one of three sites
+             (checked on input, see bc-author-link's own JS below) rather
+             than any arbitrary link, since this ends up as a clickable
+             link on Build Viewer's cards. -->
+        <label class="wr-label bc-author-link-toggle" for="bc-author-link-check" style="margin: 0;">
+          <input type="checkbox" id="bc-author-link-check">
+          Link?
+        </label>
+        <div id="bc-author-link-wrap" hidden>
+          <input type="url" id="bc-author-link" class="wr-input" placeholder="https://www.youtube.com/@yourchannel">
+          <p class="wr-hint" id="bc-author-link-hint">Only a YouTube channel, Steam profile, or Microsoft/Xbox profile link is allowed.</p>
+        </div>
+        <label class="wr-label" for="bc-desc" style="margin: 0;">Description</label>
+        <textarea id="bc-desc" class="wr-input bc-desc-input" placeholder="What's this build for..."></textarea>
+        <!-- Which map(s) this build is meant for - also optional, "All
+             Maps" (nothing picked) by default. Multi-select: any number of
+             maps can be on at once, same idea as Map Creator's own map
+             picker (search + thumbnail grid) but scaled down to a small
+             popover off one trigger button instead of a whole page-width
+             panel. Picking a map doesn't close the popover (there might be
+             more to pick) - outside click/Escape/the trigger itself close
+             it, same as any other popover on the site. -->
+        <label class="wr-label" style="margin: 0;">Map</label>
+        <div class="bc-map-picker" id="bc-map-picker">
+          <button type="button" class="wr-btn bc-map-picker__trigger" id="bc-map-trigger" aria-haspopup="true" aria-expanded="false">
+            <img class="bc-map-picker__thumb" id="bc-map-thumb" src="" alt="" hidden>
+            <span id="bc-map-trigger-label">All Maps</span>
+          </button>
+          <div class="bc-map-picker__panel" id="bc-map-panel" hidden>
+            <input type="text" id="bc-map-search" class="wr-input" placeholder="Search maps...">
+            <div class="bc-map-picker__list" id="bc-map-list">
+              <button type="button" class="bc-map-picker__item bc-map-picker__item--all" id="bc-map-item-all" data-slug="" data-name="all maps">All Maps</button>
+              {%- for group in site.data.maps %}
+              {%- for map in group.maps %}
+              {%- assign mslug = map.name | slugify %}
+              <button type="button" class="bc-map-picker__item" data-slug="{{ mslug }}" data-name="{{ map.name | downcase }}">
+                <img class="bc-map-picker__item-thumb" src="{{ '/images/maps/' | append: mslug | append: '-small.jpg' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';">
+                <span>{{ map.name }}</span>
+              </button>
+              {%- endfor %}
+              {%- endfor %}
+            </div>
+            <!-- Single shared hover-preview image (position: fixed, moved to
+                 the hovered item via JS) rather than one popup per item -
+                 the list above scrolls (overflow-y: auto), and an
+                 absolutely-positioned popup nested inside a scroll container
+                 gets clipped by it. Fixed positioning escapes that clipping
+                 entirely since it's anchored to the viewport, not the list. -->
+            <img class="bc-map-picker__preview-big" id="bc-map-preview-big" alt="" hidden onerror="this.hidden = true;">
+          </div>
+        </div>
+      </div>
+      <div class="wr-row">
+        <label class="wr-label" for="bc-link">Build code (copy to share, paste to load)</label>
+        <div class="wr-inline">
+          <input type="text" id="bc-link" class="wr-input" placeholder="Paste a build code here...">
+          <button type="button" class="wr-btn" id="bc-copy-link">Copy</button>
+          <button type="button" class="wr-btn" id="bc-clear">Clear</button>
+        </div>
+      </div>
+      <div id="bc-plan-preview"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── Data from the site ─────────────────────────────────── */
+  // Energy cost to buy each perk rank (site.data.perk_costs.costs,
+  // _data/perk_costs.yml) - universal, same array regardless of class or
+  // which of the 4 perks, index 0 = cost of rank 1, same source the D-pad
+  // overlay's own per-rank breakdown (_includes/perk-slot.html) reads from.
+  // Used by the perk planner's own per-cell cost line below.
+  var PERK_COSTS = [{%- for c in site.data.perk_costs.costs -%}{{ c | jsonify }}{% unless forloop.last %},{% endunless %}{%- endfor -%}];
+
+  // Same shape as the Class Randomizer's CLASSES array (n=name, s=slug,
+  // cat=category letter, ic=icon path, cards=[{n,s,r,lv,img,d,lvls}]) -
+  // skin-unlock cards excluded since those are cosmetic, not equippable
+  // skill cards. `d` is level 1's resolved description (used as the
+  // default/fallback); `lvls` is every level's resolved description in
+  // order, one string per level, for the card tile's own level picker -
+  // same {X}/{Y} substitution class.html's own level-pip panels do, just
+  // flattened into a plain string array here instead of N server-rendered
+  // panels, since this page builds all its markup client-side.
+  var CLASSES = [
+    {%- comment %} Flattened into a single pre-sorted list (rather than looping
+    categories, then classes, as two nested loops) so forloop.last below
+    correctly detects the very last class overall - nested loops would only
+    ever see "last within this category," silently dropping the comma
+    between e.g. the last Assault class and the first Tank class. {% endcomment %}
+    {%- assign bc_categories2 = "Assault,Tank,Support,Promotional" | split: "," -%}
+    {%- assign bc_all_classes = "" | split: "," -%}
+    {%- for cat in bc_categories2 %}
+      {%- assign cat_classes = site.classes | where: "category", cat | sort: "title" -%}
+      {%- assign bc_all_classes = bc_all_classes | concat: cat_classes -%}
+    {%- endfor -%}
+    {%- for c in bc_all_classes %}
+    {%- assign cat_letter = "a" -%}
+    {%- if c.category == "Tank" %}{%- assign cat_letter = "t" -%}
+    {%- elsif c.category == "Support" %}{%- assign cat_letter = "s" -%}
+    {%- elsif c.category == "Promotional" %}{%- assign cat_letter = "r" -%}
+    {%- endif %}
+    {
+      n: "{{ c.title | replace: '"', '\"' }}",
+      s: "{{ c.slug }}",
+      cat: "{{ cat_letter }}",
+      ic: "{{ '/images/classes/icons/' | append: c.slug | append: '.png' | relative_url }}",
+      perks: [
+        {%- comment %} One object per direction that actually exists on this class
+        (some classes are missing 1+ of the 4 - see _classes/*.md), each carrying
+        everything the Build panel's perk-order-by-wave planner needs: display
+        name, optional description, its icon (same /images/perks/{slug}-{dir}.svg
+        path _layouts/class.html itself uses, so a missing file's onerror
+        fallback in the JS behaves identically to there), and its 10 rank
+        values (rank 1-10, _classes/*.md's own `values:` array) for the
+        planner's hover tooltip - not every class has these filled in yet, so
+        this comes through as [] where absent rather than assuming 10 entries.
+        A running "first" flag (rather than an unless-forloop-last check on
+        the 4-direction loop directly) because forloop.last there refers to
+        position among all 4 directions, not among however many actually
+        exist - skipping a missing middle direction (e.g. right) would
+        otherwise still try to comma-join around it. {% endcomment -%}
+        {%- assign perk_dirs = "up,right,down,left" | split: "," -%}
+        {%- assign perk_first = true -%}
+        {%- for dir in perk_dirs -%}
+          {%- assign pk = c.perks[dir] -%}
+          {%- if pk -%}
+            {%- unless perk_first %},{% endunless -%}
+            {%- assign perk_first = false -%}
+            {%- assign pk_icon = '/images/perks/' | append: c.slug | append: '-' | append: dir | append: '.svg' | relative_url -%}
+            { n: {{ pk.name | jsonify }}, d: {{ pk.description | default: "" | jsonify }}, icon: {{ pk_icon | jsonify }}, vals: [{%- if pk.values -%}{%- for v in pk.values -%}{{ v | jsonify }}{% unless forloop.last %},{% endunless %}{%- endfor -%}{%- endif -%}] }
+          {%- endif -%}
+        {%- endfor %}
+      ],
+      cards: [
+        {%- assign real_cards = c.cards | where_exp: "cd", "cd.type != 'skin'" -%}
+        {%- for cd in real_cards %}
+        {%- assign cd_lvl1 = cd.levels | first -%}
+        {%- assign cd_desc = cd.description -%}
+        {%- if cd_lvl1 -%}
+          {%- capture cd_xmark %}<mark class="kw kw--value{% if cd_lvl1.X == '?' %} kw--unknown{% endif %}">{{ cd_lvl1.X }}</mark>{% endcapture -%}
+          {%- assign cd_desc = cd_desc | replace: '{X}', cd_xmark -%}
+          {%- if cd_lvl1.Y -%}
+            {%- capture cd_ymark %}<mark class="kw kw--value{% if cd_lvl1.Y == '?' %} kw--unknown{% endif %}">{{ cd_lvl1.Y }}</mark>{% endcapture -%}
+            {%- assign cd_desc = cd_desc | replace: '{Y}', cd_ymark -%}
+          {%- endif -%}
+        {%- endif -%}
+        {%- assign cd_desc = cd_desc | replace: '{', '' | replace: '}', '' -%}
+        {%- assign cd_img = '/images/cards/' | append: c.slug | append: '-' | append: cd.slug | append: '.png' | relative_url -%}
+        { n: "{{ cd.name | replace: '"', '\"' }}", s: "{{ cd.slug }}", r: "{{ cd.rarity | default: 'Common' }}", lv: {{ cd.unlock_level | default: 1 }}, img: {{ cd_img | jsonify }}, d: {{ cd_desc | jsonify }},
+          lvls: [
+            {%- if cd.levels -%}
+              {%- for lvl in cd.levels -%}
+                {%- assign li_desc = cd.description -%}
+                {%- capture li_xmark %}<mark class="kw kw--value{% if lvl.X == '?' %} kw--unknown{% endif %}">{{ lvl.X }}</mark>{% endcapture -%}
+                {%- assign li_desc = li_desc | replace: '{X}', li_xmark -%}
+                {%- if lvl.Y -%}
+                  {%- capture li_ymark %}<mark class="kw kw--value{% if lvl.Y == '?' %} kw--unknown{% endif %}">{{ lvl.Y }}</mark>{% endcapture -%}
+                  {%- assign li_desc = li_desc | replace: '{Y}', li_ymark -%}
+                {%- endif -%}
+                {%- assign li_desc = li_desc | replace: '{', '' | replace: '}', '' -%}
+                {{ li_desc | jsonify }}{% unless forloop.last %},{% endunless %}
+              {%- endfor -%}
+            {%- else -%}
+              {{ cd_desc | jsonify }}
+            {%- endif -%}
+          ]
+        }{% unless forloop.last %},{% endunless %}
+        {%- endfor %}
+      ]
+    }{% unless forloop.last %},{% endunless %}
+    {%- endfor %}
+  ];
+  var BY_SLUG = {};
+  CLASSES.forEach(function (c) { BY_SLUG[c.s] = c; });
+
+  // Full category name + swatch color for each class's single-letter `cat`
+  // code above - same 4 category/color pairs the Class panel's own columns
+  // use (bc_categories/bc_cat_colors in the Liquid loop up top), just
+  // reachable from JS too now for the sticky bar below.
+  var CAT_INFO = {
+    a: { name: 'Assault',      color: '#c62b0f' },
+    t: { name: 'Tank',         color: '#4995ff' },
+    s: { name: 'Support',      color: '#2fb740' },
+    r: { name: 'Promotional',  color: '#d856d5' }
+  };
+
+  /* ── State ──────────────────────────────────────────────── */
+  // cards holds up to 5 slugs, in slot order (index 0 = Slot 1, etc).
+  // cardLvl maps a card's slug to its chosen level (1-6, set via the level
+  // pips on its tile in the Cards panel) - separate from a card's fixed
+  // `lv` unlock-level requirement. Missing entries default to level 1.
+  var state = { cls: null, cards: [], cardLvl: {}, title: '', author: '', authorLink: '', desc: '', maps: [] };
+
+  // Only a real profile URL from one of these three sites - checked
+  // against the actual pasted value (not just "starts with https://"),
+  // since this becomes a real clickable link on Build Viewer's cards and
+  // shouldn't be able to point anywhere else.
+  var AUTHOR_LINK_PATTERNS = [
+    /^https:\/\/(www\.)?youtube\.com\/@[A-Za-z0-9_.-]+\/?$/,
+    /^https:\/\/steamcommunity\.com\/id\/[A-Za-z0-9_-]+\/?$/,
+    /^https:\/\/(www\.)?xbox\.com\/play\/user\/[A-Za-z0-9_.-]+\/?$/
+  ];
+  function isValidAuthorLink(url) {
+    return AUTHOR_LINK_PATTERNS.some(function (re) { return re.test(url); });
+  }
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  /* ── Rendering ──────────────────────────────────────────── */
+  function renderClassGrid() {
+    document.querySelectorAll('.bc-class-chip').forEach(function (btn) {
+      btn.classList.toggle('wr-chip--selected', btn.getAttribute('data-class') === state.cls);
+    });
+  }
+
+  function renderCardGrid() {
+    var cls = BY_SLUG[state.cls];
+    var hint = $('bc-cards-hint');
+    var grid = $('bc-card-grid');
+    if (!cls) {
+      hint.textContent = 'Pick a class to see its cards.';
+      grid.innerHTML = '';
+      return;
+    }
+    // .length alone would count empty holes left behind by a removed card
+    // (see toggleCard) as if they were still filled slots, so this counts
+    // only the actually-occupied ones.
+    var filledCount = state.cards.filter(function (s) { return s; }).length;
+    var full = filledCount >= 5;
+    hint.textContent = filledCount + '/5 cards selected'
+      + (full ? ' - loadout full, remove a card to add another.' : ' - click a card to add it to the loadout.');
+    // Real card tiles (art + rarity border + name + description, always
+    // visible) instead of the old plain-text .wr-chip + hover-only preview -
+    // reuses the site's own .class-card styling (same component the class
+    // pages use for their Class Cards grid) so these look consistent with
+    // the rest of the site rather than inventing a new look. The old
+    // .xref-card-preview hover popup is dropped entirely here since
+    // everything it showed (art, rarity, unlock level, description) is now
+    // just sitting on the tile already - nothing left to reveal on hover.
+    //
+    // A <div role="button"> instead of a real <button> - the level pips
+    // below are real <button>s too (so they're independently focusable/
+    // clickable), and HTML disallows nesting a button inside another
+    // button (same reason the Map Calibrator's map-select cards use a div
+    // wrapper around their own nested "Preview" button). Selecting the
+    // card is handled via click + keydown delegation instead of relying on
+    // native button semantics - see the two delegated listeners below.
+    grid.innerHTML = cls.cards.map(function (cd) {
+      var slotIdx = state.cards.indexOf(cd.s);
+      var selected = slotIdx !== -1;
+      var disabled = !selected && full;
+      var rarityClass = esc(cd.r.toLowerCase());
+      var lvls = (cd.lvls && cd.lvls.length) ? cd.lvls : [cd.d];
+      // Re-render (e.g. after toggling another card) should keep showing
+      // whichever level was last picked for THIS card, not silently reset
+      // back to level 1 - state.cardLvl is the source of truth for that,
+      // clamped in case a class swap left a stale value beyond this card's
+      // own level count.
+      var chosenLvl = Math.min(state.cardLvl[cd.s] || 1, lvls.length);
+      var panels = lvls.map(function (desc, i) {
+        return '<span class="class-card__desc" data-level-panel="' + (i + 1) + '"' + ((i + 1) === chosenLvl ? '' : ' data-level-hidden') + '>' + desc + '</span>';
+      }).join('');
+      var pips = lvls.length > 1
+        ? ('<span class="class-card__levels" role="group" aria-label="Card level">'
+          + lvls.map(function (_, i) {
+              return '<button type="button" class="class-card__level-pip class-card__level-pip--btn' + ((i + 1) === chosenLvl ? ' class-card__level-pip--active' : '')
+                + '" data-level="' + (i + 1) + '" title="Show level ' + (i + 1) + ' values">' + (i + 1) + '</button>';
+            }).join('')
+          + '</span>')
+        : '';
+      return '<div class="class-card bc-card-tile class-card--' + rarityClass
+        + (selected ? ' bc-card-tile--selected' : '') + (disabled ? ' bc-card-tile--disabled' : '')
+        + '" data-card="' + esc(cd.s) + '" data-name="' + esc(cd.n.toLowerCase()) + '"'
+        // data-slot (1-5, only set once selected) drives the per-slot color
+        // below (home.scss) - same 5-colour cycle Map Calibrator uses for
+        // its point groups, so which slot a card occupies reads as a color
+        // match instead of every selected card getting the same gold.
+        + (selected ? ' data-slot="' + (slotIdx + 1) + '"' : '')
+        // title gives a disabled tile a native browser tooltip on hover -
+        // simplest option here since .class-card sets overflow:hidden (it
+        // clips the art to its rounded corners), which would clip any
+        // custom absolutely-positioned tooltip trying to pop out past the
+        // tile's own edges the way .xref-card-preview does elsewhere. A
+        // native title tooltip isn't part of the page's own layout, so
+        // overflow:hidden doesn't touch it.
+        + (disabled ? ' title="Loadout full (5/5) - remove a card from your Build to select this one."' : '')
+        + ' role="button" tabindex="0" aria-pressed="' + selected + '"' + (disabled ? ' aria-disabled="true"' : '') + '>'
+        + (selected ? '<span class="bc-card-tile__badge">Slot ' + (slotIdx + 1) + '</span>' : '')
+        + '<span class="class-card__img-wrap">'
+        + '<img src="' + esc(cd.img) + '" alt="" loading="lazy" onerror="this.style.display=\'none\';this.parentElement.classList.add(\'class-card__img-wrap--empty\');">'
+        // Always-visible overlay (not hover-only) over the art, stating why
+        // the tile is greyed out and inert - the dimmed opacity alone
+        // doesn't say WHETHER a card is unavailable because the loadout is
+        // full (fixable by freeing a slot) versus some other reason, so this
+        // spells it out right on the tile instead of relying only on the
+        // title tooltip above (which a touch-screen user, without hover,
+        // would never see at all). Scoped to just the art rather than the
+        // whole tile so the name/rarity/description below stay legible.
+        // Two-line message instead of one run-on sentence - a short, bold
+        // "NO SLOTS FREE" headline reads at a glance even at this size/
+        // contrast, with the explanation as a smaller second line rather
+        // than everything competing for attention as one same-weight block.
+        + (disabled ? '<span class="bc-card-tile__locked"><span class="bc-card-tile__locked-msg"><span class="bc-card-tile__locked-title">No Free Slots</span><span class="bc-card-tile__locked-sub">Free a slot to select this card</span></span></span>' : '')
+        + '</span>'
+        + '<span class="class-card__info">'
+        + '<span class="class-card__meta">'
+        + '<span class="class-card__rarity class-card__rarity--' + rarityClass + '">' + esc(cd.r) + '</span>'
+        + '<span class="class-card__unlock">Unlocks at Level ' + cd.lv + '</span>'
+        + '</span>'
+        + '<span class="class-card__name">' + esc(cd.n) + '</span>'
+        + '<span class="class-card__panels level-stack">' + panels + '</span>'
+        + pips
+        + '</span>'
+        + '</div>';
+    }).join('');
+    // A fresh render doesn't carry the DOM's hidden/visible state forward,
+    // so re-apply the current search filter (if any) rather than leaving
+    // freshly-rendered tiles ignoring it until the next keystroke.
+    filterCards();
+  }
+
+  // Switches one card tile to a different level's description panel -
+  // mirrors the class pages' own [data-level-panel]/[data-level-hidden]
+  // toggle (_layouts/class.html) exactly, just scoped to the single tile
+  // the clicked pip lives in instead of a page-wide querySelectorAll.
+  function setCardLevel(pip) {
+    var tile = pip.closest('.bc-card-tile');
+    if (!tile) return;
+    var lvl = pip.getAttribute('data-level');
+    tile.querySelectorAll('[data-level-panel]').forEach(function (panel) {
+      panel.toggleAttribute('data-level-hidden', panel.getAttribute('data-level-panel') !== lvl);
+    });
+    tile.querySelectorAll('.class-card__level-pip--btn').forEach(function (p) {
+      p.classList.toggle('class-card__level-pip--active', p === pip);
+    });
+    // Persist the pick and, if this card is currently one of the 5 loadout
+    // slots, refresh the Build panel too - its mini tile's level badge and
+    // hover-preview description need to reflect the new level, not just the
+    // tile here in the Cards panel.
+    var slug = tile.getAttribute('data-card');
+    state.cardLvl[slug] = +lvl;
+    if (state.cards.indexOf(slug) !== -1) { renderBuild(); }
+    syncUrl();
+  }
+
+  // Mirror of setCardLevel above, but starting from the Slots row's own
+  // level badge (.bc-slot-card__lvl) instead of a Cards panel pip -
+  // cycles 1 -> 2 -> ... -> this card's own max level (data-max-lvl,
+  // stamped on the badge at render time) -> back to 1, rather than
+  // jumping straight to a specific clicked number.
+  //
+  // Patches this tile's own badge text + its .xref-card-preview
+  // description directly, the same way setCardLevel patches a Cards panel
+  // tile's pips/description in place, INSTEAD of calling renderBuild() -
+  // a full renderBuild() replaces the whole Slots row's innerHTML, which
+  // destroys and recreates this exact tile (.xref-card-preview included)
+  // out from under the mouse that's still sitting on top of it mid-click.
+  // The freshly recreated preview starts back at its own default (hidden)
+  // state and has to re-run its :hover fade-in transition from scratch,
+  // which looked like the popup "re-appearing"/jumping on every single
+  // click instead of just updating its text in place while staying open.
+  // renderCardGrid() for the OTHER side is still a full re-render, same as
+  // setCardLevel's own renderBuild() call - the mouse is never hovering
+  // the Cards panel tile in this flow, so recreating it has nothing to
+  // visibly interrupt.
+  function cycleSlotCardLevel(badge) {
+    var slug = badge.getAttribute('data-card');
+    var maxLvl = +badge.getAttribute('data-max-lvl');
+    if (!slug || !maxLvl || maxLvl < 2) return;
+    var cur = Math.min(state.cardLvl[slug] || 1, maxLvl);
+    var newLvl = (cur % maxLvl) + 1;
+    state.cardLvl[slug] = newLvl;
+
+    badge.textContent = newLvl;
+    badge.title = 'Click to cycle to level ' + (newLvl % maxLvl + 1) + ' of ' + maxLvl;
+    var cls = BY_SLUG[state.cls];
+    var cd = null;
+    if (cls) {
+      for (var j = 0; j < cls.cards.length; j++) { if (cls.cards[j].s === slug) { cd = cls.cards[j]; break; } }
+    }
+    var descEl = badge.parentElement && badge.parentElement.querySelector('.xref-card-preview__desc');
+    if (cd && descEl) {
+      var lvls = (cd.lvls && cd.lvls.length) ? cd.lvls : [cd.d];
+      var rarityClass = esc(cd.r.toLowerCase());
+      // Same markup renderBuild's own slot-tile builder produces for
+      // .xref-card-preview__desc - kept in sync by hand since this is a
+      // one-off in-place patch rather than a shared template function.
+      descEl.innerHTML = '<span class="class-card__meta">'
+        + '<span class="class-card__rarity class-card__rarity--' + rarityClass + '">' + esc(cd.r) + '</span>'
+        + '<span class="class-card__unlock">Unlocks at Level ' + cd.lv + '</span>'
+        + '</span>'
+        + '<strong>' + esc(cd.n) + '</strong><br>' + lvls[newLvl - 1];
+    }
+
+    renderCardGrid();
+    syncUrl();
+  }
+
+  // ── Card search ────────────────────────────────────────────
+  // Same style/behavior as the Class panel's search box - substring match
+  // on each tile's own data-name, no collapse-to-first-row involved here
+  // (the card pool doesn't have the Class picker's "Show all" toggle).
+  function filterCards() {
+    var q = $('bc-card-search').value.trim().toLowerCase();
+    // .bc-card-tile composes .class-card, which sets its own `display:
+    // flex` in CSS - same specificity as (and later in the cascade than)
+    // the browser's [hidden]{display:none} UA rule, so the `hidden`
+    // attribute alone would get overridden and leave a "hidden" tile
+    // visible (this bit us once already on .bc-class-chip - see
+    // updateClassColDisplay above). Inline style.display always wins,
+    // so use that instead.
+    document.querySelectorAll('#bc-card-grid .bc-card-tile').forEach(function (tile) {
+      var match = !q || (tile.getAttribute('data-name') || '').indexOf(q) !== -1;
+      tile.style.display = match ? '' : 'none';
+    });
+  }
+
+  // Every PVE mode a class's 5-card loadout carries into, and its wave
+  // count - hoisted up here (used to just be a local inside renderBuild(),
+  // rebuilt every render for no reason) since it's fixed data, not
+  // per-class/per-render - restoreFromUrl() below needs it too, to
+  // validate a pasted modes= list against real mode names.
+  var MODE_WAVES = {
+    'Horde': 50,
+    'Horde Mania': 25,
+    "Mad Man's Monsters": 20,
+    'Jingle Juvies': 20,
+    'Horde Frenzy': 12,
+    'Predator Hunt': 10,
+    'Boss Rush': 10,
+    'Escape From Kadar': 10,
+    'Nexus Siege': 10,
+    'Horde Roulette': 10
+  };
+
+  // Which "Works in" wave-length category (below) is currently expanded -
+  // null means none. Single-select on purpose (see toggleModeGroup): opening
+  // one closes/locks out every other category button until it's closed
+  // again.
+  var bcActiveModeGroup = null;
+
+  // Which individual mode badges (inside the currently open category) have
+  // been clicked "on" - a plain { label: true } map. Persisted in the Build
+  // code (modes=, see syncUrl/restoreFromUrl) and read by Build Viewer as
+  // this build's specific gamemode(s) - not just cosmetic anymore. Any
+  // number can be on at once, independent of each other.
+  var bcSelectedModes = {};
+
+  // Per-category "perk order by wave" planner - lets you mark which wave
+  // you plan to rank up each of the class's 4 perks on, since perk ranks
+  // build up cumulatively over the course of a match rather than all being
+  // available from wave 1. Keyed by the category's own wave count (a plain
+  // number as a string, e.g. "50" for the 50 Waves category, "20" for the
+  // 20 Waves one) rather than its full label, since that's shorter and
+  // still unique - see MODE_WAVES/modeGroups below.
+  //   bcPerkPlanOpen[waveKey] -> bool, whole grid shown/hidden as one block.
+  //   bcPerkPlan[waveKey]     -> array of 4 arrays (one per perk column,
+  //                              same order as cls.perks), each holding the
+  //                              wave number "ranked up here" for that perk -
+  //                              ONE ENTRY PER RANK, so the same wave number
+  //                              can appear more than once (e.g. [1,1,1,5,5]
+  //                              means 3 ranks were bought at wave 1 and 2
+  //                              more at wave 5 - nothing says power has to
+  //                              be spent one wave at a time, you can dump
+  //                              everything you've saved into one wave if you
+  //                              want). Always kept sorted ascending, so a
+  //                              given wave's RANK RANGE is just "how many
+  //                              entries come before it" through "... plus
+  //                              how many entries equal it" - see
+  //                              buildPerkTable below for the actual math.
+  //                              A cell's own number is simply how many times
+  //                              its own wave appears in the column, capped
+  //                              overall (the whole column, across every
+  //                              wave) at 10 entries.
+  var bcPerkPlanOpen = {};
+  var bcPerkPlan = {};
+  // bcPerkPlanCombined[waveKey] -> bool, only meaningful for a category long
+  // enough to be split into 10-wave chunks (> 15 waves - 50/25/20). true
+  // shows that category as one single un-chunked table (via the "Combine
+  // Waves" button) instead of the usual per-chunk toggles - purely a display
+  // choice, doesn't touch bcPerkPlan itself either way.
+  var bcPerkPlanCombined = {};
+
+  function renderBuild() {
+    var cls = BY_SLUG[state.cls];
+    var wrap = $('bc-build-grid');
+    if (!cls) {
+      wrap.innerHTML = '<p class="wr-hint">Pick a class and some cards to see your build here.</p>';
+      $('bc-plan-preview').innerHTML = '';
+      return;
+    }
+    // wrap.innerHTML gets fully replaced below, so every .bc-perk-plan__scroll
+    // box (a perk-plan table's own scroll area) is a brand-new DOM node after
+    // this render - its scrollTop would silently reset to 0 otherwise, which
+    // is what made clicking any cell in a scrolled-down table look like it
+    // "jumped back up". Capturing each box's scrollTop here (keyed by its own
+    // data-waves - the plain waveKey for a combined/single table, or
+    // "waveKey:chunkIndex" for one chunk) and restoring it in
+    // fitPerkPlanScrolls below keeps that box showing the same rows across
+    // the re-render a single cell click triggers.
+    var savedPerkScroll = {};
+    var oldPerkBoxes = wrap.querySelectorAll('.bc-perk-plan__scroll[data-waves]');
+    for (var spi = 0; spi < oldPerkBoxes.length; spi++) {
+      savedPerkScroll[oldPerkBoxes[spi].getAttribute('data-waves')] = oldPerkBoxes[spi].scrollTop;
+    }
+    var slots = [];
+    for (var i = 0; i < 5; i++) {
+      var slug = state.cards[i];
+      var cd = null;
+      if (slug) {
+        for (var j = 0; j < cls.cards.length; j++) { if (cls.cards[j].s === slug) { cd = cls.cards[j]; break; } }
+      }
+      // Mini version of the same .class-card tile used in the Cards panel
+      // above (art + rarity border + name) so a slot reads as a real card
+      // at a glance instead of plain text - the .xref-card-preview hover
+      // popup (site-wide art + resolved description pattern, see
+      // styles/main.scss and .wr-chip in this file) fills in the full
+      // description on hover/focus since there's no room for it at this size.
+      slots.push(cd
+        ? (function () {
+            var lvls = (cd.lvls && cd.lvls.length) ? cd.lvls : [cd.d];
+            // The badge/preview show the level CHOSEN via the Cards panel's
+            // pips (state.cardLvl), not cd.lv - that's a fixed unlock
+            // requirement, a different number from which of the card's 1-6
+            // ranks is currently picked for this build.
+            var chosenLvl = Math.min(state.cardLvl[cd.s] || 1, lvls.length);
+            var chosenDesc = lvls[chosenLvl - 1];
+            var rarityClass = esc(cd.r.toLowerCase());
+            // Rarity used to be folded into the description text ("- Rare,
+            // unlocks at Level 5") - now it's its own colored badge (same
+            // .class-card__rarity--{rarity}/meta layout the Cards panel
+            // tiles use) sitting above the name, and the popup's own border
+            // picks up that rarity color too (.xref-card-preview--{rarity},
+            // home.scss) instead of always being plain gray.
+            return '<div class="bc-slot-card class-card class-card--' + rarityClass + '" tabindex="0"'
+              // Native HTML5 drag-and-drop, handled by the delegated
+              // dragstart/dragover/drop listeners below - data-slot-index
+              // (this loop's own 0-based i) is how the drop handler knows
+              // which two entries in state.cards to swap.
+              + ' draggable="true" data-slot-index="' + i + '" title="Drag to move to another slot">'
+              + '<span class="class-card__img-wrap">'
+              + '<img src="' + esc(cd.img) + '" alt="" loading="lazy" onerror="this.style.display=\'none\';">'
+              + '</span>'
+              + '<span class="class-card__info"><span class="class-card__name">' + esc(cd.n) + '</span></span>'
+              // Only clickable (cycleSlotCardLevel, delegated listener
+              // below) when there's actually more than one level to cycle
+              // through - same lvls.length > 1 check the Cards panel's own
+              // pips row uses to decide whether to render itself at all.
+              // data-max-lvl lets the click handler wrap back to 1 without
+              // re-deriving cls.cards/lvls itself.
+              + '<span class="bc-slot-card__lvl' + (lvls.length > 1 ? ' bc-slot-card__lvl--cyclable' : '') + '"'
+              + (lvls.length > 1
+                ? ' role="button" tabindex="0" data-card="' + esc(cd.s) + '" data-max-lvl="' + lvls.length + '" title="Click to cycle to level ' + (chosenLvl % lvls.length + 1) + ' of ' + lvls.length + '"'
+                : '')
+              + '>' + chosenLvl + '</span>'
+              + '<span class="xref-card-preview xref-card-preview--' + rarityClass + '">'
+              + '<img src="' + esc(cd.img) + '" alt="" loading="lazy" onerror="this.style.display=\'none\';">'
+              + '<span class="xref-card-preview__desc">'
+              + '<span class="class-card__meta">'
+              + '<span class="class-card__rarity class-card__rarity--' + rarityClass + '">' + esc(cd.r) + '</span>'
+              + '<span class="class-card__unlock">Unlocks at Level ' + cd.lv + '</span>'
+              + '</span>'
+              + '<strong>' + esc(cd.n) + '</strong><br>' + chosenDesc
+              + '</span>'
+              + '</span>'
+              + '</div>';
+          }())
+        : ('<div class="bc-slot-card bc-slot-card--empty" data-slot-index="' + i + '">'
+          // Mirrors a filled tile's own two-part structure (square art area
+          // on top, padded info area below) instead of one plain centered
+          // box - so an empty slot's height is built out of the exact same
+          // width-relative aspect-ratio + rem-based padding rules a filled
+          // tile uses, rather than a separately-guessed aspect-ratio number.
+          // That guarantees the two stay pixel-equal at any column width
+          // (5-across desktop, 3-across mobile, any page width) instead of
+          // just approximately matching at one specific width - which is
+          // what let filled/empty slot heights drift apart and visibly
+          // shift the Perks text + shareable-link box below whenever a slot
+          // flipped between empty and filled.
+          + '<span class="bc-slot-card__empty-art"></span>'
+          + '<span class="bc-slot-card__empty-info"><span class="bc-slot-card__empty-label">Empty</span></span>'
+          + '</div>'));
+    }
+    // Slot numbers 1-5 as a header row above the tiles instead of a badge
+    // sitting on each card - the fixed 5-column .bc-slot-grid below shares
+    // the same column count, so lining these up as their own row keeps them
+    // aligned without repeating the number on every tile.
+    var slotLabels = '<div class="bc-slot-grid bc-slot-grid--labels">'
+      + [1, 2, 3, 4, 5].map(function (n) {
+          // state.cards can have holes (a removed card leaves its old slot
+          // null - see toggleCard) - grey this number out rather than
+          // showing its slot color when there's currently no card sitting
+          // under it, so the color only ever means "this slot is filled".
+          var filled = !!state.cards[n - 1];
+          return '<span class="bc-slot-grid__label' + (filled ? '' : ' bc-slot-grid__label--empty') + '">' + n + '</span>';
+        }).join('')
+      + '</div>';
+    // Every PVE mode this same 5-card loadout actually carries into - every
+    // Horde variant in _data/gamemodes.yml EXCEPT the two that explicitly
+    // flip "Use Cards" to OFF (Classic Horde, Classic Horde Frenzy - those
+    // intentionally recreate old-school Horde with a Default Loadout
+    // instead of classes), plus Escape, which shares the same class/card
+    // system as Horde even though it's not filed as a Horde variant
+    // (confirmed by Score Boost's own card text: "5% increased team score
+    // in Horde and 5% time bonus in Escape" - one card, two modes).
+    // Campaign/Campaign DLC have no class/card system at all, so neither
+    // belongs here either. "Use Fabricator: OFF" (Predator Hunt, Nexus
+    // Siege) is a separate setting from "Use Cards" in the data (both
+    // listed independently for Horde/Horde Frenzy) - not using the
+    // Fabricator doesn't mean cards are off too, so those two stay in.
+    // Grouped by wave length (per _data/gamemodes.yml variant "desc" text)
+    // instead of one flat list, so it reads as "these modes are roughly the
+    // same length" rather than a jumble - Escape has no wave count at all
+    // (it's a linear escort/timer mode, not a wave-survival one) so it gets
+    // its own group up top rather than being forced under a wave-count label.
+    // MODE_WAVES itself now lives up top with the other module-level state
+    // (restoreFromUrl() needs it too) - just used here, not declared here.
+    // Escape used to get its own group here (cards do carry over per Score
+    // Boost's own text - see the comment above) but perks specifically
+    // don't apply there, and this section is now also where the per-wave
+    // perk-order grid lives (below), so Escape doesn't belong in this list
+    // at all anymore.
+    var modeGroups = [];
+    // Bucket by wave count, then sort buckets longest-first.
+    var byWaves = {};
+    Object.keys(MODE_WAVES).forEach(function (m) {
+      var w = MODE_WAVES[m];
+      (byWaves[w] = byWaves[w] || []).push(m);
+    });
+    Object.keys(byWaves).map(Number).sort(function (a, b) { return b - a; }).forEach(function (w) {
+      // waveCount carried alongside label/modes - drives both the perk
+      // planner's row count and its bcPerkPlan/bcPerkPlanOpen storage key
+      // below.
+      modeGroups.push({ label: w + ' Waves', modes: byWaves[w], waveCount: w });
+    });
+    // Real <button>s instead of the old <details>/<summary> per-group
+    // disclosure - stacked in a single vertical column (not a wrapping
+    // horizontal row), one per wave-length category. Single-select: opening
+    // one shows its mode list right underneath itself, and clicking a
+    // DIFFERENT category switches straight to that one - no need to close
+    // the current one first (used to grey out and lock every other button
+    // until the open one was explicitly closed, which just made hopping
+    // between categories slower than it needed to be for something with
+    // no real conflict between them). No "Works in:" label needed above it
+    // now that the column of category buttons already makes clear what
+    // these are.
+    var modesLine = '<div class="bc-mode-groups" role="group" aria-label="Works in">'
+      + modeGroups.map(function (g) {
+          var isActive = g.label === bcActiveModeGroup;
+          // A group with only one mode in it (50 Waves -> just Horde, 25
+          // Waves -> just Horde Mania, 12 Waves -> just Horde Frenzy) has
+          // nothing to pick between - the category IS the mode - so its
+          // name goes straight on the button itself ("50 Waves - Horde")
+          // instead of hiding behind a click that would only ever reveal a
+          // single redundant nested button.
+          var isSingle = g.modes.length === 1 && g.modes[0] !== g.label;
+          var displayLabel = isSingle ? (g.label + ' - ' + g.modes[0]) : g.label;
+          // Total Energy already committed to this category's perk plan
+          // (every rank marked across all 4 columns, whichever waves they
+          // landed on) - shown pinned to the category button's own right
+          // edge so it's visible at a glance without expanding the planner.
+          // Zero (nothing marked yet) shows nothing extra rather than a
+          // redundant "0" on every untouched category.
+          var catCost = cls.perks.length ? perkPlanCost(String(g.waveCount)) : 0;
+          // Icon before the number, same order as every other cost readout
+          // on this page (the per-cell cost line, the Fabricator, the D-pad
+          // overlay) - never the number first. No wrapping brackets - the
+          // badge's own right-pinned position (.bc-mode-group-btn__cost,
+          // home.scss) already sets it apart from the label without needing
+          // parentheses too.
+          var costSuffix = catCost > 0
+            ? (' <span class="bc-mode-group-btn__cost">'
+              + '<span class="bc-mode-group-btn__cost-label">Total:</span> '
+              + '<span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span> '
+              + catCost.toLocaleString('en-US') + '</span>')
+            : '';
+          var btn = '<button type="button" class="bc-mode-group-btn'
+            + (isActive ? ' bc-mode-group-btn--active' : '')
+            + '" data-group="' + esc(g.label) + '" aria-pressed="' + isActive + '"'
+            + '>' + esc(displayLabel) + costSuffix + '</button>';
+          var content = (isActive && !isSingle)
+            ? ('<p class="bc-mode-group-content">'
+              + g.modes.map(function (m) {
+                  // Real <button>s, not inert <span>s - clicking one just
+                  // toggles its own pressed/selected look (bcSelectedModes),
+                  // no navigation, no other side effect. margin-bottom too,
+                  // not just margin-right, on the inline style - a long
+                  // group can still wrap onto multiple lines at this
+                  // panel's width, and without it the wrapped rows sat
+                  // edge-to-edge with no vertical breathing room.
+                  var isSelected = !!bcSelectedModes[m];
+                  return '<button type="button" class="type-badge bc-mode-badge' + (isSelected ? ' bc-mode-badge--selected' : '')
+                    + '" data-mode="' + esc(m) + '" aria-pressed="' + isSelected + '" style="margin: 0 0.35rem 0.35rem 0;">' + esc(m) + '</button>';
+                }).join('')
+              + '</p>')
+            : '';
+          // Perk order-by-wave planner, one per active category - only
+          // makes sense once a category is open, and only if this class
+          // actually has perks to plan around (every real class does; this
+          // is just a defensive check). waveKey is the category's own wave
+          // count as a string ("50", "20", ...), matching bcPerkPlan's keys
+          // (bcPerkPlan itself is ALWAYS keyed by this plain waveKey, never
+          // by a chunk key below, since rank numbers have to stay continuous
+          // across the whole category, not reset every 10 waves).
+          var planHtml = '';
+          if (isActive && cls.perks.length) {
+            var waveKey = String(g.waveCount);
+            var plan = bcPerkPlan[waveKey] || [];
+            // Icon (same /images/perks/{slug}-{dir}.svg path/onerror-hide
+            // fallback _layouts/class.html itself uses - some classes are
+            // missing 1+ of the 4 icon files, hence the fallback rather
+            // than assuming it always loads) plus the name stays visible in
+            // the header itself (this table is dense/small - relying on
+            // hover alone to even know which column is which would be a bad
+            // time), and the .xref-link--tip/.xref-tip hover-preview pattern
+            // used site-wide (class names, cards, etc.) adds the
+            // description (where documented) and the full rank 1-10 %
+            // breakdown on top of that. Built once per category, reused by
+            // every 10-wave chunk below rather than recomputed per chunk.
+            // Header now shows just the icon + a live "X / 10" rank count
+            // for this category (recomputed fresh on every render, so it
+            // always reflects the current plan[pi] as cells are clicked) -
+            // the perk's actual NAME moved entirely into the hover/focus
+            // tooltip below, along with its description and full rank 1-10
+            // breakdown, since there wasn't room to keep the name AND a
+            // running count both always visible in a column this narrow.
+            var headerCells = cls.perks.map(function (p, pi) {
+              var count = (plan[pi] || []).length;
+              var ranksHtml = p.vals.length
+                ? ('<span class="bc-perk-tip__ranks">' + p.vals.map(function (v, i) {
+                    return '<span class="bc-perk-tip__rank"><b>' + (i + 1) + '</b><span>' + esc(v) + '</span></span>';
+                  }).join('') + '</span>')
+                : '<span class="bc-perk-tip__unknown">Rank values not documented yet.</span>';
+              return '<th><span class="xref-link--tip bc-perk-head" tabindex="0">'
+                // visibility: hidden (not display: none) on a missing icon
+                // keeps its box - and the space it reserves - intact, so a
+                // class missing this direction's SVG still lines up its
+                // "X / 10" count at the same fixed spot every column shares,
+                // rather than that column's count creeping up to fill the
+                // gap where the icon should have been.
+                + '<img class="bc-perk-head__icon" src="' + esc(p.icon) + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\';">'
+                + '<span class="bc-perk-head__count">' + count + ' / 10</span>'
+                + '<span class="xref-tip bc-perk-tip">'
+                  + '<strong>' + esc(p.n) + '</strong>'
+                  + (p.d ? ('<br>' + esc(p.d)) : '')
+                  + '<br>' + ranksHtml
+                + '</span>'
+                + '</span></th>';
+            }).join('');
+            // One <table> covering waves waveStart-waveEnd (inclusive) -
+            // shared by both the single-table categories and each of the
+            // 50-wave category's 5 chunks below. boxKey identifies which
+            // scroll box this is (the plain waveKey for a combined/single
+            // table, or "waveKey:chunkIndex" for one chunk) - stamped onto
+            // the scroll wrapper below purely so fitPerkPlanScrolls
+            // (renderBuild) can restore that specific box's own scroll
+            // position after the next re-render recreates it from scratch.
+            function buildPerkTable(waveStart, waveEnd, boxKey) {
+              var bodyRows = '';
+              for (var w = waveStart; w <= waveEnd; w++) {
+                var rowCells = cls.perks.map(function (_, pi) {
+                  var col = plan[pi] || [];
+                  // count = how many ranks are stacked on THIS wave (a cell's
+                  // own number, can be more than 1 - see the bcPerkPlan
+                  // comment above). cumulativeBefore = how many ranks were
+                  // already bought at earlier waves in this same column -
+                  // together these two pick out exactly which slice of
+                  // PERK_COSTS this cell represents, e.g. cumulativeBefore=3,
+                  // count=2 means this cell covers ranks 4-5.
+                  var count = col.filter(function (x) { return x === w; }).length;
+                  var cumulativeBefore = col.filter(function (x) { return x < w; }).length;
+                  var filled = count > 0;
+                  // Each of the 4 columns is its own independent pool of up
+                  // to 10 points to spend on that one perk - a wave being
+                  // used for one perk does NOT block marking that same wave
+                  // for one of the other 3, and a wave already holding some
+                  // ranks doesn't block piling MORE ranks onto that same
+                  // wave either (Power isn't spent per-wave in one lump in-
+                  // game, it's spent whenever you have enough, on whichever
+                  // perk you want - nothing stops dumping several ranks'
+                  // worth of Power into one perk at a single wave). The only
+                  // lock is the column as a whole having already used all 10
+                  // of its points - once that happens, + stops working
+                  // everywhere in that column (including on already-filled
+                  // cells, since there's nothing left to add), and every
+                  // still-EMPTY cell in that column grays out too (a filled
+                  // one stays fully visible/clickable-to-remove).
+                  var maxedOut = col.length >= 10;
+                  var locked = !filled && maxedOut;
+                  var lockTitle = maxedOut
+                    ? 'Max rank (10) reached for this perk - clear a rank first to add more.'
+                    : '';
+                  // - and + are two separate buttons either side of the
+                  // count instead of one whole-cell toggle - minus only ever
+                  // does something once this cell holds at least one rank
+                  // (removes just one rank from THIS wave only - it does not
+                  // touch any other wave in the column), plus only ever does
+                  // something while this column still has room, regardless
+                  // of whether this particular cell is already filled. Same
+                  // native-title-tooltip + aria-disabled (never the real
+                  // disabled attribute, which would also silently swallow
+                  // the title tooltip) approach as every other "why can't I
+                  // click this" case on this page.
+                  var minusDisabled = !filled;
+                  var plusDisabled = maxedOut;
+                  var plusTitle = maxedOut ? lockTitle : '';
+                  var dataAttrs = ' data-waves="' + waveKey + '" data-perk="' + pi + '" data-wave="' + w + '"';
+                  // Energy cost line only ever shows a value for a FILLED
+                  // cell (what was actually paid for the rank(s) stacked at
+                  // this wave) - an empty cell (none picked here yet) shows
+                  // no price at all, full stop, whether or not this column
+                  // has room left. visibility: hidden (not omitting the
+                  // element) still keeps this row's height reserved for
+                  // every empty cell, same reasoning as the missing-icon
+                  // fallback on the column headers above - otherwise a
+                  // column of mixed filled/empty cells would have its rows
+                  // constantly resizing.
+                  // PERK_COSTS entries are pre-formatted display strings
+                  // with thousands commas already baked in (e.g. "1,000",
+                  // straight out of _data/perk_costs.yml) - fine to show
+                  // as-is for a single rank, but summing more than one of
+                  // them needs the comma stripped back out first (otherwise
+                  // "+" on two strings just concatenates them, e.g.
+                  // "1,000" + "1,450" -> "1,0001,450") and the total
+                  // reformatted with its own commas afterward.
+                  var costValue = null;
+                  if (filled) {
+                    var costSum = 0;
+                    for (var rk = cumulativeBefore; rk < cumulativeBefore + count; rk++) {
+                      costSum += Number(String(PERK_COSTS[rk]).replace(/,/g, ''));
+                    }
+                    costValue = costSum.toLocaleString('en-US');
+                  }
+                  // Same fab-tile__icon--bolt "Power/Energy" icon the
+                  // Fabricator page uses (styles/main.scss) - a solid SVG
+                  // bolt mask rather than the raw ⚡ character, which
+                  // otherwise renders as an oversized color emoji in most
+                  // browsers. Reused as-is (not a bc-* class of its own) so
+                  // this, the class page's D-pad overlay (_includes/
+                  // perk-slot.html), and Fabricator all show the exact same
+                  // icon for "this costs Energy" rather than three visually
+                  // different bolts.
+                  var costHtml = '<span class="bc-perk-cell__cost"' + (costValue ? '' : ' style="visibility:hidden;"') + '>'
+                    + '<span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span> ' + esc(costValue || '0') + '</span>';
+                  return '<td><span class="bc-perk-cell' + (filled ? ' bc-perk-cell--filled' : '') + (locked ? ' bc-perk-cell--locked' : '') + '">'
+                    + '<span class="bc-perk-cell__top">'
+                      + '<span class="bc-perk-cell__num">' + (filled ? count : '') + '</span>'
+                      + '<span class="bc-perk-cell__btns">'
+                        + '<button type="button" class="bc-perk-cell__btn bc-perk-cell__btn--minus' + (minusDisabled ? ' bc-perk-cell__btn--disabled' : '') + '"'
+                          + ' data-perk-action="minus"' + dataAttrs
+                          + (minusDisabled ? ' aria-disabled="true"' : '')
+                          + (minusDisabled ? '' : ' title="Remove one rank from this wave."')
+                          + '>&minus;</button>'
+                        + '<button type="button" class="bc-perk-cell__btn bc-perk-cell__btn--plus' + (plusDisabled ? ' bc-perk-cell__btn--disabled' : '') + '"'
+                          + ' data-perk-action="plus"' + dataAttrs
+                          + (plusDisabled ? ' aria-disabled="true"' : '')
+                          + (plusTitle ? ' title="' + plusTitle + '"' : '')
+                          + '>+</button>'
+                        + '</span>'
+                      + '</span>'
+                    + costHtml
+                    + '</span></td>';
+                }).join('');
+                bodyRows += '<tr><th scope="row">' + w + '</th>' + rowCells + '</tr>';
+              }
+              // data-visible-rows tells the post-render sizing pass (see
+              // fitPerkPlanScrolls below renderBuild) how many full rows this
+              // table should show before it starts scrolling. Every category
+              // longer than 15 waves is now split into <= 10-row chunks
+              // (below), so in practice this table is always <= 10 rows and
+              // this always ends up showing every one of them with no
+              // scrolling at all - the Math.min(., 15) cap only matters as a
+              // safety net were something to ever call buildPerkTable with a
+              // longer range directly, so it degrades to "show 15, scroll for
+              // the rest" instead of one giant table rather than breaking.
+              var totalRows = waveEnd - waveStart + 1;
+              var visibleRows = Math.min(totalRows, 15);
+              return '<div class="bc-perk-plan__scroll" data-visible-rows="' + visibleRows + '" data-waves="' + esc(boxKey) + '"><table class="bc-perk-plan__table">'
+                + '<thead><tr><th>Wave</th>' + headerCells + '</tr></thead>'
+                + '<tbody>' + bodyRows + '</tbody>'
+                + '</table></div>';
+            }
+            if (g.waveCount > 15) {
+              // Any category longer than 15 waves (50, 25, 20) gets split
+              // into separately collapsible 10-wave chunks by default rather
+              // than one long table capped at a 15-row viewport with the
+              // rest only reachable by scrolling - every chunk then shows
+              // ALL of its own rows at once (10, or fewer in a shorter last
+              // chunk) with no inner scrollbar at all. The "Combine Waves"
+              // button lets whoever prefers one long scrolling table over
+              // several short chunks switch this category over to that
+              // instead (bcPerkPlanCombined) - purely a display choice, same
+              // buildPerkTable either way, and bcPerkPlan itself is
+              // untouched by it either way.
+              var combined = !!bcPerkPlanCombined[waveKey];
+              // Clear All only makes sense once combined into one table -
+              // in the default chunked view, each chunk gets its own
+              // "Clear waves X-Y" instead (below), scoped to just that
+              // chunk's own range rather than the whole category.
+              // Same "reserve the space, only actually show it once it'd do
+              // something" treatment as each chunk's own Clear button
+              // (below) - checked across the category's FULL wave range
+              // (1..g.waveCount) rather than one chunk's own slice, since
+              // this button wipes everything, not just one chunk.
+              var categoryHasMarks = chunkHasMarkedRanks(waveKey, 1, g.waveCount);
+              var clearAllBtn = combined
+                ? ('<button type="button" class="bc-perk-plan__clear-all" data-waves="' + waveKey + '"'
+                  + (categoryHasMarks ? '' : ' style="visibility:hidden;" disabled aria-hidden="true" tabindex="-1"')
+                  + ' title="Clear every rank marked in this category.">Clear All</button>')
+                : '';
+              var combineToggleBtn = '<button type="button" class="bc-perk-plan__combine-toggle" data-combine-waves="' + waveKey + '"'
+                + ' title="' + (combined
+                  ? 'Split this category back into separate 10-wave chunks.'
+                  : 'Combine every 10-wave chunk in this category into one single table.') + '">'
+                + (combined ? 'Split Into Chunks' : 'Combine Waves') + '</button>';
+              if (combined) {
+                var combinedOpen = !!bcPerkPlanOpen[waveKey];
+                // Clear All + the Combine/Split toggle ride along on the
+                // same row as the Show/Hide toggle itself
+                // (.bc-perk-plan__chunk-head, the same merge each
+                // individual chunk's own row below uses) instead of a
+                // separate header row sitting above it - one row instead
+                // of two for what's really one main control plus two
+                // secondary, occasional actions next to it.
+                planHtml = '<div class="bc-perk-plan">'
+                  + '<div class="bc-perk-plan__chunk-head">'
+                  + '<button type="button" class="bc-perk-plan__toggle" data-waves="' + waveKey + '" aria-expanded="' + combinedOpen + '">'
+                  + (combinedOpen ? 'Hide' : 'Show') + ' perk order by wave</button>'
+                  + clearAllBtn
+                  + combineToggleBtn
+                  + '</div>'
+                  + (combinedOpen ? buildPerkTable(1, g.waveCount, waveKey) : '')
+                  + '</div>';
+              } else {
+                // Each chunk has its own show/hide toggle stored under its
+                // own "waveKey:chunkIndex" key (bcPerkPlanOpen only -
+                // bcPerkPlan itself stays keyed by the plain waveKey so
+                // ranks still count across every chunk as one continuous
+                // column, e.g. rank 11 in chunk 2 continuing on from rank 10
+                // in chunk 1).
+                var numChunks = Math.ceil(g.waveCount / 10);
+                var chunkIndices = [];
+                for (var ci2 = 0; ci2 < numChunks; ci2++) { chunkIndices.push(ci2); }
+                planHtml = '<div class="bc-perk-plan">' + chunkIndices.map(function (ci) {
+                  var waveStart = ci * 10 + 1, waveEnd = Math.min(ci * 10 + 10, g.waveCount);
+                  var chunkKey = waveKey + ':' + ci;
+                  var chunkOpen = !!bcPerkPlanOpen[chunkKey];
+                  // Used to be its own separate .bc-perk-plan__header row
+                  // sitting BELOW the Show/Hide toggle's own full-width row -
+                  // two rows of vertical space for what's really one control
+                  // (the toggle) plus one occasional companion (Clear, only
+                  // once this chunk is actually open). Sharing one flex row
+                  // instead - the toggle gives up its usual full width to
+                  // make room, Clear sits to its right sized to its own
+                  // content.
+                  // Rendered (and its layout space reserved) any time this
+                  // chunk is open, whether or not there's actually
+                  // anything to clear - only hidden via visibility:hidden
+                  // (never display:none/omitted) once it would be a no-op,
+                  // so Combine Waves next to it doesn't jump left/right
+                  // every time a rank gets marked or cleared.
+                  var hasMarks = chunkHasMarkedRanks(waveKey, waveStart, waveEnd);
+                  var clearBtn = chunkOpen
+                    ? ('<button type="button" class="bc-perk-plan__clear-range" data-waves="' + waveKey + '" data-wave-start="' + waveStart + '" data-wave-end="' + waveEnd + '"'
+                      + (hasMarks ? '' : ' style="visibility:hidden;" disabled aria-hidden="true" tabindex="-1"')
+                      + ' title="Clear every rank marked within waves ' + waveStart + '-' + waveEnd + ' only - the rest of this category is untouched.">'
+                      + 'Clear</button>')
+                    : '';
+                  // combineToggleBtn (the same category-wide "Combine
+                  // Waves" action, unchanged whichever chunk it's clicked
+                  // from) rides along on every chunk's own row now too,
+                  // instead of sitting alone in its own header row above
+                  // the whole list - one less standalone row, and the
+                  // option to combine is right there no matter which
+                  // chunk you're currently looking at.
+                  var chunkHead = '<div class="bc-perk-plan__chunk-head">'
+                    + '<button type="button" class="bc-perk-plan__toggle" data-waves="' + chunkKey + '" aria-expanded="' + chunkOpen + '">'
+                    + (chunkOpen ? 'Hide' : 'Show') + ' waves ' + waveStart + '-' + waveEnd + '</button>'
+                    + clearBtn
+                    + combineToggleBtn
+                    + '</div>';
+                  return '<div class="bc-perk-plan__chunk">'
+                    + chunkHead
+                    + (chunkOpen ? buildPerkTable(waveStart, waveEnd, chunkKey) : '')
+                    + '</div>';
+                }).join('') + '</div>';
+              }
+            } else {
+              // Short enough (<= 15 waves - 10 or 12-wave categories) that
+              // one table with its own single toggle already shows every
+              // row with no scrolling, so there's no need to chunk it, but
+              // it's always effectively "combined" (there's only ever one
+              // table) - shares the exact same chunk-head row (toggle +
+              // Clear All together, Clear All reserved-but-hidden until
+              // there's actually something to clear) as the combined
+              // >15-wave view above, rather than its own separate
+              // always-visible header sitting on its own row.
+              var planOpen = !!bcPerkPlanOpen[waveKey];
+              var shortCategoryHasMarks = chunkHasMarkedRanks(waveKey, 1, g.waveCount);
+              var shortClearAllBtn = '<button type="button" class="bc-perk-plan__clear-all" data-waves="' + waveKey + '"'
+                + (shortCategoryHasMarks ? '' : ' style="visibility:hidden;" disabled aria-hidden="true" tabindex="-1"')
+                + ' title="Clear every rank marked in this category.">Clear All</button>';
+              planHtml = '<div class="bc-perk-plan">'
+                + '<div class="bc-perk-plan__chunk-head">'
+                + '<button type="button" class="bc-perk-plan__toggle" data-waves="' + waveKey + '" aria-expanded="' + planOpen + '">'
+                + (planOpen ? 'Hide' : 'Show') + ' perk order by wave</button>'
+                + shortClearAllBtn
+                + '</div>'
+                + (planOpen ? buildPerkTable(1, g.waveCount, waveKey) : '')
+                + '</div>';
+            }
+          }
+          return btn + content + planHtml;
+        }).join('')
+      + '</div>';
+    // No .wr-loadout wrapper here (that gave this its own background/border/
+    // padding on top of .wr-panel's, which already frames the whole Build
+    // panel - a box inside a box) - the class name/icon are dropped too
+    // (redundant with the Classes picker above) in favor of a plain "Slots"
+    // label, so this now renders straight into the panel itself. That also
+    // frees up the horizontal space .wr-loadout's own 1rem side padding used
+    // to eat into, so the slot tiles have more room for their art/name.
+    // Only enabled once at least one slot actually has a card in it -
+    // state.cards can be all holes (every entry null, see toggleCard) even
+    // while its own .length is still > 0, so this checks for an actual
+    // filled slot rather than just an empty array.
+    var anySlotFilled = state.cards.some(function (s) { return s; });
+    var slotsHead = '<div class="bc-slots-head">'
+      + '<h3 class="wr-loadout__title">Slots</h3>'
+      + '<button type="button" class="bc-slots-clear" data-slots-clear'
+      + (anySlotFilled ? '' : ' disabled aria-disabled="true"')
+      + ' title="Remove every card from this loadout, freeing all 5 slots.">Clear all Slots</button>'
+      + '</div>';
+    wrap.innerHTML = slotsHead
+      + slotLabels
+      + '<div class="bc-slot-grid">' + slots.join('') + '</div>'
+      + modesLine;
+    // --cat-accent: the current class's own category color (same 4 colors
+    // the Class picker's columns use - CAT_INFO above) - a CSS custom
+    // property set directly on the wrapper (innerHTML swaps don't touch an
+    // element's own inline style, only its content) so every "this is
+    // active/marked" accent inside the Build panel - the open category
+    // button, a filled perk cell - reads in that class's own color instead
+    // of one fixed color for every class. Falls back to the old gold/tank
+    // shades in SCSS (var(--cat-accent, ...)) for the rare case cls.cat
+    // doesn't match a known category.
+    var catInfo = CAT_INFO[cls.cat];
+    wrap.style.setProperty('--cat-accent', catInfo ? catInfo.color : '#4995ff');
+    fitPerkPlanScrolls(savedPerkScroll);
+    $('bc-plan-preview').innerHTML = buildPlanPreview(cls, modeGroups);
+  }
+
+  // Read-only summary of every category's own perk-order-by-wave plan (not
+  // just whichever one is currently open above) - a "here's the whole plan
+  // at a glance" view under the build code box, since the planner itself
+  // only ever shows one category open at a time and, even then, buries each
+  // wave's marks inside a dense per-perk grid rather than reading them out
+  // in order. Skips a category entirely once it has no marks at all, and
+  // within a shown category skips straight past any wave that has none of
+  // its own, rather than listing every wave 1-through-waveCount.
+  function buildPlanPreview(cls, modeGroups) {
+    if (!cls.perks.length) { return ''; }
+    var blocks = modeGroups.map(function (g) {
+      var waveKey = String(g.waveCount);
+      var plan = bcPerkPlan[waveKey];
+      if (!plan || !plan.some(function (col) { return col && col.length; })) { return ''; }
+      // Same isSingle/displayLabel fold used by the category button itself
+      // above (modesLine) - a category with only one mode in it folds that
+      // mode's name straight into the heading ("50 Waves - Horde") instead
+      // of a separate line repeating a single gamemode; a category covering
+      // several modes at once (e.g. "10 Waves") keeps the plain wave-count
+      // heading and lists every mode it applies to underneath instead.
+      var isSingle = g.modes.length === 1 && g.modes[0] !== g.label;
+      var headLabel = isSingle ? (g.label + ' - ' + g.modes[0]) : g.label;
+      var modesHtml = isSingle
+        ? ''
+        : ('<p class="bc-plan-preview__modes">' + esc(g.modes.join(', ')) + '</p>');
+      var waveItems = [];
+      for (var w = 1; w <= g.waveCount; w++) {
+        var parts = [];
+        for (var pi = 0; pi < cls.perks.length; pi++) {
+          var col = plan[pi] || [];
+          var count = col.filter(function (x) { return x === w; }).length;
+          if (!count) { continue; }
+          // cumulativeBefore mirrors buildPerkTable's own math above (ranks
+          // already bought at earlier waves in this same column) so the
+          // level shown here is the exact rank(s) this wave's purchase(s)
+          // land on, not just a running total unrelated to what got bought.
+          var cumulativeBefore = col.filter(function (x) { return x < w; }).length;
+          // Just the bare number(s) now, no "Lv." prefix - the chip's own
+          // icon already establishes "this is a perk level", so spelling
+          // that out again in the text next to it was redundant once the
+          // icon replaced the perk's name here.
+          var lvlLabel = count > 1
+            ? ((cumulativeBefore + 1) + '-' + (cumulativeBefore + count))
+            : String(cumulativeBefore + 1);
+          var p = cls.perks[pi];
+          // Icon instead of the perk's name (same /images/perks/{slug}-
+          // {dir}.svg icon and onerror-hide fallback the planner's own
+          // column headers use, home.scss's .bc-perk-head) with the level
+          // reached printed right next to it - the full name only shows up
+          // in the .xref-link--tip/.xref-tip hover/focus tooltip (same
+          // site-wide pattern class names, cards, and this planner's column
+          // headers all already use), same idea as the column headers
+          // themselves trading a full name for icon + count once space gets
+          // tight, just applied here too since a wave can rack up several of
+          // these side by side.
+          parts.push('<span class="xref-link--tip bc-plan-preview__perk" tabindex="0">'
+            + '<img class="bc-plan-preview__perk-icon" src="' + esc(p.icon) + '" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\';">'
+            + '<span class="bc-plan-preview__perk-lvl">' + lvlLabel + '</span>'
+            + '<span class="xref-tip">' + esc(p.n) + '</span>'
+            + '</span>');
+        }
+        if (parts.length) {
+          waveItems.push('<li><b>Wave ' + w + '</b><span class="bc-plan-preview__perks">' + parts.join('') + '</span></li>');
+        }
+      }
+      if (!waveItems.length) { return ''; }
+      return '<div class="bc-plan-preview__cat">'
+        + '<h4 class="bc-plan-preview__cat-head">' + esc(headLabel) + '</h4>'
+        + modesHtml
+        + '<ul class="bc-plan-preview__waves">' + waveItems.join('') + '</ul>'
+        + '</div>';
+    }).filter(Boolean);
+    if (!blocks.length) { return ''; }
+    return '<div class="bc-plan-preview">'
+      + '<h3 class="bc-plan-preview__title">Perk Plan Preview</h3>'
+      + blocks.join('')
+      + '</div>';
+  }
+
+  // A plain fixed max-height on .bc-perk-plan__scroll can't know each
+  // table's own row/header height (those come from CSS - font-size,
+  // padding, cell height - and are free to change later), so instead of
+  // guessing a px number by hand this measures the ACTUAL rendered header
+  // and first-row heights right after every render and sizes the scroll
+  // box to fit exactly data-visible-rows rows with nothing cut off
+  // mid-row. A 10-row table (each 50-wave chunk, or any 10-wave category)
+  // ends up tall enough to show all 10 with no scrollbar at all; a longer
+  // one (20/25 waves) caps at its data-visible-rows (15) and scrolls for
+  // the remainder instead of rendering a partial row at the bottom.
+  function fitPerkPlanScrolls(savedScroll) {
+    var boxes = document.querySelectorAll('#bc-build-grid .bc-perk-plan__scroll[data-visible-rows]');
+    for (var i = 0; i < boxes.length; i++) {
+      var box = boxes[i];
+      var thead = box.querySelector('thead');
+      var tbody = box.querySelector('tbody');
+      if (!thead || !tbody || !tbody.children.length) { continue; }
+      var visibleRows = +box.getAttribute('data-visible-rows') || 10;
+      var headHeight = thead.getBoundingClientRect().height;
+      var bodyHeight;
+      if (visibleRows >= tbody.children.length) {
+        // Showing every row in this table (the common case - a 10-row
+        // chunk/category, or a 12-wave category) - read the whole tbody's
+        // real height directly instead of "one row's height * row count",
+        // which avoids compounding each row's own fractional sub-pixel
+        // rounding error across many rows (that error is what caused a
+        // stray 1px scrollbar even though every row visibly fit).
+        bodyHeight = tbody.getBoundingClientRect().height;
+      } else {
+        // Longer table (20/25 waves) intentionally showing fewer rows than
+        // it has - there's no single "real" height to read since most rows
+        // are offscreen, so fall back to first-row-height * visible count.
+        var row = tbody.querySelector('tr');
+        bodyHeight = row.getBoundingClientRect().height * visibleRows;
+      }
+      // A few px of slack so neither the box's own 1px border nor any
+      // leftover sub-pixel rounding forces a needless scrollbar when the
+      // content height already matches (or barely exceeds) what's set here.
+      box.style.maxHeight = Math.ceil(headHeight + bodyHeight) + 3 + 'px';
+      // Restore whatever this same box (matched by its own data-waves key -
+      // see the renderBuild comment above) was scrolled to before this
+      // render tore down and rebuilt it from scratch - without this, every
+      // click inside a scrolled-down table (the combined view, or a 20/25
+      // wave category's default 15-row viewport) would snap back to
+      // showing wave 1 again on every single click.
+      var savedTop = savedScroll && savedScroll[box.getAttribute('data-waves')];
+      if (savedTop) { box.scrollTop = savedTop; }
+    }
+  }
+
+  /* ── URL state ──────────────────────────────────────────── */
+  // Same query-string + replaceState pattern used on the Classes/Fabricator
+  // pages - mirrors the current build into the URL so it can be bookmarked
+  // or shared, without spamming browser history on every click.
+  function syncUrl() {
+    var params = new URLSearchParams(window.location.search);
+    if (state.cls) { params.set('class', state.cls); } else { params.delete('class'); }
+    // Title/author/desc - purely descriptive, carried along so a shared
+    // link keeps them. Skipped while that field itself has focus (same
+    // reason bc-link's own value is skipped below) so a mid-typing render
+    // triggered elsewhere never stomps on what's still being typed.
+    if (state.title) { params.set('title', state.title); } else { params.delete('title'); }
+    if (state.author) { params.set('author', state.author); } else { params.delete('author'); }
+    // Only ever written to the URL once it's a real match for one of the
+    // three allowed sites (see isValidAuthorLink) - an in-progress/invalid
+    // paste stays local to the input (with its own error styling, see the
+    // input listener below) rather than going out in a shareable link.
+    if (state.authorLink && isValidAuthorLink(state.authorLink)) { params.set('authorLink', state.authorLink); } else { params.delete('authorLink'); }
+    if (state.desc) { params.set('desc', state.desc); } else { params.delete('desc'); }
+    if (state.maps.length) { params.set('maps', state.maps.join(',')); } else { params.delete('maps'); }
+    // Trim only TRAILING holes (an empty slot 5 with nothing after it
+    // doesn't need spelling out) - an internal hole (e.g. slot 3 empty,
+    // slots 4-5 still filled) is kept as a blank entry between commas so
+    // reloading the link puts each remaining card back in its own slot
+    // instead of sliding them all down to fill the gap.
+    var cardsForUrl = state.cards.slice();
+    while (cardsForUrl.length && !cardsForUrl[cardsForUrl.length - 1]) { cardsForUrl.pop(); }
+    if (cardsForUrl.length) { params.set('cards', cardsForUrl.join(',')); } else { params.delete('cards'); }
+    // Only chosen levels above 1 need spelling out - keeps the URL short
+    // for the (common) case where nobody's touched a card's level pips.
+    var lvlPairs = Object.keys(state.cardLvl).filter(function (s) {
+      return state.cardLvl[s] > 1 && state.cards.indexOf(s) !== -1;
+    }).map(function (s) { return s + ':' + state.cardLvl[s]; });
+    if (lvlPairs.length) { params.set('lvls', lvlPairs.join(',')); } else { params.delete('lvls'); }
+    // Which specific modes (Predator Hunt, Boss Rush, ...) are marked on -
+    // flat comma-joined list, mode names are already unique across every
+    // wave-length group (see MODE_WAVES) so there's no need to bucket this
+    // by group the way plan= below has to.
+    var selectedModeKeys = Object.keys(bcSelectedModes).filter(function (m) { return bcSelectedModes[m]; });
+    if (selectedModeKeys.length) { params.set('modes', selectedModeKeys.join(',')); } else { params.delete('modes'); }
+    // Perk-order-by-wave plan: "50:5,10,20;;8,15;|20:3,7" - waveKey, then
+    // that category's 4 perk columns joined with ";" (each column itself a
+    // ","-joined, ascending wave list - empty string for an untouched
+    // column), multiple categories joined with "|". Only categories with at
+    // least one marked wave are included, so picking a class/cards without
+    // ever opening the planner doesn't add anything to the URL.
+    var planParts = Object.keys(bcPerkPlan).map(function (wk) {
+      var cols = bcPerkPlan[wk] || [];
+      if (!cols.some(function (c) { return c && c.length; })) { return null; }
+      return wk + ':' + cols.map(function (c) { return (c || []).join(','); }).join(';');
+    }).filter(Boolean);
+    if (planParts.length) { params.set('plan', planParts.join('|')); } else { params.delete('plan'); }
+    // Which category's planner panel is currently open (if any), and for
+    // every category that's ever been switched to combined view or had one
+    // of its own tables/chunks expanded - bcPerkPlanCombined/bcPerkPlanOpen -
+    // so reopening a shared link (or just refreshing the page) puts the
+    // planner back exactly how it was left instead of resetting to "closed,
+    // split into chunks, nothing expanded" every time, even though the
+    // marked ranks themselves (plan=, above) already survive a reload fine.
+    if (bcActiveModeGroup) { params.set('group', bcActiveModeGroup); } else { params.delete('group'); }
+    var combinedKeys = Object.keys(bcPerkPlanCombined).filter(function (wk) { return bcPerkPlanCombined[wk]; });
+    if (combinedKeys.length) { params.set('combined', combinedKeys.join(',')); } else { params.delete('combined'); }
+    var openKeys = Object.keys(bcPerkPlanOpen).filter(function (k) { return bcPerkPlanOpen[k]; });
+    if (openKeys.length) { params.set('open', openKeys.join(',')); } else { params.delete('open'); }
+    var qs = params.toString();
+    var url = window.location.pathname + (qs ? '?' + qs : '');
+    window.history.replaceState(null, '', url);
+    // The build code box doubles as both the "share this" output and the
+    // "load one someone sent me" input (see applyCodeString below) - it
+    // holds just the query string itself (no origin/pathname) since that's
+    // all restoreFromUrl actually needs to reproduce a build, and it reads
+    // noticeably shorter to copy/paste than the full page URL. Skipped
+    // while the box itself has focus so a mid-paste edit here never gets
+    // stomped by a state change firing elsewhere (e.g. a background
+    // re-render) while the person is still typing/pasting into it.
+    if (document.activeElement !== $('bc-link')) { $('bc-link').value = qs; }
+  }
+
+  function restoreFromUrl(queryString) {
+    var params = new URLSearchParams(queryString !== undefined ? queryString : window.location.search);
+    var cls = params.get('class');
+    if (!cls || !BY_SLUG[cls]) return;
+    state.cls = cls;
+    state.title = params.get('title') || '';
+    state.author = params.get('author') || '';
+    // Same "only keep it if it's still valid" treatment as maps below - a
+    // hand-edited/stale link could carry a disallowed URL.
+    var restoredAuthorLink = params.get('authorLink') || '';
+    state.authorLink = isValidAuthorLink(restoredAuthorLink) ? restoredAuthorLink : '';
+    state.desc = params.get('desc') || '';
+    // Only valid slugs kept (a hand-edited/stale link could name a map
+    // that's since been renamed or removed).
+    state.maps = (params.get('maps') || '').split(',').filter(function (s) {
+      return s && mapSlugs.indexOf(s) !== -1;
+    });
+    $('bc-title').value = state.title;
+    $('bc-author').value = state.author;
+    $('bc-author-link').value = state.authorLink;
+    $('bc-author-link-check').checked = !!state.authorLink;
+    updateAuthorLinkUI();
+    $('bc-desc').value = state.desc;
+    updateMapTriggerUI();
+    var validSlugs = BY_SLUG[cls].cards.map(function (c) { return c.s; });
+    // Map (not filter) so a blank entry between commas - an internal hole
+    // left by a removed card, see syncUrl/toggleCard - becomes a real null
+    // placeholder that keeps every later card's own slot number lined up,
+    // instead of being dropped and sliding everything after it back a slot.
+    state.cards = (params.get('cards') || '').split(',').map(function (s) {
+      return (s && validSlugs.indexOf(s) !== -1) ? s : null;
+    });
+    while (state.cards.length && !state.cards[state.cards.length - 1]) { state.cards.pop(); }
+    state.cards = state.cards.slice(0, 5);
+    state.cardLvl = {};
+    (params.get('lvls') || '').split(',').forEach(function (pair) {
+      var parts = pair.split(':');
+      var slug = parts[0], lvl = +parts[1];
+      if (slug && validSlugs.indexOf(slug) !== -1 && lvl > 1) { state.cardLvl[slug] = lvl; }
+    });
+    bcSelectedModes = {};
+    (params.get('modes') || '').split(',').forEach(function (m) {
+      if (m && MODE_WAVES.hasOwnProperty(m)) { bcSelectedModes[m] = true; }
+    });
+    // Perk-order-by-wave plan - see syncUrl's comment for the format. Each
+    // wave number is clamped/sanitized (positive integer, capped at 60 -
+    // comfortably above the longest category's 50 waves - and each column
+    // capped at 10 entries) rather than trusted outright, since this is
+    // parsed straight out of a URL a person could hand-edit or share.
+    bcPerkPlan = {};
+    (params.get('plan') || '').split('|').forEach(function (entry) {
+      if (!entry) { return; }
+      var i = entry.indexOf(':');
+      if (i === -1) { return; }
+      var wk = entry.slice(0, i);
+      var cols = entry.slice(i + 1).split(';').map(function (s) {
+        var waves = s ? s.split(',').map(Number).filter(function (n) { return n > 0 && n <= 60 && Math.floor(n) === n; }) : [];
+        waves.sort(function (a, b) { return a - b; });
+        return waves.slice(0, 10);
+      });
+      bcPerkPlan[wk] = cols;
+    });
+    // See syncUrl's comment above for why these three exist - restores
+    // which category panel was open and how each one's table(s) were
+    // displayed, on top of the actual marked ranks (bcPerkPlan) restored
+    // just above. No validation against this class's own actual mode
+    // groups/chunk counts needed here - an unrecognized or now-stale group
+    // label or chunk key simply never matches anything at render time
+    // (renderBuild only checks bcActiveModeGroup/bcPerkPlanOpen/
+    // bcPerkPlanCombined for keys it's already generated itself from the
+    // current class), so a mismatched value here just quietly shows
+    // nothing extra rather than breaking anything.
+    bcActiveModeGroup = params.get('group') || null;
+    bcPerkPlanCombined = {};
+    (params.get('combined') || '').split(',').forEach(function (wk) {
+      if (wk) { bcPerkPlanCombined[wk] = true; }
+    });
+    bcPerkPlanOpen = {};
+    (params.get('open') || '').split(',').forEach(function (k) {
+      if (k) { bcPerkPlanOpen[k] = true; }
+    });
+  }
+
+  // Keeps #bc-sticky's text/color/visibility in sync with state.cls -
+  // called from every place that changes it (selectClass, the Clear
+  // button, once up front after restoreFromUrl(), and the
+  // IntersectionObserver below whenever #bc-class-panel scrolls in/out of
+  // view) - same idea as class.html's own sticky bar, just driven by app
+  // state instead of being fixed at render time. bcHeroOutOfView is only
+  // ever written by that observer; visibility here is the AND of "scrolled
+  // past the Class panel" and "a class is actually picked" - scrolling
+  // down before picking one shouldn't pop up a bar with nothing to show.
+  var bcHeroOutOfView = false;
+  function updateStickyBar() {
+    var cls = state.cls && BY_SLUG[state.cls];
+    var info = cls && CAT_INFO[cls.cat];
+    $('bc-sticky-cat').textContent = info ? info.name.toUpperCase() : '';
+    $('bc-sticky-name').textContent = cls ? cls.n.toUpperCase() : '';
+    $('bc-sticky').style.setProperty('--cat-color', info ? info.color : '');
+    $('bc-sticky').classList.toggle('is-visible', bcHeroOutOfView && !!cls);
+  }
+
+  /* ── Actions ────────────────────────────────────────────── */
+  // Shared by selectClass() (switching class) and the Clear button - every
+  // piece of "about this build" metadata that isn't the class/cards
+  // themselves: title/author/author link/description/maps, plus the mode
+  // badges and perk-order plan (both keyed off wave-count categories that
+  // only make sense for whichever class/cards they were set up for).
+  // Switching class used to leave all of this sitting there from whatever
+  // was picked before, describing a build that's no longer what's on
+  // screen - same reasoning as clearing cards/cardLvl on a class switch,
+  // just extended to cover the rest of the build's own state too.
+  function resetBuildMeta() {
+    state.title = '';
+    state.author = '';
+    state.authorLink = '';
+    state.desc = '';
+    state.maps = [];
+    $('bc-title').value = '';
+    $('bc-author').value = '';
+    $('bc-author-link').value = '';
+    $('bc-author-link-check').checked = false;
+    updateAuthorLinkUI();
+    $('bc-desc').value = '';
+    updateMapTriggerUI();
+    bcActiveModeGroup = null;
+    bcSelectedModes = {};
+    bcPerkPlanOpen = {};
+    bcPerkPlan = {};
+    bcPerkPlanCombined = {};
+  }
+
+  function selectClass(slug) {
+    if (state.cls === slug) return;
+    state.cls = slug;
+    state.cards = [];
+    state.cardLvl = {};
+    resetBuildMeta();
+    renderClassGrid();
+    renderCardGrid();
+    renderBuild();
+    syncUrl();
+    updateStickyBar();
+  }
+
+  function toggleCard(slug) {
+    var i = state.cards.indexOf(slug);
+    if (i !== -1) {
+      // Leave a hole (null) instead of splice()-ing the rest of the array
+      // down a slot - splice used to shift every later card into the
+      // now-open index (old slot 4 becomes 3, old 5 becomes 4, ...),
+      // freeing the LAST slot instead of the one actually being removed.
+      // Setting just this index to null keeps every other card's own slot
+      // number exactly where it was.
+      state.cards[i] = null;
+    } else {
+      var filledCount = state.cards.filter(function (s) { return s; }).length;
+      if (filledCount >= 5) { return; }
+      // Fill the lowest-numbered open slot (an existing hole from an
+      // earlier removal) before ever extending the array - keeps a new
+      // pick landing in slot 1-5 order instead of always tacking onto the
+      // end.
+      var emptyIdx = state.cards.indexOf(null);
+      if (emptyIdx !== -1) { state.cards[emptyIdx] = slug; }
+      else { state.cards.push(slug); }
+    }
+    renderCardGrid();
+    renderBuild();
+    syncUrl();
+  }
+
+  // Opens `label`'s mode list, closing whichever one (if any) was open
+  // before - or closes it back down if it was already the open one. Locked
+  // buttons never reach here at all (guarded in the click handler below,
+  // same as a disabled card tile's own guard), so no re-check needed.
+  function toggleModeGroup(label) {
+    bcActiveModeGroup = (bcActiveModeGroup === label) ? null : label;
+    renderBuild();
+    syncUrl();
+  }
+
+  // Toggles one mode badge on/off - persisted via syncUrl() (modes=) and
+  // read by Build Viewer as this build's specific gamemode(s).
+  function toggleModeBadge(mode) {
+    bcSelectedModes[mode] = !bcSelectedModes[mode];
+    renderBuild();
+    syncUrl();
+  }
+
+  // "Clear all Slots" (renderBuild's slotsHead) - empties the 5-card
+  // loadout only, leaving the picked class, perk plan, and mode badges
+  // alone. A lighter-touch reset than the page-wide "Clear" button
+  // ($('bc-clear') below), which wipes everything including the class
+  // itself.
+  function clearAllSlots() {
+    if (!state.cards.some(function (s) { return s; })) return;
+    state.cards = [];
+    renderCardGrid();
+    renderBuild();
+    syncUrl();
+  }
+
+  // Total Energy already committed to a category's perk plan (every rank
+  // marked across all 4 columns, regardless of which wave each landed on) -
+  // used by the category button's "(X)" cost suffix above. A rank's cost
+  // only depends on which position (1-10) it holds within its own column
+  // (see the bcPerkPlan comment above), so this just needs each column's
+  // own length, not which specific waves were picked.
+  function perkPlanCost(waveKey) {
+    var cols = bcPerkPlan[waveKey] || [];
+    var total = 0;
+    cols.forEach(function (col) {
+      var n = (col || []).length;
+      for (var k = 0; k < n; k++) { total += Number(String(PERK_COSTS[k]).replace(/,/g, '')); }
+    });
+    return total;
+  }
+
+  // Shows/hides the whole perk-order-by-wave table for one category - the
+  // table itself (bcPerkPlan) isn't touched, just whether it's visible.
+  function togglePerkPlanOpen(waveKey) {
+    bcPerkPlanOpen[waveKey] = !bcPerkPlanOpen[waveKey];
+    renderBuild();
+    syncUrl();
+  }
+
+  // Switches one category (> 15 waves) between its default several-10-wave-
+  // chunks display and one single combined table - purely a display choice,
+  // same as togglePerkPlanOpen above, doesn't touch bcPerkPlan itself.
+  function toggleCombineWaves(waveKey) {
+    bcPerkPlanCombined[waveKey] = !bcPerkPlanCombined[waveKey];
+    renderBuild();
+    syncUrl();
+  }
+
+  // Adds one more rank to a (wave, perk-column) cell - the + button's
+  // action. A wave can hold more than one rank (pushing the same wave value
+  // onto the column again just stacks another entry on it - see the
+  // bcPerkPlan comment above renderBuild), so this never refuses just
+  // because the wave is already filled - only the column's own 10-point cap
+  // stops it.
+  function markPerkCell(waveKey, perkIdx, wave) {
+    var plan = bcPerkPlan[waveKey] = bcPerkPlan[waveKey] || [];
+    var col = plan[perkIdx] = plan[perkIdx] || [];
+    // Each column is its own independent 10-point pool (see buildPerkTable,
+    // index.html) - no cross-column check here, a wave can be marked in
+    // more than one column at once, and this same wave can already hold
+    // ranks and still take more.
+    if (col.length >= 10) { return; }
+    col.push(wave);
+    col.sort(function (a, b) { return a - b; });
+    syncUrl();
+    renderBuild();
+  }
+
+  // Removes one rank from a (wave, perk-column) cell - the - button's
+  // action. Only ever removes a single rank FROM THIS WAVE - if this wave
+  // holds 3 ranks, one click leaves 2 there; it never touches any other
+  // wave's ranks in the same column (indexOf finds one matching entry,
+  // splice drops just that one).
+  function unmarkPerkCell(waveKey, perkIdx, wave) {
+    var plan = bcPerkPlan[waveKey];
+    var col = plan && plan[perkIdx];
+    if (!col) { return; }
+    var i = col.indexOf(wave);
+    if (i === -1) { return; } // not marked, - has nothing to do
+    col.splice(i, 1);
+    syncUrl();
+    renderBuild();
+  }
+
+  // "Clear All" (combined/single-table view) - wipes every rank for every
+  // perk in this whole category in one go.
+  function clearPerkPlan(waveKey) {
+    if (!bcPerkPlan[waveKey]) { return; }
+    delete bcPerkPlan[waveKey];
+    syncUrl();
+    renderBuild();
+  }
+
+  // "Clear waves X-Y" (split/chunked view) - wipes only the ranks that fall
+  // within one chunk's own wave range, leaving every other chunk's marks in
+  // this same category (bcPerkPlan is one continuous set of columns across
+  // all chunks) untouched. Filtering out of the middle of an already-sorted
+  // column keeps it sorted, so the position-is-rank rule above still holds
+  // for whatever's left afterward.
+  // Whether at least one rank is marked anywhere within [waveStart,
+  // waveEnd] for this category - same range clearPerkRange itself would
+  // wipe, checked ahead of time so a chunk's own "Clear" button (see
+  // renderBuild's chunk-head builder) can tell whether it would actually
+  // do anything before the user clicks it.
+  function chunkHasMarkedRanks(waveKey, waveStart, waveEnd) {
+    var plan = bcPerkPlan[waveKey];
+    if (!plan) { return false; }
+    for (var pi = 0; pi < plan.length; pi++) {
+      var col = plan[pi];
+      if (!col) { continue; }
+      for (var k = 0; k < col.length; k++) {
+        if (col[k] >= waveStart && col[k] <= waveEnd) { return true; }
+      }
+    }
+    return false;
+  }
+
+  function clearPerkRange(waveKey, waveStart, waveEnd) {
+    var plan = bcPerkPlan[waveKey];
+    if (!plan) { return; }
+    var changed = false;
+    for (var pi = 0; pi < plan.length; pi++) {
+      var col = plan[pi];
+      if (!col || !col.length) { continue; }
+      var filtered = col.filter(function (w) { return w < waveStart || w > waveEnd; });
+      if (filtered.length !== col.length) { plan[pi] = filtered; changed = true; }
+    }
+    if (!changed) { return; }
+    syncUrl();
+    renderBuild();
+  }
+
+  document.addEventListener('click', function (e) {
+    var classBtn = e.target.closest('.bc-class-chip');
+    if (classBtn) { selectClass(classBtn.getAttribute('data-class')); return; }
+    var combineToggle = e.target.closest('#bc-build-grid .bc-perk-plan__combine-toggle');
+    if (combineToggle) { toggleCombineWaves(combineToggle.getAttribute('data-combine-waves')); return; }
+    var clearAllBtn = e.target.closest('#bc-build-grid .bc-perk-plan__clear-all');
+    if (clearAllBtn) {
+      if (!clearAllBtn.disabled) { clearPerkPlan(clearAllBtn.getAttribute('data-waves')); }
+      return;
+    }
+    var clearRangeBtn = e.target.closest('#bc-build-grid .bc-perk-plan__clear-range');
+    if (clearRangeBtn) {
+      if (!clearRangeBtn.disabled) {
+        clearPerkRange(clearRangeBtn.getAttribute('data-waves'), +clearRangeBtn.getAttribute('data-wave-start'), +clearRangeBtn.getAttribute('data-wave-end'));
+      }
+      return;
+    }
+    var perkToggle = e.target.closest('#bc-build-grid .bc-perk-plan__toggle');
+    if (perkToggle) { togglePerkPlanOpen(perkToggle.getAttribute('data-waves')); return; }
+    var perkBtn = e.target.closest('#bc-build-grid .bc-perk-cell__btn');
+    if (perkBtn) {
+      if (!perkBtn.classList.contains('bc-perk-cell__btn--disabled')) {
+        var waveKeyArg = perkBtn.getAttribute('data-waves'), perkIdxArg = +perkBtn.getAttribute('data-perk'), waveArg = +perkBtn.getAttribute('data-wave');
+        if (perkBtn.getAttribute('data-perk-action') === 'plus') {
+          markPerkCell(waveKeyArg, perkIdxArg, waveArg);
+        } else {
+          unmarkPerkCell(waveKeyArg, perkIdxArg, waveArg);
+        }
+      }
+      return;
+    }
+    var modeBadge = e.target.closest('#bc-build-grid .bc-mode-badge');
+    if (modeBadge) { toggleModeBadge(modeBadge.getAttribute('data-mode')); return; }
+    var slotsClearBtn = e.target.closest('#bc-build-grid [data-slots-clear]');
+    if (slotsClearBtn) {
+      if (!slotsClearBtn.disabled) { clearAllSlots(); }
+      return;
+    }
+    var modeBtn = e.target.closest('#bc-build-grid .bc-mode-group-btn');
+    if (modeBtn) { toggleModeGroup(modeBtn.getAttribute('data-group')); return; }
+    // Checked before anything else keyed off .bc-slot-card so a level-cycle
+    // click doesn't also register as clicking the tile itself - though
+    // nothing currently listens for a plain click on .bc-slot-card, this
+    // keeps the same defensive ordering the pip-vs-tile check below uses.
+    var slotLvlBadge = e.target.closest('#bc-build-grid .bc-slot-card__lvl--cyclable');
+    if (slotLvlBadge) { cycleSlotCardLevel(slotLvlBadge); return; }
+    // Checked before the card-tile branch below since a level pip lives
+    // INSIDE a .bc-card-tile - without this, clicking a pip would also
+    // bubble into the tile's own toggleCard() and add/remove it from the
+    // loadout at the same time as switching its level, which isn't what a
+    // level click should do.
+    var pip = e.target.closest('#bc-card-grid .class-card__level-pip--btn');
+    if (pip) { setCardLevel(pip); return; }
+    var cardBtn = e.target.closest('#bc-card-grid .bc-card-tile');
+    if (cardBtn && !cardBtn.classList.contains('bc-card-tile--disabled')) { toggleCard(cardBtn.getAttribute('data-card')); return; }
+  });
+
+  // .bc-card-tile is a div (role="button"), not a real <button> (see
+  // renderCardGrid's comment on why), so it needs its own Enter/Space
+  // activation - a real <button> gets this for free. Bails out if the key
+  // actually landed on a nested real <button> (a level pip) instead of the
+  // tile itself - those already fire their own native click (caught by the
+  // pip branch above), so acting here too would double-fire: switch the
+  // level AND toggle the card's selection from the same keypress.
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+    if (e.target.closest('button')) return;
+    var slotLvlBadge = e.target.closest('#bc-build-grid .bc-slot-card__lvl--cyclable');
+    if (slotLvlBadge) { e.preventDefault(); cycleSlotCardLevel(slotLvlBadge); return; }
+    var cardBtn = e.target.closest('#bc-card-grid .bc-card-tile');
+    if (cardBtn && !cardBtn.classList.contains('bc-card-tile--disabled')) {
+      e.preventDefault();
+      toggleCard(cardBtn.getAttribute('data-card'));
+    }
+  });
+
+  // ── Slots row: drag-and-drop reordering ─────────────────────────────
+  // Lets a filled slot tile be dragged onto any other slot (filled or
+  // empty) to change which of the 5 positions it's in, without having to
+  // remove + re-add cards to shuffle them into a different order. Always
+  // SWAPS the two indices in state.cards rather than treating "dropped on
+  // an empty slot" as a special case - swapping a card with a null entry
+  // naturally just moves it there and leaves its old slot empty, so one
+  // code path handles both "swap two cards" and "move a card into a gap".
+  //
+  // Listeners are delegated onto document (like every other handler in
+  // this file) rather than attached to the tiles themselves, since
+  // renderBuild() replaces #bc-build-grid's entire innerHTML on every
+  // change - any listener bound directly to a tile would be thrown away
+  // the next time a card's picked, leveled, or moved.
+  var bcDragSrcIndex = null;
+
+  document.addEventListener('dragstart', function (e) {
+    var tile = e.target.closest('#bc-build-grid .bc-slot-card[draggable="true"]');
+    if (!tile) return;
+    bcDragSrcIndex = +tile.getAttribute('data-slot-index');
+    e.dataTransfer.effectAllowed = 'move';
+    // Firefox requires data actually be set via setData for a drag to
+    // start at all - the index is also kept in bcDragSrcIndex above since
+    // dataTransfer.getData is only readable again on the 'drop' event
+    // itself, not during dragover.
+    try { e.dataTransfer.setData('text/plain', String(bcDragSrcIndex)); } catch (err) {}
+    // Without this, the browser falls back to its default drag image - a
+    // raw rectangular screenshot of the whole tile, ignoring its own
+    // rounded corners/border entirely, which looked like a broken/torn
+    // border wherever it overlapped another tile mid-drag. The card's own
+    // <img> is already a clean plain rectangle with nothing else riding
+    // along on it, so using just that as the drag image avoids the issue
+    // rather than trying to patch the default one.
+    var art = tile.querySelector('.class-card__img-wrap img');
+    if (art) { e.dataTransfer.setDragImage(art, art.clientWidth / 2, art.clientHeight / 2); }
+    tile.classList.add('bc-slot-card--dragging');
+    // A native drag suppresses the mouseleave/blur that would otherwise
+    // hide this tile's .xref-card-preview hover popup, so it can get
+    // stuck open (still floating over the category buttons below) for as
+    // long as the drag lasts. body.bc-dragging-active (home.scss)
+    // force-hides every slot preview while this is set - removed in
+    // dragend below, which fires no matter how the drag ends.
+    document.body.classList.add('bc-dragging-active');
+  });
+
+  document.addEventListener('dragover', function (e) {
+    var tile = e.target.closest('#bc-build-grid .bc-slot-card');
+    if (!tile || bcDragSrcIndex === null) return;
+    // Without this, the browser's default is to disallow dropping here at
+    // all (the 'drop' event never fires and the cursor shows a "no" icon).
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (+tile.getAttribute('data-slot-index') !== bcDragSrcIndex) {
+      tile.classList.add('bc-slot-card--drag-over');
+    }
+  });
+
+  document.addEventListener('dragleave', function (e) {
+    var tile = e.target.closest('#bc-build-grid .bc-slot-card');
+    if (tile) { tile.classList.remove('bc-slot-card--drag-over'); }
+  });
+
+  document.addEventListener('drop', function (e) {
+    var tile = e.target.closest('#bc-build-grid .bc-slot-card');
+    if (!tile || bcDragSrcIndex === null) return;
+    e.preventDefault();
+    tile.classList.remove('bc-slot-card--drag-over');
+    var targetIndex = +tile.getAttribute('data-slot-index');
+    if (targetIndex !== bcDragSrcIndex) {
+      var tmp = state.cards[targetIndex];
+      state.cards[targetIndex] = state.cards[bcDragSrcIndex];
+      state.cards[bcDragSrcIndex] = tmp;
+      // renderBuild() alone only refreshes the Slots row itself - the
+      // Cards pool panel on the left has its own independent copy of each
+      // card's "Slot N" badge/border color (renderCardGrid, same
+      // slotIdx-from-state.cards lookup toggleCard already uses), which
+      // needs its own re-render too or it keeps showing the pre-drag
+      // slot numbers even though the Slots row already moved on.
+      renderCardGrid();
+      renderBuild();
+      syncUrl();
+    }
+    // Cleaned up here rather than left for the dragend handler below to
+    // catch - a successful drop that actually swapped two cards just
+    // called renderBuild() above, which replaces #bc-build-grid's entire
+    // innerHTML and destroys the original dragged element in the process.
+    // The browser still fires a real 'dragend' on that element afterward,
+    // but a detached node's events never bubble up to this delegated
+    // document listener, so bc-dragging-active would otherwise get stuck
+    // on <body> forever (hiding every slot's hover preview site-wide for
+    // the rest of the session). dragend's own cleanup below still matters
+    // as a fallback for a drag that's cancelled instead of dropped (Esc,
+    // dropped outside any valid target) - drop never fires there at all,
+    // so this line never runs for that case.
+    document.body.classList.remove('bc-dragging-active');
+    bcDragSrcIndex = null;
+  });
+
+  // Fires on the dragged element whether the drag ended in a drop or was
+  // cancelled (dropped outside any valid target, Esc, etc.) - without
+  // this, cancelling a drag by dropping it somewhere invalid could leave
+  // bcDragSrcIndex set and the dragging tile's own dim/opacity style
+  // stuck on from bc-slot-card--dragging (that class only otherwise gets
+  // removed by the next full renderBuild(), which a cancelled drag never
+  // triggers).
+  document.addEventListener('dragend', function (e) {
+    var tile = e.target.closest('#bc-build-grid .bc-slot-card');
+    if (tile) { tile.classList.remove('bc-slot-card--dragging'); }
+    document.querySelectorAll('#bc-build-grid .bc-slot-card--drag-over').forEach(function (el) {
+      el.classList.remove('bc-slot-card--drag-over');
+    });
+    document.body.classList.remove('bc-dragging-active');
+    bcDragSrcIndex = null;
+  });
+
+  /* ── Class picker: search + collapse-to-first-row ──────────
+     Same pattern as the Map Calibrator's Map picker (tools/map-calibrator):
+     each category column collapses to just its first row by default (here
+     that's just its top class, since .bc-class-list is a plain vertical
+     stack rather than a wrapping grid), with a single "Show all" toggle
+     that expands every column together. Searching always shows every
+     match regardless of collapse state, same as the Map picker. */
+  var classCols = Array.prototype.slice.call(document.querySelectorAll('.bc-class-col'));
+  var classSearch = $('bc-class-search');
+  var classToggle = $('bc-class-toggle');
+  var classesAllExpanded = false;
+
+  // Uses el.style.display rather than the `hidden` attribute to hide chips -
+  // .bc-class-chip declares its own `display: flex` in CSS, which (same
+  // specificity, later in the cascade than the browser's [hidden]{display:
+  // none} UA rule) wins and leaves the chip visible even while "hidden" is
+  // set. An inline style always beats a class rule, so it actually hides.
+  function computeClassFirstRow(col) {
+    var items = Array.prototype.slice.call(col.querySelectorAll('.bc-class-chip'));
+    if (!items.length) return;
+    var prevDisplay = items.map(function (el) { return el.style.display; });
+    items.forEach(function (el) { el.style.display = ''; });
+    var firstTop = items[0].offsetTop;
+    items.forEach(function (el) {
+      el.dataset.firstRow = (Math.abs(el.offsetTop - firstTop) < 4) ? '1' : '0';
+    });
+    items.forEach(function (el, i) { el.style.display = prevDisplay[i]; });
+  }
+
+  function updateClassColDisplay(col) {
+    var items = Array.prototype.slice.call(col.querySelectorAll('.bc-class-chip'));
+    var q = classSearch.value.trim().toLowerCase();
+    var searching = !!q;
+    var hasOverflow = false;
+    var anyVisible = false;
+
+    items.forEach(function (el) {
+      var matches = !searching || el.getAttribute('data-name').indexOf(q) !== -1;
+      var visible = searching ? matches : (classesAllExpanded || el.dataset.firstRow === '1');
+      if (!searching && el.dataset.firstRow !== '1') hasOverflow = true;
+      el.style.display = visible ? '' : 'none';
+      if (visible) anyVisible = true;
+    });
+
+    // A search with no matches in this category hides the whole column
+    // (header included) rather than leaving an empty card behind - same
+    // .bc-class-grid > .wr-cardgrid__col display:flex override applies here
+    // as it does to the chips above, so this uses style.display too.
+    col.style.display = (searching && !anyVisible) ? 'none' : '';
+
+    // This column's own fade cue - only on while collapsed AND this
+    // specific column actually has something hidden below the fold (a
+    // short category with nothing to collapse never shows one), and never
+    // while searching. No display override on .bc-class-col__fade itself,
+    // so the plain `hidden` attribute works fine here (unlike the chips/
+    // column above).
+    var fade = col.querySelector('.bc-class-col__fade');
+    if (fade) fade.hidden = searching || classesAllExpanded || !hasOverflow;
+
+    return hasOverflow;
+  }
+
+  function refreshClassCols() {
+    var q = classSearch.value.trim().toLowerCase();
+    var searching = !!q;
+    var totalCount = 0;
+    var anyOverflow = false;
+    classCols.forEach(function (col) {
+      totalCount += col.querySelectorAll('.bc-class-chip').length;
+      if (updateClassColDisplay(col)) anyOverflow = true;
+    });
+
+    if (classToggle) {
+      classToggle.hidden = searching || !anyOverflow;
+      classToggle.setAttribute('aria-expanded', classesAllExpanded ? 'true' : 'false');
+      classToggle.innerHTML = classesAllExpanded ? 'Show less &#9652;' : 'Show all ' + totalCount + ' classes &#9662;';
+    }
+  }
+
+  classCols.forEach(computeClassFirstRow);
+  refreshClassCols();
+
+  if (classToggle) {
+    classToggle.addEventListener('click', function () {
+      classesAllExpanded = !classesAllExpanded;
+      refreshClassCols();
+    });
+  }
+
+  if (classSearch) {
+    classSearch.addEventListener('input', refreshClassCols);
+  }
+
+  var cardSearch = $('bc-card-search');
+  if (cardSearch) {
+    cardSearch.addEventListener('input', filterCards);
+  }
+
+  var classResizeTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(classResizeTimer);
+    classResizeTimer = setTimeout(function () {
+      classCols.forEach(computeClassFirstRow);
+      refreshClassCols();
+    }, 150);
+  });
+
+  $('bc-copy-link').addEventListener('click', function () {
+    var input = $('bc-link');
+    input.select();
+    if (navigator.clipboard) { navigator.clipboard.writeText(input.value); }
+    else { document.execCommand('copy'); }
+  });
+
+  // Loads whatever build code is currently sitting in the box - accepts
+  // either the bare code syncUrl itself writes in there (just the query
+  // string, no leading "?") or a full URL someone pasted straight from
+  // their address bar (anything up to and including the last "?" is
+  // stripped off first). Returns false without touching any state at all
+  // if what's left doesn't even have a recognized class in it, so a bad
+  // paste can never half-apply.
+  function applyCodeString(code) {
+    code = String(code || '').trim();
+    if (!code) { return false; }
+    var qIndex = code.lastIndexOf('?');
+    var qs = qIndex !== -1 ? code.slice(qIndex + 1) : code;
+    if (qs.charAt(0) === '?') { qs = qs.slice(1); }
+    var params = new URLSearchParams(qs);
+    var cls = params.get('class');
+    if (!cls || !BY_SLUG[cls]) { return false; }
+    restoreFromUrl(qs);
+    window.history.replaceState(null, '', window.location.pathname + '?' + qs);
+    renderClassGrid();
+    renderCardGrid();
+    renderBuild();
+    syncUrl();
+    updateStickyBar();
+    return true;
+  }
+
+  // Change (not input) - fires once after the paste/edit is done (on blur,
+  // or via the Enter-triggers-blur handler right below), not on every
+  // keystroke while someone might still be mid-paste. A code that fails to
+  // parse flashes the box red for a moment and puts the current build's own
+  // code back, rather than leaving whatever bad text was typed/pasted
+  // sitting there looking like it might have worked.
+  var bcLinkInput = $('bc-link');
+  bcLinkInput.addEventListener('change', function () {
+    if (!applyCodeString(bcLinkInput.value)) {
+      bcLinkInput.classList.add('wr-input--invalid');
+      setTimeout(function () { bcLinkInput.classList.remove('wr-input--invalid'); }, 900);
+      syncUrl();
+    }
+  });
+  bcLinkInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { bcLinkInput.blur(); }
+  });
+
+  $('bc-clear').addEventListener('click', function () {
+    state.cls = null;
+    state.cards = [];
+    state.cardLvl = {};
+    resetBuildMeta();
+    renderClassGrid();
+    renderCardGrid();
+    renderBuild();
+    syncUrl();
+    updateStickyBar();
+  });
+
+  $('bc-title').addEventListener('input', function () { state.title = this.value; syncUrl(); });
+  $('bc-author').addEventListener('input', function () { state.author = this.value; syncUrl(); });
+  $('bc-desc').addEventListener('input', function () { state.desc = this.value; syncUrl(); });
+
+  /* ── Author link - off by default, revealed by its own "Link?" checkbox,
+     restricted to a real profile URL from one of three sites (see
+     AUTHOR_LINK_PATTERNS/isValidAuthorLink above the state declaration). */
+  var bcAuthorLinkCheck = $('bc-author-link-check');
+  var bcAuthorLinkWrap = $('bc-author-link-wrap');
+  var bcAuthorLinkInput = $('bc-author-link');
+  var bcAuthorLinkHint = $('bc-author-link-hint');
+
+  // Shows/hides the link input itself (the checkbox's own job) and, while
+  // it's shown, flags whatever's currently typed as valid/invalid - called
+  // after every change (typing, checkbox toggle, restoreFromUrl, Clear) so
+  // the input's border/hint always matches state.authorLink's real state.
+  function updateAuthorLinkUI() {
+    bcAuthorLinkWrap.hidden = !bcAuthorLinkCheck.checked;
+    if (!bcAuthorLinkCheck.checked) {
+      bcAuthorLinkInput.classList.remove('wr-input--invalid');
+      return;
+    }
+    var val = bcAuthorLinkInput.value.trim();
+    var invalid = val.length > 0 && !isValidAuthorLink(val);
+    bcAuthorLinkInput.classList.toggle('wr-input--invalid', invalid);
+    bcAuthorLinkHint.textContent = invalid
+      ? 'Not a recognized link - only a YouTube channel, Steam profile, or Microsoft/Xbox profile link is allowed.'
+      : 'Only a YouTube channel, Steam profile, or Microsoft/Xbox profile link is allowed.';
+  }
+
+  bcAuthorLinkCheck.addEventListener('change', function () {
+    if (!this.checked) {
+      // Unchecking drops whatever was typed too - re-checking starts blank
+      // rather than silently keeping a hidden value around that could
+      // still be invalid from before.
+      bcAuthorLinkInput.value = '';
+      state.authorLink = '';
+    }
+    updateAuthorLinkUI();
+    if (this.checked) { bcAuthorLinkInput.focus(); }
+    syncUrl();
+  });
+  bcAuthorLinkInput.addEventListener('input', function () {
+    // Only ever written to state once it's actually valid - an in-progress
+    // paste just shows as invalid locally (see updateAuthorLinkUI) instead
+    // of briefly going out in the URL/build code as something unusable.
+    state.authorLink = isValidAuthorLink(this.value.trim()) ? this.value.trim() : '';
+    updateAuthorLinkUI();
+    syncUrl();
+  });
+
+  /* ── Map picker - small popover, search + thumbnail grid ──────────── */
+  var bcMapTrigger = $('bc-map-trigger');
+  var bcMapPanel = $('bc-map-panel');
+  var bcMapThumb = $('bc-map-thumb');
+  var bcMapTriggerLabel = $('bc-map-trigger-label');
+  var bcMapItems = Array.prototype.slice.call(document.querySelectorAll('.bc-map-picker__item'));
+  var bcMapItemAll = $('bc-map-item-all');
+  var mapSlugs = bcMapItems.map(function (el) { return el.getAttribute('data-slug'); }).filter(Boolean);
+
+  // Reflects state.maps onto the trigger button - called after any change,
+  // including restoreFromUrl(), never mutates state itself. Multi-select:
+  // no maps picked -> "All Maps", one picked -> that map's thumb+name, more
+  // than one -> a count (a single thumbnail can't represent a set).
+  function updateMapTriggerUI() {
+    if (state.maps.length === 0) {
+      bcMapThumb.hidden = true;
+      bcMapTriggerLabel.textContent = 'All Maps';
+    } else if (state.maps.length === 1) {
+      var item = bcMapItems.filter(function (el) { return el.getAttribute('data-slug') === state.maps[0]; })[0];
+      var thumbImg = item ? item.querySelector('.bc-map-picker__item-thumb') : null;
+      if (item && thumbImg) {
+        bcMapThumb.src = thumbImg.src;
+        bcMapThumb.hidden = false;
+        bcMapTriggerLabel.textContent = item.querySelector('span').textContent;
+      } else {
+        bcMapThumb.hidden = true;
+        bcMapTriggerLabel.textContent = 'All Maps';
+      }
+    } else {
+      bcMapThumb.hidden = true;
+      bcMapTriggerLabel.textContent = state.maps.length + ' maps selected';
+    }
+    bcMapItems.forEach(function (el) {
+      var slug = el.getAttribute('data-slug');
+      el.classList.toggle('wr-chip--selected', state.maps.indexOf(slug) !== -1);
+    });
+    if (bcMapItemAll) { bcMapItemAll.classList.toggle('wr-chip--selected', state.maps.length === 0); }
+  }
+
+  function closeMapPanel() {
+    bcMapPanel.hidden = true;
+    bcMapTrigger.setAttribute('aria-expanded', 'false');
+    hideMapPreview();
+  }
+
+  // Shared hover-preview image (see .bc-map-picker__preview-big in
+  // home.scss for why this is one shared `position: fixed` element instead
+  // of one absolutely-positioned popup per item). Positioned via
+  // getBoundingClientRect against the hovered/focused item itself, so it
+  // tracks correctly no matter where that item's scrolled to inside the
+  // list.
+  var bcMapPreviewBig = $('bc-map-preview-big');
+  function showMapPreview(el) {
+    var thumbImg = el.querySelector('.bc-map-picker__item-thumb');
+    // The small thumb's own onerror (see the Liquid loop above) sets
+    // display: none on itself once its image 404s - checking that here
+    // means a map with no thumbnail file just gets no preview at all,
+    // instead of a big broken-image icon. The inline onerror on
+    // #bc-map-preview-big itself (below) is a second safety net in case
+    // the small thumb hasn't finished loading/erroring yet when hovered.
+    if (!thumbImg || !thumbImg.src || thumbImg.style.display === 'none') return;
+    var r = el.getBoundingClientRect();
+    var previewW = 260;
+    var previewH = previewW * 10 / 16; // matches the CSS aspect-ratio: 16/10
+    bcMapPreviewBig.src = thumbImg.src;
+    bcMapPreviewBig.hidden = false;
+    var left = r.left;
+    if (left + previewW > window.innerWidth - 8) { left = window.innerWidth - previewW - 8; }
+    if (left < 8) { left = 8; }
+    var top = r.top - previewH - 8;
+    if (top < 8) { top = r.bottom + 8; } // not enough room above -> show below instead
+    bcMapPreviewBig.style.left = left + 'px';
+    bcMapPreviewBig.style.top = top + 'px';
+  }
+  function hideMapPreview() { bcMapPreviewBig.hidden = true; }
+
+  bcMapTrigger.addEventListener('click', function () {
+    var open = bcMapPanel.hidden;
+    bcMapPanel.hidden = !open;
+    bcMapTrigger.setAttribute('aria-expanded', String(open));
+    if (open) { $('bc-map-search').value = ''; bcMapItems.forEach(function (el) { el.hidden = false; }); $('bc-map-search').focus(); }
+  });
+  document.addEventListener('click', function (e) {
+    if (!bcMapPanel.hidden && !$('bc-map-picker').contains(e.target)) { closeMapPanel(); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (!bcMapPanel.hidden && e.key === 'Escape') { closeMapPanel(); bcMapTrigger.focus(); }
+  });
+  $('bc-map-search').addEventListener('input', function () {
+    var q = this.value.trim().toLowerCase();
+    bcMapItems.forEach(function (el) {
+      el.hidden = q ? el.getAttribute('data-name').indexOf(q) === -1 : false;
+    });
+  });
+  bcMapItems.forEach(function (el) {
+    el.addEventListener('click', function () {
+      var slug = el.getAttribute('data-slug') || '';
+      if (!slug) {
+        // "All Maps" - clears every map instead of toggling itself in/out.
+        state.maps = [];
+      } else {
+        var idx = state.maps.indexOf(slug);
+        if (idx === -1) { state.maps.push(slug); } else { state.maps.splice(idx, 1); }
+      }
+      updateMapTriggerUI();
+      syncUrl();
+      // Multi-select: picking a map doesn't close the popover, so more can
+      // be picked right after. Only "All Maps" (a full reset) closes it.
+      if (!slug) { closeMapPanel(); }
+    });
+    el.addEventListener('mouseenter', function () { showMapPreview(el); });
+    el.addEventListener('mouseleave', hideMapPreview);
+    el.addEventListener('focus', function () { showMapPreview(el); });
+    el.addEventListener('blur', hideMapPreview);
+  });
+  // The preview's position is computed once on hover/focus - if the list
+  // scrolls underneath a still-hovered item, that position goes stale, so
+  // just hide it rather than track scroll continuously.
+  $('bc-map-list').addEventListener('scroll', hideMapPreview);
+
+  restoreFromUrl();
+  renderClassGrid();
+  renderCardGrid();
+  renderBuild();
+  syncUrl();
+  updateStickyBar();
+
+  // ── Perk-header tooltip positioning (perk-order-by-wave planner) ──────
+  // .xref-tip's default CSS (position: absolute, anchored under its
+  // trigger) gets clipped by .bc-perk-plan__scroll's overflow: auto -
+  // footer.html already has a fix for this exact issue for the Fabricator's
+  // .settings-table__scroll tables (#page-table-tip-fix, computes a
+  // position: fixed placement by hand on hover/focus instead), but that
+  // script queries the DOM once on page load - useless here since this
+  // table is torn down and rebuilt by renderBuild() on every click. This is
+  // the same fix, just event-delegated so it keeps working no matter how
+  // many times the table underneath gets re-rendered.
+  document.addEventListener('mouseover', function (e) {
+    var trigger = e.target.closest('#bc-build-grid .bc-perk-head');
+    if (trigger) { positionPerkTip(trigger); }
+  });
+  document.addEventListener('focusin', function (e) {
+    var trigger = e.target.closest('#bc-build-grid .bc-perk-head');
+    if (trigger) { positionPerkTip(trigger); }
+  });
+  function positionPerkTip(trigger) {
+    var tip = trigger.querySelector('.xref-tip');
+    if (!tip) { return; }
+    var r = trigger.getBoundingClientRect();
+    tip.style.position = 'fixed';
+    tip.style.top = (r.bottom + 10) + 'px';
+    tip.style.left = (r.left + r.width / 2) + 'px';
+    tip.style.transform = 'translate(-50%, 0)';
+    // Clamp horizontally so a trigger near the left/right edge of this
+    // narrow sidebar table doesn't push the tooltip off-screen.
+    var tr = tip.getBoundingClientRect();
+    var margin = 8;
+    var shift = 0;
+    if (tr.left < margin) { shift = margin - tr.left; }
+    else if (tr.right > window.innerWidth - margin) { shift = (window.innerWidth - margin) - tr.right; }
+    if (shift) { tip.style.left = (r.left + r.width / 2 + shift) + 'px'; }
+  }
+
+  // ── Sticky class bar show/hide ────────────────────────────
+  // Same pattern _layouts/class.html uses for its own sticky bar: track
+  // .site-header's real height in a CSS custom property (so the bar can
+  // sit flush underneath it even if the header's height ever changes -
+  // e.g. wrapping nav on a narrow viewport) and toggle the bar's
+  // .is-visible class via IntersectionObserver once its reference element
+  // (#bc-class-panel here, .class-page__hero there) scrolls out of view.
+  // Also requires a class actually be selected - scrolling down before
+  // picking one shouldn't pop up a bar with nothing to show.
+  (function () {
+    var header = document.querySelector('.site-header');
+    function setHeaderH() {
+      if (header) { document.documentElement.style.setProperty('--header-h', header.offsetHeight + 'px'); }
+    }
+    if (header) { setHeaderH(); window.addEventListener('resize', setHeaderH); }
+
+    var nav = document.querySelector('.site-nav');
+    if (nav) { nav.addEventListener('transitionend', setHeaderH); }
+
+    var hero = $('bc-class-panel');
+    if (hero && 'IntersectionObserver' in window) {
+      new IntersectionObserver(function (entries) {
+        bcHeroOutOfView = !entries[0].isIntersecting;
+        updateStickyBar();
+      }).observe(hero);
+    }
+
+    var topLink = $('bc-sticky-name');
+    if (topLink) {
+      topLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+  })();
+})();
+</script>

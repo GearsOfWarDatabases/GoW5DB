@@ -1,0 +1,160 @@
+# ── Maps ───────────────────────────────────────────────────────────────────
+# Grouped exactly as in-game. One map per entry, with the game it originally
+# debuted in (shown as a badge on the map card and in the expanded view).
+# Map images: drop TWO files per map into images/maps/, named from the
+# slugified map name (e.g. "Blood Drive" -> blood-drive):
+#   images/maps/<slug>.jpg         - big image, shown in the click-to-expand modal
+#   images/maps/<slug>-small.jpg   - small image, shown in the grid thumbnail
+#   images/maps/<slug>-layout.jpg  - optional named top-down callout diagram,
+#                                    toggled in the modal via "Show In-Game Map"
+#                                    (only Icebound, River, Blood Drive, Vasgar,
+#                                    Foundation, District, Allfathers Arena,
+#                                    Abyss, Asylum, Command, Harbor, Gridlock,
+#                                    and Clocktower have one captured so far)
+# Only maps in the "PVP and PVE (Horde)" group are clickable to open the big
+# image; "PVE (Escape)" cards render as static thumbnails. Missing images
+# render nothing (no placeholder) so gaps are easy to spot at a glance - see
+# maps/index.html's onerror.
+- name: PVP and PVE (Horde)
+  maps:
+    - name: Abyss
+      game: Gears 5
+    - name: Allfathers Arena
+      game: Gears 5
+    - name: Asylum
+      game: Gears 5
+    - name: Atrium
+      game: Gears 5
+    - name: Blood Drive
+      game: Gears of War 2
+    - name: Bunker
+      game: Gears 5
+    - name: Canals
+      game: Gears of War
+    - name: Checkout
+      game: Gears of War 3
+    - name: Clocktower
+      game: Gears of War
+    - name: Command
+      game: Gears 5
+    - name: Dam
+      game: Gears of War 4
+    - name: Dawn
+      game: Gears of War 4
+    - name: District
+      game: Gears 5
+    - name: Ephyra
+      game: Gears 5
+    - name: Exhibit
+      game: Gears 5
+    - name: Forge
+      game: Gears of War 4
+    - name: Foundation
+      game: Gears of War 4
+    - name: Gridlock
+      game: Gears of War
+    - name: Harbor
+      game: Gears of War 4
+    - name: Icebound
+      game: Gears 5
+    - name: Lift
+      game: Gears of War 4
+    - name: Mercy
+      game: Gears of War 3
+    - name: Nexus
+      game: Gears 5
+    - name: Overload
+      game: Gears 5
+    - name: Pahanu
+      game: Gears 5
+    - name: Rail Line
+      game: Gears 5
+    - name: Reclaimed
+      game: Gears of War 4
+    - name: Reactor
+      game: Gears 5
+    - name: Regency
+      game: Gears 5
+    - name: Ritual
+      game: Gears 5
+    - name: River
+      game: Gears of War 2
+    - name: Speyer
+      game: Gears of War 4
+    - name: Tomb
+      game: Gears 5
+    - name: Training Grounds
+      game: Gears 5
+    - name: Turbine
+      game: Gears 5
+    - name: Vasgar
+      game: Gears 5
+    - name: Village
+      game: Gears 5
+
+- name: PVE (Escape)
+  maps:
+    - name: Forever
+      game: Gears 5
+    - name: Ice Queen
+      game: Gears 5
+    - name: Last Stand
+      game: Gears 5
+    - name: Lethal Engagements
+      game: Gears 5
+    - name: Melee Brawl
+      game: Gears 5
+    - name: The Ambush
+      game: Gears 5
+    - name: The Barracks
+      game: Gears 5
+    - name: The Blight
+      game: Gears 5
+    - name: The Choke
+      game: Gears 5
+    - name: The Clock
+      game: Gears 5
+    - name: The Corruption
+      game: Gears 5
+    - name: The Descent
+      game: Gears 5
+    - name: The Detour
+      game: Gears 5
+    - name: The End
+      game: Gears 5
+    - name: The Gatekeepers
+      game: Gears 5
+    - name: The Gauntlet
+      game: Gears 5
+    - name: The Hive
+      game: Gears 5
+    - name: The Hive - Past Hive
+      game: Gears 5
+    - name: The Hunters
+      game: Gears 5
+    - name: The Labyrinth
+      game: Gears 5
+    - name: The Line
+      game: Gears 5
+    - name: The Link
+      game: Gears 5
+    - name: The Malfunction
+      game: Gears 5
+    - name: The Mines
+      game: Gears 5
+    - name: The Mist
+      game: Gears 5
+    - name: The Onslaught
+      game: Gears 5
+    - name: The Split
+      game: Gears 5
+    - name: The Surge
+      game: Gears 5
+    - name: The Trap
+      game: Gears 5
+    - name: The Wanderer
+      game: Gears 5
+    - name: The Warren
+      game: Gears 5
+    - name: Venom Run
+      game: Gears 5

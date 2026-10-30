@@ -1,0 +1,137 @@
+# ── Map Dot Data ──────────────────────────────────────────────────────────
+# Calibrated marker positions overlaid on a map's minimap/easter-egg image
+# in the site's map modal and edited via the Map Creator tool
+# (/tools/map-calibrator/).
+#
+# Keyed by map slug (slugified map name, e.g. "Blood Drive" -> blood-drive).
+# Each map can have up to four independent point sets, all calibrated the
+# same way in Map Creator (pick the map, pick one of these as the
+# "Image / point set" mode, place/drag/orient points same as any other):
+#   easter_egg - rendered as the clickable dots on the "Easter Egg" view in
+#                the maps page modal (see EASTER_EGG_DOTS/renderDots() in
+#                maps/index.html, which reads this file directly at build
+#                time via `site.data.map_dots`).
+#   guides     - reserved for a future strategy-guide overlay (fortification
+#                spots, sightlines, camp locations, etc.) - not rendered
+#                anywhere on the live site yet, but already calibratable in
+#                the tool so guide content can be authored ahead of time.
+#   pvp        - reserved for Versus-specific markers on the plain in-game
+#                minimap (weapon spawns, sightlines, etc.) - like `guides`,
+#                calibratable now but not rendered on the live site yet.
+#   pve        - same idea as `pvp`, for Horde-specific markers (fabricator
+#                spots, fortification lines, etc.) on the same plain minimap.
+#
+# The Maps page's "Minimap Data" filter row (see maps-filter in
+# maps/index.html) reads point COUNTS from all four sets to build its
+# Easter Eggs/Guides/PVP/PVE chips and each map card's badge - a map only
+# shows a badge/matches a filter once it actually has 1+ points here, same
+# "no entry = nothing renders" tolerance as everything else in this file.
+#
+# Point fields:
+#   x, y   - required. Percentage (0-100) position within the map image.
+#   angle  - optional. Facing direction in degrees (standard atan2
+#            convention: 0 = right, 90 = down, since y grows downward).
+#            Draws a small needle on the dot when present. (The map-
+#            calibrator tool's own angle field displays/accepts this as a
+#            compass bearing instead - 0 = North - purely as a UI
+#            convenience; it converts to/from this atan2 value before
+#            ever touching this file, so what actually gets saved here
+#            hasn't changed.)
+#   group  - optional. A single letter used to color- and label-group
+#            related points (all "A" points render in the same color and
+#            are numbered A-1, A-2, ... within that group). Points with no
+#            group render in the default marker color, unlabeled by group.
+#   shape  - optional. One of circle (default) | square | diamond |
+#            triangle. Purely visual - lets different point types (e.g.
+#            different groups, or Easter Egg vs Guides) be told apart at a
+#            glance beyond just color.
+#   images - optional. A list of filenames (order matters - it's the order
+#            they're shown in) that live in images/maps/dots/, e.g.
+#            images: ['Foundation_Statue_1.jpg', 'Foundation_Statue_2.jpg'].
+#            Clicking a dot that has images opens a small gallery below the
+#            map image (in both Map Creator and the live Maps page modal)
+#            that cycles through them in that order. Authored from Map
+#            Creator's per-point image panel: pick a folder on disk, drag
+#            the thumbnails into the order you want, then - same as every
+#            other field here - use Export Map Data to get it into this file
+#            AND copy the actual picked files into images/maps/dots/
+#            yourself (the browser can only read files you pick, never write
+#            them into the repo). Flat folder, not one per map/point - the
+#            filenames are expected to be self-describing (map + spot, e.g.
+#            "Foundation_Statue_1.jpg") rather than nested in subfolders.
+#
+# Both the maps page and the calibrator tool tolerate a map/mode having no
+# entry here at all (nothing renders / the tool just starts empty).
+#
+# <mode>_total (optional, e.g. easter_egg_total, guides_total) - the actual
+# number of distinct THINGS a mode's dots represent on that map, when that
+# differs from the number of dots itself. The Maps page's badge/filter
+# counts (see easter_egg_count etc. in maps/index.html) default to a plain
+# `| size` of the dot list, which is correct when each dot IS one thing -
+# but a single easter egg can need a whole sequence of waypoint dots to
+# mark how to trigger it (Ritual's does: 14 dots across groups A-D are all
+# one easter egg, not 14 of them), so without this override the badge would
+# read "Easter Egg (14)" instead of the actually-correct "Easter Egg (1)".
+# Only needed when dot count != real count; omit it anywhere they match.
+#
+# <mode>_view (optional, e.g. pve_view, guides_view) - Map Creator's own
+# Dot size/Zoom/Fabricator radius width+height/Show Radius
+# controls at the time this mode's points were last saved, so reopening a
+# map+mode looks the same as when it was left rather than resetting to generic
+# defaults every time. Written/read automatically by the tool - not
+# rendered anywhere on the live site (only the point positions themselves
+# are), so it's safe to omit for any map/mode that's never been saved
+# through the tool since this field was added.
+#   dotSize        - px, the calibrator's Dot size slider (marker size on
+#                    screen - purely a viewing preference, not a game value).
+#   zoom            - percent, the calibrator's zoom level (100 = fit width).
+#   fabRadiusX      - px (at 100% zoom), the Fabricator's spawn-exclusion
+#                     radius's left-right reach - default 200. A real
+#                     calibration value (what will/won't spawn), unlike
+#                     dotSize/zoom above.
+#   fabRadiusY      - px (at 100% zoom), the same radius's up-down reach -
+#                     default 120 (giving the default oval, wider than
+#                     tall). Independent of fabRadiusX - drag the Radius ↔
+#                     and Radius ↕ sliders in the tool separately to get
+#                     any width/height combination: slim oval, squashed
+#                     oval, tall oval, or a true circle when the two match.
+#   fabRadiusOn     - whether the radius indicator is currently shown
+#                     (defaults to true/on if omitted).
+#
+# ── Pasting Export Map Data's output in here ───────────────────────────────
+# Export Map Data gives you a real, already-valid block like this:
+#
+#   canals:
+#     pve_view: { dotSize: 22, zoom: 87, fabRadiusX: 200, fabRadiusY: 120, fabRadiusOn: true, fabRadiusRect: false }
+#     pve:
+#       - { x: 30.5, y: 43.0, angle: 210.0, group: Map, markerType: fabricator }
+#       - { x: 50.3, y: 80.5, group: Map, markerType: tap }
+#
+# If that map has no entry below yet, paste the whole thing in as-is (as its
+# own top-level entry, anywhere in the file). If it's already here with
+# other modes on it, don't paste a second top-level `canals:` key - YAML
+# doesn't merge duplicate keys, it just silently keeps whichever one comes
+# last, discarding the other's modes. Instead splice just the two indented
+# lines (`pve_view: {...}` and `pve:` + its points) into the existing
+# `canals:` block, matching its indentation.
+
+ritual:
+  # 14 dots (see below) are every waypoint of Ritual's single easter egg
+  # sequence, not 14 separate easter eggs - see <mode>_total above.
+  easter_egg_total: 1
+  easter_egg:
+    - { x: 62.5, y: 22.9, angle: -65.2, group: A }
+    - { x: 76.1, y: 33.2, angle: -64.2, group: A }
+    - { x: 94.2, y: 59.2, angle: -120.7, group: A }
+    - { x: 74.1, y: 82.4, angle: 139.8, group: A }
+    - { x: 35.6, y: 84.8, angle: 131.2, group: A }
+    - { x: 24.5, y: 51.8, angle: 118.5, group: A }
+    - { x: 4.7, y: 65.4, angle: 22.2, group: A }
+    - { x: 47.8, y: 91.7, angle: 143.7, group: A }
+    - { x: 45.3, y: 12.9, angle: -137.0, group: A }
+    - { x: 34.0, y: 22.9, angle: -61.8, group: A }
+    - { x: 30.3, y: 79.4, angle: 83.6, group: B }
+    - { x: 67.3, y: 78.4, angle: 88.2, group: B }
+    - { x: 48.6, y: 89.6, angle: -88.5, group: C }
+    - { x: 48.6, y: 18.2, angle: -90.7, group: D }
+  guides: []

@@ -1,0 +1,57 @@
+{%- comment %} Renders the hover/click tooltip for a level-track node on a
+single class's own page. Unlike level-unlock-badge.html (used on the main
+Classes page, which lists every class's unlock at a given level with a
+"Class | Card" two-column layout and an "All Classes" collapsing row), this
+only ever needs to show what THIS ONE class unlocks there - so no per-class
+column, no All-Classes case. Almost always exactly one card; occasionally
+two (e.g. two Heroic skins both unlocking at the level cap), so it's still a
+list rather than a single fixed slot. Reuses the exact same
+.level-badge__tip/-preview/-list/-card CSS as the multi-class version (see
+_sass/home.scss) with a &--single modifier that collapses the "Class | Card"
+grid down to one column, and the same shared-preview-slot hover pattern
+established there (see that file's comment for why it's one slot per
+tooltip, not one per row) - classes/index.html's card-preview JS
+(clampPreviewHorizontal/Vertical/IntoView, showLevelCardPreview) is ported
+into this page's own <script> block in _layouts/class.html since there's no
+second preview type here to juggle against.
+Usage: {% include class-level-unlock-badge.html level=lvl class=page %} {%- endcomment %}
+{%- assign cb_level = include.level -%}
+{%- assign cb_cards = include.class.cards | where: "unlock_level", cb_level -%}
+{%- if cb_cards.size > 0 -%}
+<span class="level-badge__tip">
+  <span class="level-badge__tip-title">Level {{ cb_level }} Unlocks:</span>
+  <span class="level-badge__tip-preview" aria-hidden="true">
+    <img alt="" loading="lazy" onerror="this.closest('.level-badge__tip-preview').classList.remove('is-visible');">
+    <span class="level-badge__tip-preview-desc"></span>
+  </span>
+  <ul class="level-badge__tip-list level-badge__tip-list--single">
+    {%- for card in cb_cards -%}
+      {%- assign cb_imgurl = "/images/cards/" | append: include.class.slug | append: "-" | append: card.slug | append: ".png" | relative_url -%}
+      {%- if card.type == "skin" -%}
+        {%- comment %} Cosmetic skins have no {X}/{Y} levels to fill in -
+        any stray "{...}" left over (e.g. "Unlocks the {Heroic Venom} skin")
+        just gets its braces stripped rather than shown literally. {% endcomment %}
+        {%- assign cb_desc = card.description | replace: '{', '' | replace: '}', '' -%}
+      {%- else -%}
+        {%- comment %} Level 1 effect text - same {X}/{Y} substitution
+        _layouts/class.html uses for a card's first level panel, minus the
+        interactive multi-level pip UI this quick preview doesn't need. {% endcomment %}
+        {%- assign cb_lvl1 = card.levels | first -%}
+        {%- assign cb_desc = card.description -%}
+        {%- if cb_lvl1 -%}
+          {%- capture cb_xmark %}<mark class="kw kw--value{% if cb_lvl1.X == '?' %} kw--unknown{% endif %}{% if cb_lvl1.X contains '~' %} kw--estimated{% endif %}">{{ cb_lvl1.X }}</mark>{% endcapture -%}
+          {%- assign cb_desc = cb_desc | replace: '{X}', cb_xmark -%}
+          {%- if cb_lvl1.Y -%}
+            {%- capture cb_ymark %}<mark class="kw kw--value{% if cb_lvl1.Y == '?' %} kw--unknown{% endif %}{% if cb_lvl1.Y contains '~' %} kw--estimated{% endif %}">{{ cb_lvl1.Y }}</mark>{% endcapture -%}
+            {%- assign cb_desc = cb_desc | replace: '{Y}', cb_ymark -%}
+          {%- endif -%}
+        {%- endif -%}
+        {%- assign cb_desc = cb_desc | replace: '{', '' | replace: '}', '' -%}
+      {%- endif -%}
+      <li>
+        <a class="level-badge__tip-card level-badge__tip-card--{{ card.rarity | downcase }}" href="#{{ card.slug }}" data-card-img="{{ cb_imgurl }}" data-card-desc="{{ cb_desc | escape }}" data-card-rarity="{{ card.rarity | downcase }}">{{ card.name }}</a>
+      </li>
+    {%- endfor -%}
+  </ul>
+</span>
+{%- endif -%}

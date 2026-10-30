@@ -1,0 +1,16 @@
+---
+title: Esports
+---
+<div class="section-page">
+  <div class="section-page__header">
+    <h1 class="section-page__title">Esports</h1>
+  </div>
+
+  <p class="section-page__intro">STORE &gt; ESPORTS &gt; {{ site.data.esports.tab }} tab - every item costs {{ site.data.esports.price }}. The {{ site.data.esports.other_tabs | join: " and " }} tabs also exist in-game but haven't been screenshotted yet.</p>
+
+  <ul class="simple-item-list">
+    {%- for item in site.data.esports.items %}
+    <li>{{ item }}</li>
+    {%- endfor %}
+  </ul>
+</div>

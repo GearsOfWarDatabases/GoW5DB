@@ -1,0 +1,50 @@
+---
+title: Enemies
+---
+<div class="section-page">
+  <h1 class="section-page__title">Enemies</h1>
+  <p class="section-page__intro">Every enemy that spawns in Horde, the Energy it's worth on a kill, and the weapon it carries (if any).
+  {{ site.data.enemies.tier_note }} Enemies with more than one loadout (a Lambent reskin, or a Scion's carried heavy weapon) are grouped
+  together under one name, with each variant listed underneath it.</p>
+
+  <div class="settings-table__scroll">
+    <table class="settings-table enemies-table">
+      <thead>
+        <tr>
+          <th rowspan="2">Enemy</th>
+          <th colspan="2">Energy</th>
+          <th rowspan="2">Weapon</th>
+          <th rowspan="2">Color</th>
+        </tr>
+        <tr>
+          <th>Other</th>
+          <th>Master</th>
+        </tr>
+      </thead>
+      <tbody>
+        {%- for e in site.data.enemies.list %}
+        {%- if e.variants %}
+        <tr class="enemies-table__group"><td colspan="5">{{ e.name }}</td></tr>
+        {%- for v in e.variants %}
+        <tr class="enemies-table__variant">
+          <td class="enemies-table__variant-name">{{ v.name }}</td>
+          <td><mark class="kw kw--value{% if v.energy_other == '?' %} kw--unknown{% endif %}">{{ v.energy_other }}</mark></td>
+          <td><mark class="kw kw--value{% if v.energy_master == '?' %} kw--unknown{% endif %}{% if v.energy_master contains '~' %} kw--estimated{% endif %}"{% if v.energy_master contains '~' %} title="Estimated as half of Other-difficulty Energy (rounded) - not yet individually confirmed for this enemy"{% endif %}>{{ v.energy_master }}</mark></td>
+          <td>{%- if v.weapon %}{% include render-desc.html text=v.weapon page=page %}{%- else %}—{%- endif %}</td>
+          <td>{%- if v.color %}<span class="type-badge enemies-table__color enemies-table__color--{{ v.color | downcase }}">{{ v.color }}</span>{%- endif %}</td>
+        </tr>
+        {%- endfor %}
+        {%- else %}
+        <tr>
+          <td>{{ e.name }}</td>
+          <td><mark class="kw kw--value{% if e.energy_other == '?' %} kw--unknown{% endif %}">{{ e.energy_other }}</mark></td>
+          <td><mark class="kw kw--value{% if e.energy_master == '?' %} kw--unknown{% endif %}{% if e.energy_master contains '~' %} kw--estimated{% endif %}"{% if e.energy_master contains '~' %} title="Estimated as half of Other-difficulty Energy (rounded) - not yet individually confirmed for this enemy"{% endif %}>{{ e.energy_master }}</mark></td>
+          <td>{%- if e.weapon %}{% include render-desc.html text=e.weapon page=page %}{%- else %}—{%- endif %}</td>
+          <td>{%- if e.color %}<span class="type-badge enemies-table__color enemies-table__color--{{ e.color | downcase }}">{{ e.color }}</span>{%- endif %}</td>
+        </tr>
+        {%- endif %}
+        {%- endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

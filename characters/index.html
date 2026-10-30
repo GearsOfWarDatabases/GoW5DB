@@ -1,0 +1,45 @@
+---
+title: Characters
+---
+<div class="section-page">
+  <div class="section-page__header">
+    <h1 class="section-page__title">Characters</h1>
+  </div>
+
+  <p class="section-page__intro">Every character captured from the in-game Characters select screen. Not every skin has been screenshotted yet.</p>
+
+  {%- assign cog_list = site.data.characters.list | where: "faction", "cog" %}
+  {%- assign swarm_list = site.data.characters.list | where: "faction", "swarm" %}
+
+  <div class="characters-columns">
+    <div class="characters-column">
+      <h2 class="characters-column__title characters-column__title--cog">COG <span class="characters-column__count">{{ cog_list.size }}</span></h2>
+      {%- for c in cog_list %}
+      <div class="character-entry">
+        <div class="character-entry__header">
+          {% assign c_portrait = '/images/characters/' | append: c.slug | append: '-portrait.jpg' %}
+          <img class="character-entry__portrait" src="{{ c_portrait | relative_url }}" alt="{{ c.name }}" loading="lazy" />
+          <span class="character-entry__name">{{ c.name }}</span>
+        </div>
+        {% assign c_body = '/images/characters/' | append: c.slug | append: '.jpg' %}
+        <img class="character-entry__body" src="{{ c_body | relative_url }}" alt="" loading="lazy" />
+      </div>
+      {%- endfor %}
+    </div>
+
+    <div class="characters-column">
+      <h2 class="characters-column__title characters-column__title--swarm">Swarm <span class="characters-column__count">{{ swarm_list.size }}</span></h2>
+      {%- for c in swarm_list %}
+      <div class="character-entry">
+        <div class="character-entry__header">
+          {% assign c_portrait = '/images/characters/' | append: c.slug | append: '-portrait.jpg' %}
+          <img class="character-entry__portrait" src="{{ c_portrait | relative_url }}" alt="{{ c.name }}" loading="lazy" />
+          <span class="character-entry__name">{{ c.name }}</span>
+        </div>
+        {% assign c_body = '/images/characters/' | append: c.slug | append: '.jpg' %}
+        <img class="character-entry__body" src="{{ c_body | relative_url }}" alt="" loading="lazy" />
+      </div>
+      {%- endfor %}
+    </div>
+  </div>
+</div>

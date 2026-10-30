@@ -1,0 +1,312 @@
+# Gears 5 RE-UP rewards + XP curve - all 60 RE-UPs, fully confirmed from a
+# single source (unlike Honor, which is still partial - see
+# classes/index.html #honor-debug). Source:
+# https://gearsutility.com/gears-5/re-up-rewards
+#
+# Each RE-UP is one full character-level "prestige" reset (Level 1-100,
+# reset back to 1 on completion): xp_per_level is the flat XP required for
+# every character level within that RE-UP's cycle, and total_xp is the
+# full amount needed to complete the whole RE-UP (not an exact multiple of
+# xp_per_level - taken as-is from the source rather than recomputed).
+# Both are pre-formatted strings with commas already applied, same
+# convention as _data/leveling.yml's own xp column.
+- level: 1
+  roman: "I"
+  reward: "Desert Camo Lancer, Gnasher and Snub & 1st Bloodspray"
+  xp_per_level: "1,025"
+  total_xp: "101,475"
+- level: 2
+  roman: "II"
+  reward: "Desert Camo Hammerburst, Boltok and Claw"
+  xp_per_level: "1,050"
+  total_xp: "103,950"
+- level: 3
+  roman: "III"
+  reward: "Desert Camo Overkill, Enforcer & EMBAR"
+  xp_per_level: "1,075"
+  total_xp: "106,425"
+- level: 4
+  roman: "IV"
+  reward: "Desert Camo Retro Lancer, Longshot and Markza"
+  xp_per_level: "1,100"
+  total_xp: "108,900"
+- level: 5
+  roman: "V"
+  reward: "Desert Camo Torque Bow, Breaker Mace and Boomshot"
+  xp_per_level: "1,125"
+  total_xp: "111,375"
+- level: 6
+  roman: "VI"
+  reward: "Desert Camo Talon, Lancer GL and Dropshot"
+  xp_per_level: "1,150"
+  total_xp: "113,850"
+- level: 7
+  roman: "VII"
+  reward: "GET SOME! Lancer, Gnasher and Snub"
+  xp_per_level: "1,175"
+  total_xp: "116,325"
+- level: 8
+  roman: "VIII"
+  reward: "GET SOME! Hammerburst, Boltok and Claw"
+  xp_per_level: "1,200"
+  total_xp: "118,800"
+- level: 9
+  roman: "IX"
+  reward: "GET SOME! Overkill, Enforcer & EMBAR"
+  xp_per_level: "1,225"
+  total_xp: "121,275"
+- level: 10
+  roman: "X"
+  reward: "GET SOME! Retro Lancer, Longshot and Markza"
+  xp_per_level: "1,250"
+  total_xp: "123,750"
+- level: 11
+  roman: "XI"
+  reward: "GET SOME! Torque Bow, Breaker Mace and Boomshot"
+  xp_per_level: "1,300"
+  total_xp: "128,700"
+- level: 12
+  roman: "XII"
+  reward: "GET SOME! Talon, Lancer GL and Dropshot"
+  xp_per_level: "1,350"
+  total_xp: "133,650"
+- level: 13
+  roman: "XIII"
+  reward: "Team ICE Lancer"
+  xp_per_level: "1,400"
+  total_xp: "138,600"
+- level: 14
+  roman: "XIV"
+  reward: "Team ICE Breaker Mace"
+  xp_per_level: "1,450"
+  total_xp: "143,550"
+- level: 15
+  roman: "XV"
+  reward: "Team ICE Markza"
+  xp_per_level: "1,500"
+  total_xp: "148,500"
+- level: 16
+  roman: "XVI"
+  reward: "Team ICE Hammerburst"
+  xp_per_level: "1,575"
+  total_xp: "155,925"
+- level: 17
+  roman: "XVII"
+  reward: "Team ICE Overkill"
+  xp_per_level: "1,650"
+  total_xp: "163,350"
+- level: 18
+  roman: "XVIII"
+  reward: "Team ICE Boomshot"
+  xp_per_level: "1,725"
+  total_xp: "170,775"
+- level: 19
+  roman: "XIX"
+  reward: "Team ICE Torque Bow"
+  xp_per_level: "1,800"
+  total_xp: "178,200"
+- level: 20
+  roman: "XX"
+  reward: "Team ICE EMBAR"
+  xp_per_level: "1,875"
+  total_xp: "185,625"
+- level: 21
+  roman: "XXI"
+  reward: "Heroic Marcus"
+  xp_per_level: "1,975"
+  total_xp: "195,525"
+- level: 22
+  roman: "XXII"
+  reward: "Team ICE Claw"
+  xp_per_level: "2,075"
+  total_xp: "205,425"
+- level: 23
+  roman: "XXIII"
+  reward: "Team ICE Talon"
+  xp_per_level: "2,175"
+  total_xp: "215,325"
+- level: 24
+  roman: "XXIV"
+  reward: "Team ICE Boltok"
+  xp_per_level: "2,275"
+  total_xp: "225,225"
+- level: 25
+  roman: "XXV"
+  reward: "Team ICE Longshot"
+  xp_per_level: "2,375"
+  total_xp: "235,125"
+- level: 26
+  roman: "XXVI"
+  reward: "Team ICE Snub"
+  xp_per_level: "2,500"
+  total_xp: "247,500"
+- level: 27
+  roman: "XXVII"
+  reward: "Team ICE Lancer GL"
+  xp_per_level: "2,625"
+  total_xp: "259,875"
+- level: 28
+  roman: "XXVIII"
+  reward: "Team ICE Retro Lancer"
+  xp_per_level: "2,750"
+  total_xp: "272,250"
+- level: 29
+  roman: "XXIX"
+  reward: "Team ICE Dropshot"
+  xp_per_level: "2,875"
+  total_xp: "284,625"
+- level: 30
+  roman: "XXX"
+  reward: "Team ICE Enforcer"
+  xp_per_level: "3,000"
+  total_xp: "297,000"
+- level: 31
+  roman: "XXXI"
+  reward: "Team ICE Gnasher"
+  xp_per_level: "3,150"
+  total_xp: "311,850"
+- level: 32
+  roman: "XXXII"
+  reward: "Heroic Ascendant Lancer"
+  xp_per_level: "3,300"
+  total_xp: "326,700"
+- level: 33
+  roman: "XXXIII"
+  reward: "Heroic Ascendant Breaker Mace"
+  xp_per_level: "3,450"
+  total_xp: "341,550"
+- level: 34
+  roman: "XXXIV"
+  reward: "Heroic Ascendant Markza"
+  xp_per_level: "3,600"
+  total_xp: "356,400"
+- level: 35
+  roman: "XXXV"
+  reward: "Heroic Ascendant Dropshot"
+  xp_per_level: "3,750"
+  total_xp: "371,250"
+- level: 36
+  roman: "XXXVI"
+  reward: "Heroic Ascendant Overkill"
+  xp_per_level: "3,925"
+  total_xp: "388,575"
+- level: 37
+  roman: "XXXVII"
+  reward: "Heroic Ascendant Boomshot"
+  xp_per_level: "4,100"
+  total_xp: "405,900"
+- level: 38
+  roman: "XXXVIII"
+  reward: "Heroic Ascendant Claw"
+  xp_per_level: "4,275"
+  total_xp: "423,225"
+- level: 39
+  roman: "XXXIX"
+  reward: "Heroic Ascendant Talon"
+  xp_per_level: "4,450"
+  total_xp: "440,550"
+- level: 40
+  roman: "XL"
+  reward: "Heroic Ascendant Boltok"
+  xp_per_level: "4,625"
+  total_xp: "457,875"
+- level: 41
+  roman: "XLI"
+  reward: "Heroic Ascendant Snub"
+  xp_per_level: "4,825"
+  total_xp: "477,675"
+- level: 42
+  roman: "XLII"
+  reward: "Heroic Ascendant Longshot"
+  xp_per_level: "5,025"
+  total_xp: "497,475"
+- level: 43
+  roman: "XLIII"
+  reward: "Heroic Ascendant EMBAR"
+  xp_per_level: "5,225"
+  total_xp: "517,275"
+- level: 44
+  roman: "XLIV"
+  reward: "Heroic Ascendant Lancer GL"
+  xp_per_level: "5,425"
+  total_xp: "537,075"
+- level: 45
+  roman: "XLV"
+  reward: "Heroic Ascendant Retro Lancer"
+  xp_per_level: "5,625"
+  total_xp: "556,875"
+- level: 46
+  roman: "XLVI"
+  reward: "Heroic Ascendant Hammerburst"
+  xp_per_level: "5,875"
+  total_xp: "581,625"
+- level: 47
+  roman: "XLVII"
+  reward: "Heroic Ascendant Scorcher"
+  xp_per_level: "6,125"
+  total_xp: "606,375"
+- level: 48
+  roman: "XLVIII"
+  reward: "Heroic Ascendant Torque Bow"
+  xp_per_level: "6,375"
+  total_xp: "631,125"
+- level: 49
+  roman: "XLIX"
+  reward: "Heroic Ascendant Enforcer"
+  xp_per_level: "6,625"
+  total_xp: "655,875"
+- level: 50
+  roman: "L"
+  reward: "Heroic Kantus & Heroic Ascendant Gnasher"
+  xp_per_level: "6,875"
+  total_xp: "680,625"
+- level: 51
+  roman: "LI"
+  reward: "Space Race Precision Set"
+  xp_per_level: "7,175"
+  total_xp: "710,325"
+- level: 52
+  roman: "LII"
+  reward: "King $#?@ Blood Spray"
+  xp_per_level: "7,475"
+  total_xp: "740,025"
+- level: 53
+  roman: "LIII"
+  reward: "Space Race Assault Set"
+  xp_per_level: "7,775"
+  total_xp: "769,725"
+- level: 54
+  roman: "LIV"
+  reward: "Crown Mark & Triumph Banner"
+  xp_per_level: "8,076"
+  total_xp: "799,425"
+- level: 55
+  roman: "LV"
+  reward: "Heroic Karn"
+  xp_per_level: "8,375"
+  total_xp: "829,125"
+- level: 56
+  roman: "LVI"
+  reward: "Wipe Hands Expression"
+  xp_per_level: "8,725"
+  total_xp: "863,775"
+- level: 57
+  roman: "LVII"
+  reward: "Space Race Power Set"
+  xp_per_level: "9,075"
+  total_xp: "898,425"
+- level: 58
+  roman: "LVIII"
+  reward: "Golden Crown Blood Spray"
+  xp_per_level: "9,425"
+  total_xp: "933,075"
+- level: 59
+  roman: "LIX"
+  reward: "Space Race Loadout Set"
+  xp_per_level: "9,775"
+  total_xp: "967,725"
+- level: 60
+  roman: "LX"
+  reward: "Heroic Kait"
+  xp_per_level: "10,125"
+  total_xp: "1,002,375"

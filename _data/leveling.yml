@@ -1,0 +1,31 @@
+# ── Character Leveling ─────────────────────────────────────────────────────
+# Every class/role shares ONE universal XP curve, capped at Level 20 - not
+# class-specific. Confirmed via screenshots showing different classes at the
+# SAME level requiring the SAME XP (e.g. Marksman at Level 16 and Brawler at
+# Level 16 both show "XX,XXX / 40,000 XP"), and via 6 different classes shown
+# already at Level 20 with no XP bar at all (hard cap).
+#
+# `xp` is the XP required to go from `level` to `level + 1`. '?' = not yet
+# confirmed on screen - do not guess/estimate these, leave as '?' until a
+# screenshot confirms the real value.
+max_level: 20
+xp_per_level:
+  - { level: 1,  xp: "100" }
+  - { level: 2,  xp: "500" }
+  - { level: 3,  xp: "1,000" }
+  - { level: 4,  xp: "1,500" }
+  - { level: 5,  xp: "2,000" }
+  - { level: 6,  xp: "2,500" }
+  - { level: 7,  xp: "3,000" }
+  - { level: 8,  xp: "3,500" }
+  - { level: 9,  xp: "4,000" }
+  - { level: 10, xp: "6,000" }
+  - { level: 11, xp: "8,000" }
+  - { level: 12, xp: "10,000" }
+  - { level: 13, xp: "12,000" }
+  - { level: 14, xp: "15,000" }
+  - { level: 15, xp: "20,000" }
+  - { level: 16, xp: "40,000" }
+  - { level: 17, xp: "60,000" }
+  - { level: 18, xp: "80,000" }
+  - { level: 19, xp: "100,000" }

@@ -1,0 +1,653 @@
+---
+title: Build Viewer
+---
+<div class="section-page section-page--wide">
+  <div class="section-page__header">
+    <h1 class="section-page__title">Build Viewer</h1>
+  </div>
+
+  <p class="section-page__intro">Browse shared <a href="{{ '/tools/build-creator/' | relative_url }}">Build Creator</a> loadouts. Every build here was made with Build Creator's own "Build code" (Copy) box, then added by hand to <code>_data/builds.yml</code> - see that file for how to add your own.</p>
+
+  {%- assign builds = site.data.builds | default: empty %}
+  {%- assign bv_categories = "Assault,Tank,Support,Promotional" | split: "," %}
+  {%- assign bv_cat_colors = "#c62b0f,#4995ff,#2fb740,#d856d5" | split: "," %}
+
+  {%- if builds == empty or builds.size == 0 %}
+  <p class="wr-hint">No builds added yet - see <code>_data/builds.yml</code> for how to add one.</p>
+  {%- else %}
+
+  <!-- ── Category/class breakdown ─────────────────────────────────────────
+       Every count here is computed at build time (Liquid `where`), not by
+       the filter JS below - so it's correct even with JS disabled, and the
+       filter buttons are just a convenience shortcut onto the same numbers.
+       Lists EVERY class per category (not just ones with a build) with a
+       search box + collapse/"Show all N classes" toggle, same as Build
+       Creator's own Class picker (.bc-class-col/.bc-class-chip, see the JS
+       below - it's the exact same collapse/search logic, just re-targeted
+       at #bv-summary's IDs instead of Build Creator's #bc-*). A class with
+       no builds yet still shows up (so "show all classes" actually means
+       all of them) but greyed out/disabled - see .bc-class-chip:disabled -
+       since there's nothing to filter into for it yet. -->
+  <section class="wr-panel bv-summary" id="bv-summary">
+    <div class="bc-panel__head">
+      <h2 class="wr-panel__title" style="margin: 0;">By class</h2>
+      <div class="bc-panel__head-actions">
+        <input type="text" id="bv-class-search" class="wr-input" placeholder="Search classes..." style="max-width: 220px;">
+      </div>
+    </div>
+    <div class="wr-cardgrid bv-summary-grid" id="bv-summary-grid">
+      {%- for cat in bv_categories %}
+      {%- assign cat_color = bv_cat_colors[forloop.index0] %}
+      {%- assign cat_classes = site.classes | where: "category", cat | sort: "title" %}
+      {%- assign cat_count = 0 %}
+      {%- for c in cat_classes %}{%- assign cc = builds | where: "class", c.slug | size %}{%- assign cat_count = cat_count | plus: cc %}{%- endfor %}
+      <div class="wr-cardgrid__col bc-class-col" style="--cat-color: {{ cat_color }};">
+        <div class="wr-cardgrid__head">
+          <button type="button" class="wr-chip bv-summary__cat js-bv-filter-toggle" data-bv-category="{{ cat }}">
+            <h4 class="wr-cardgrid__title" style="margin: 0;">{{ cat }}</h4>
+            <span class="bv-count">{{ cat_count }}</span>
+          </button>
+        </div>
+        <div class="bc-class-list">
+          {%- for c in cat_classes %}
+          {%- assign ccount = builds | where: "class", c.slug | size %}
+          <!-- Same icon+bold-name visual as Build Creator's own class
+               picker (bc-class-chip), not a plain text chip - .bv-class-chip
+               just adds the count badge on the right (see its CSS for why
+               that's a scoped modifier rather than a change to the shared
+               .bc-class-chip__name rule itself). No builds yet for this
+               class -> real `disabled` attribute (greyed out, not
+               clickable as a filter - see .bc-class-chip:disabled) rather
+               than leaving it out of the list entirely; :hover still works
+               on a disabled button so the class-info preview stays
+               available either way. -->
+          <button type="button" class="wr-chip bc-class-chip bv-class-chip{% if ccount == 0 %} bv-class-chip--empty{% else %} js-bv-filter-toggle{% endif %}" data-bv-category="{{ cat }}" data-bv-class="{{ c.slug }}" data-name="{{ c.title | downcase }}"{% if ccount == 0 %} disabled title="No builds added for this class yet"{% endif %}>
+            <img class="bc-class-chip__icon" src="{{ '/images/classes/icons/' | append: c.slug | append: '.png' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';">
+            <span class="bc-class-chip__name">{{ c.title }}</span>
+            <span class="bv-count">{{ ccount }}</span>
+            <span class="xref-tip xref-tip--class">
+              <span class="class-mini-preview" style="--cat-color: {{ cat_color }};">
+                <span class="class-mini-preview__head">
+                  <img class="class-mini-preview__icon" src="{{ '/images/classes/icons/' | append: c.slug | append: '.png' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';">
+                  <span class="class-mini-preview__head-text">
+                    <span class="class-mini-preview__cat">{{ cat }}</span>
+                    <span class="class-mini-preview__name">{{ c.title }}</span>
+                  </span>
+                </span>
+                <span class="class-mini-preview__desc">{{ c.description | strip_html }}</span>
+              </span>
+            </span>
+          </button>
+          {%- endfor %}
+        </div>
+        <!-- Per-column fade, same reasoning as Build Creator's own
+             .bc-class-col__fade - each category column has its own
+             $color-surface-2 card background to fade toward. -->
+        <span class="bc-class-col__fade" aria-hidden="true" hidden></span>
+      </div>
+      {%- endfor %}
+    </div>
+    <button type="button" class="bc-class-panel__toggle-bar" id="bv-class-toggle" aria-expanded="false" hidden></button>
+  </section>
+
+  <!-- ── Filters ────────────────────────────────────────────────────────── -->
+  <div class="bv-filters" id="bv-filters">
+    <!-- Text search - matches each build's title + description
+         (data-bv-search, set in the Liquid loop above), same "type to
+         narrow" idea as the class search boxes, just over the build cards
+         themselves instead of the class list. Combines with every other
+         filter here (an AND), same as everything else in this bar. -->
+    <input type="text" id="bv-search" class="wr-input" placeholder="Search builds..." style="max-width: 200px;">
+    <span class="bv-filters__sep"></span>
+    <button type="button" class="wr-chip wr-chip--selected" id="bv-clear-filters" data-bv-category="" data-bv-class="">All builds</button>
+    <span class="bv-filters__sep"></span>
+    {%- assign gamemodes = builds | map: "gamemode" | uniq | sort %}
+    {%- for g in gamemodes %}
+    <button type="button" class="wr-chip bv-gamemode-chip" data-bv-gamemode="{{ g }}">{{ g }}</button>
+    {%- endfor %}
+    <span class="bv-filters__sep"></span>
+    <div class="mc-radius-shape" id="bv-perks-switch" role="group" aria-label="Filter by whether the build has a perk plan">
+      <button type="button" class="mc-radius-shape__btn is-active" data-bv-perks="">Any</button>
+      <button type="button" class="mc-radius-shape__btn" data-bv-perks="yes">Has perks</button>
+      <button type="button" class="mc-radius-shape__btn" data-bv-perks="no">No perks</button>
+    </div>
+    <span class="bv-filters__sep"></span>
+    <!-- Map filter - same popover (search + thumbnail grid) as Build
+         Creator's own Map picker (.bc-map-picker), multi-select: a build
+         matches if it's on ANY of the picked maps (see the `active.maps`
+         OR check in applyFilters above). "All Maps" clears the picks
+         rather than being a real filter value. -->
+    <div class="bc-map-picker" id="bv-map-picker">
+      <button type="button" class="wr-btn bc-map-picker__trigger" id="bv-map-trigger" aria-haspopup="true" aria-expanded="false">
+        <img class="bc-map-picker__thumb" id="bv-map-thumb" src="" alt="" hidden>
+        <span id="bv-map-trigger-label">All Maps</span>
+      </button>
+      <div class="bc-map-picker__panel" id="bv-map-panel" hidden>
+        <input type="text" id="bv-map-search" class="wr-input" placeholder="Search maps...">
+        <div class="bc-map-picker__list" id="bv-map-list">
+          <button type="button" class="bc-map-picker__item bc-map-picker__item--all" id="bv-map-item-all" data-slug="" data-name="all maps">All Maps</button>
+          {%- for group in site.data.maps %}
+          {%- for map in group.maps %}
+          {%- assign mslug = map.name | slugify %}
+          <button type="button" class="bc-map-picker__item" data-slug="{{ mslug }}" data-name="{{ map.name | downcase }}">
+            <img class="bc-map-picker__item-thumb" src="{{ '/images/maps/' | append: mslug | append: '-small.jpg' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';">
+            <span>{{ map.name }}</span>
+          </button>
+          {%- endfor %}
+          {%- endfor %}
+        </div>
+        <img class="bc-map-picker__preview-big" id="bv-map-preview-big" alt="" hidden onerror="this.hidden = true;">
+      </div>
+    </div>
+    <span class="bv-filters__sep"></span>
+    <!-- Sort - reorders the cards below, doesn't hide any of them, so it's
+         independent of (and combines with) the filters above. "Newest"/
+         "Oldest" go off each card's position in _data/builds.yml itself
+         (data-bv-order, set from forloop.index below) - new entries get
+         appended to the bottom of that file, so document order already IS
+         chronological order; there's no separate date field to maintain. -->
+    <label class="wr-label" for="bv-sort" style="margin: 0;">Sort</label>
+    <select id="bv-sort" class="wr-input bv-sort-select">
+      <option value="newest">Newest first</option>
+      <option value="oldest">Oldest first</option>
+      <option value="name-asc">Name (A-Z)</option>
+      <option value="name-desc">Name (Z-A)</option>
+    </select>
+  </div>
+
+  <!-- ── Build cards - one vertical column per category ───────────────────
+       Same 4-column Assault/Tank/Support/Promotional split as the "By
+       class" section above, not a flat wrapping grid - each category gets
+       its own column and every one of that category's builds stacks
+       vertically inside it (see .bv-cat-col__list). Still loops the full
+       `builds` list once per category (filtered by `if cls.category ==
+       cat`) rather than pre-grouping in Liquid, so forloop.index inside
+       still reflects each build's true position in _data/builds.yml for
+       data-bv-order (see the Sort script below) - the `if` skips non-
+       matching builds without resetting the loop's own counter. -->
+  <div class="bv-cat-grid" id="bv-grid">
+    {%- for cat in bv_categories %}
+    {%- assign cat_color = bv_cat_colors[forloop.index0] %}
+    <div class="wr-cardgrid__col bv-cat-col" style="--cat-color: {{ cat_color }};">
+      <div class="wr-cardgrid__head">
+        <h4 class="wr-cardgrid__title">{{ cat }}</h4>
+      </div>
+      <div class="bv-cat-col__list">
+        {%- for b in builds %}
+        {%- assign cls = site.classes | where: "slug", b.class | first %}
+        {%- if cls and cls.category == cat %}
+        {%- assign map_names_str = "" %}
+        {%- if b.maps %}
+          {%- for mslug in b.maps %}
+            {%- for group in site.data.maps %}
+              {%- for m in group.maps %}
+                <!-- Split into its own assign rather than `m.name | slugify
+                     == mslug` inline - same Liquid parsing issue as
+                     al_prefix above (a filter result compared inline
+                     alongside other tokens in one if/unless doesn't
+                     reliably parse; this one actually threw a real syntax
+                     error/warning in the Jekyll build log). -->
+                {%- assign m_slug = m.name | slugify %}
+                {%- if m_slug == mslug %}{%- assign map_names_str = map_names_str | append: m.name | append: "," %}{%- endif %}
+              {%- endfor %}
+            {%- endfor %}
+          {%- endfor %}
+        {%- endif %}
+        {%- assign map_names = map_names_str | split: "," %}
+        {%- assign map_slugs_str = b.maps | join: "," %}
+        <!-- Author link is only ever rendered as a real <a> if it's an
+             exact match for one of the three sites Build Creator's own
+             "Link?" field allows - a hand-edited builds.yml could still
+             carry anything (a typo, a stripped/rewritten URL, some other
+             site entirely), and this falls back to plain unlinked text
+             for all of that rather than trusting the file blindly.
+             al_prefix's own equality check guards against a value that
+             merely CONTAINS one of the paths without actually starting
+             with the real scheme+host (e.g. a query string smuggling the
+             text) - kept as its own assign rather than chaining the
+             `slice` filter and `==` inline in one `if`/`unless`, since
+             Liquid doesn't reliably parse a filter result compared inline
+             alongside an `and` in the same condition. -->
+        {%- assign al = b.author_link | default: "" | strip %}
+        {%- assign al_prefix = al | slice: 0, 8 %}
+        {%- assign al_ok = false %}
+        {%- if al contains "https://www.youtube.com/@" or al contains "https://youtube.com/@" %}{%- assign al_ok = true %}{%- endif %}
+        {%- if al contains "https://steamcommunity.com/id/" %}{%- assign al_ok = true %}{%- endif %}
+        {%- if al contains "https://www.xbox.com/play/user/" or al contains "https://xbox.com/play/user/" %}{%- assign al_ok = true %}{%- endif %}
+        {%- if al_prefix != "https://" %}{%- assign al_ok = false %}{%- endif %}
+        <a class="bv-card" href="{{ '/tools/build-creator/' | relative_url }}?{{ b.code }}" style="--cat-color: {{ cat_color }};" data-bv-category="{{ cls.category }}" data-bv-class="{{ cls.slug }}" data-bv-gamemode="{{ b.gamemode }}" data-bv-perks="{% if b.has_perks %}yes{% else %}no{% endif %}" data-bv-maps=",{{ map_slugs_str }}," data-bv-order="{{ forloop.index }}" data-bv-title="{{ b.title | downcase }}" data-bv-search="{{ b.title | append: ' ' | append: b.description | downcase }}">
+          <!-- Stacked icon-on-top head, same visual language as Build
+               Creator's own .bc-class-chip (icon + bold name) -
+               xref-link--tip/xref-tip (site-wide hover-preview classes)
+               reused as-is, same class-mini-preview markup Build Creator's
+               own class chips use, so hovering the icon shows that class's
+               real info without leaving this card. Category itself isn't
+               spelled out here anymore - this column's own header plus the
+               card's own top border color (--cat-color) already carry it. -->
+          <span class="bv-card__head xref-link--tip" tabindex="0">
+            <!-- Icon + class name share a row now (was icon centered above
+                 everything, class name on its own line below) - title,
+                 then "by author", stack below that row. -->
+            <span class="bv-card__head-top">
+              <img class="bv-card__icon" src="{{ '/images/classes/icons/' | append: cls.slug | append: '.png' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';">
+              <span class="bv-card__class">{{ cls.title }}</span>
+            </span>
+            <!-- title= puts the full text in a native browser tooltip on
+                 hover - a fallback for anything still cut off by the
+                 2-line clamp (see .bv-card__title's own CSS). -->
+            <span class="bv-card__title" title="{{ b.title }}">{{ b.title }}</span>
+            <!-- The whole card is itself a real <a> (straight into Build
+                 Creator) - a real nested <a> here for the author's profile
+                 would be invalid HTML and would break the outer link, so
+                 this is a plain element styled/behaving like a link
+                 instead, opened via the click handler in the script below
+                 (which also stops the click from also triggering the
+                 card's own link). -->
+            <span class="bv-card__author">by {% if b.author %}{% if al_ok %}<span class="bv-card__author-link" data-author-href="{{ al }}" tabindex="0" role="link">{{ b.author }}</span>{% else %}{{ b.author }}{% endif %}{% else %}No Author Name Available{% endif %}</span>
+            <span class="xref-tip">
+              <span class="class-mini-preview" style="--cat-color: {{ cat_color }};">
+                <span class="class-mini-preview__head">
+                  <img class="class-mini-preview__icon" src="{{ '/images/classes/icons/' | append: cls.slug | append: '.png' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';">
+                  <span class="class-mini-preview__head-text">
+                    <span class="class-mini-preview__cat">{{ cls.category }}</span>
+                    <span class="class-mini-preview__name">{{ cls.title }}</span>
+                  </span>
+                </span>
+                <span class="class-mini-preview__desc">{{ cls.description | strip_html }}</span>
+              </span>
+            </span>
+          </span>
+          {%- if b.description %}<span class="bv-card__note">{{ b.description }}</span>{%- endif %}
+          <span class="bv-card__foot">
+            <span class="bv-card__badge">{{ b.gamemode }}</span>
+            {%- for mn in map_names %}<span class="bv-card__badge">{{ mn }}</span>{%- endfor %}
+            <span class="bv-card__badge{% if b.has_perks %} bv-card__badge--perks{% endif %}">{% if b.has_perks %}Has perks{% else %}No perks{% endif %}</span>
+          </span>
+          <!-- Full, untruncated title + description shown below the whole
+               card on hover/focus - separate from the class-info tip above
+               (icon/class-name area only, stays sideways), this covers the
+               2-line title clamp and 3-line description clamp that keep
+               every card the same fixed height (see .bv-card). -->
+          <span class="bv-card__full-preview">
+            <span class="bv-card__full-preview__title">{{ b.title }}</span>
+            {%- if b.description %}<span class="bv-card__full-preview__desc">{{ b.description }}</span>{%- endif %}
+          </span>
+        </a>
+        {%- endif %}
+        {%- endfor %}
+      </div>
+    </div>
+    {%- endfor %}
+  </div>
+  <p class="wr-hint" id="bv-no-matches" hidden>No builds match these filters.</p>
+
+  {%- endif %}
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var grid = document.getElementById('bv-grid');
+  if (!grid) return;
+  var cards = Array.prototype.slice.call(grid.querySelectorAll('.bv-card'));
+  var noMatches = document.getElementById('bv-no-matches');
+
+  // Author profile links (.bv-card__author-link, only rendered when the
+  // Liquid check above found a real match) live inside the whole-card <a>,
+  // so a real nested <a> isn't valid HTML - this opens the profile itself
+  // and stops the click from also following the card's own link underneath
+  // it. Delegated on the grid (not one listener per link) since these are
+  // sprinkled across every category column.
+  grid.addEventListener('click', function (e) {
+    var link = e.target.closest('.bv-card__author-link');
+    if (!link) return;
+    e.preventDefault();
+    e.stopPropagation();
+    window.open(link.getAttribute('data-author-href'), '_blank', 'noopener');
+  });
+  grid.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var link = e.target.closest('.bv-card__author-link');
+    if (!link) return;
+    e.preventDefault();
+    e.stopPropagation();
+    window.open(link.getAttribute('data-author-href'), '_blank', 'noopener');
+  });
+
+  var active = { category: '', cls: '', gamemode: '', perks: '', maps: [], search: '' };
+
+  function applyFilters() {
+    var shown = 0;
+    cards.forEach(function (card) {
+      var cardMaps = card.getAttribute('data-bv-maps') || ',';
+      var match = (!active.category || card.getAttribute('data-bv-category') === active.category)
+        && (!active.cls || card.getAttribute('data-bv-class') === active.cls)
+        && (!active.gamemode || card.getAttribute('data-bv-gamemode') === active.gamemode)
+        && (!active.perks || card.getAttribute('data-bv-perks') === active.perks)
+        // OR across picked maps - a build matches if it's on ANY of them.
+        && (!active.maps.length || active.maps.some(function (m) { return cardMaps.indexOf(',' + m + ',') !== -1; }))
+        && (!active.search || (card.getAttribute('data-bv-search') || '').indexOf(active.search) !== -1);
+      card.hidden = !match;
+      if (match) shown++;
+    });
+    if (noMatches) noMatches.hidden = shown !== 0;
+  }
+
+  function resetChipGroup(selector, activeClass) {
+    document.querySelectorAll(selector).forEach(function (b) { b.classList.remove(activeClass); });
+  }
+
+  // Set by the map-picker block below (if the picker exists on the page) -
+  // referenced here so "All builds" can reset its trigger label/selection
+  // too without the click handler having to know how that picker's own UI
+  // is put together.
+  var refreshMapTriggerUI = null;
+
+  // "All builds" is a full reset across every filter, not just category/
+  // class - its label promises everything, so it has to deliver everything.
+  document.getElementById('bv-clear-filters').addEventListener('click', function () {
+    active.category = ''; active.cls = ''; active.gamemode = ''; active.perks = ''; active.maps = []; active.search = '';
+    resetChipGroup('.js-bv-filter-toggle', 'wr-chip--selected');
+    resetChipGroup('.bv-gamemode-chip', 'wr-chip--selected');
+    resetChipGroup('#bv-perks-switch [data-bv-perks]', 'is-active');
+    document.getElementById('bv-clear-filters').classList.add('wr-chip--selected');
+    document.querySelector('#bv-perks-switch [data-bv-perks=""]').classList.add('is-active');
+    if (bvSearch) { bvSearch.value = ''; }
+    if (refreshMapTriggerUI) { refreshMapTriggerUI(); }
+    applyFilters();
+  });
+
+  // Category/class toggle buttons - both the "By class" counts section
+  // (#bv-summary) and the visual "Browse by class" grid at the bottom
+  // share this same handler via .js-bv-filter-toggle, so picking a class
+  // in either place highlights it in both. Clicking a class implies its
+  // category too, so both get set together. Doesn't touch gamemode/perks,
+  // so it combines with those (an AND, not a separate reset). Clicking the
+  // already-active one again deselects back to "All builds" rather than
+  // being a one-way street once something's picked.
+  document.querySelectorAll('.js-bv-filter-toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var was = btn.classList.contains('wr-chip--selected');
+      resetChipGroup('.js-bv-filter-toggle', 'wr-chip--selected');
+      document.getElementById('bv-clear-filters').classList.remove('wr-chip--selected');
+      if (was) {
+        active.category = ''; active.cls = '';
+        document.getElementById('bv-clear-filters').classList.add('wr-chip--selected');
+      } else {
+        active.category = btn.getAttribute('data-bv-category') || '';
+        active.cls = btn.getAttribute('data-bv-class') || '';
+        btn.classList.add('wr-chip--selected');
+      }
+      applyFilters();
+    });
+  });
+
+  document.querySelectorAll('.bv-gamemode-chip').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var was = btn.classList.contains('wr-chip--selected');
+      resetChipGroup('.bv-gamemode-chip', 'wr-chip--selected');
+      active.gamemode = was ? '' : btn.getAttribute('data-bv-gamemode');
+      if (!was) btn.classList.add('wr-chip--selected');
+      applyFilters();
+    });
+  });
+
+  document.querySelectorAll('#bv-perks-switch [data-bv-perks]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      active.perks = btn.getAttribute('data-bv-perks') || '';
+      resetChipGroup('#bv-perks-switch [data-bv-perks]', 'is-active');
+      btn.classList.add('is-active');
+      applyFilters();
+    });
+  });
+
+  var bvSearch = document.getElementById('bv-search');
+  if (bvSearch) {
+    bvSearch.addEventListener('input', function () {
+      active.search = this.value.trim().toLowerCase();
+      applyFilters();
+    });
+  }
+
+  /* ── Map filter - same popover as Build Creator's own Map picker
+     (.bc-map-picker), just filtering active.maps + applyFilters() instead
+     of writing to a URL/build code. Multi-select (OR match, see
+     applyFilters above); "All Maps" clears the whole selection. */
+  var bvMapTrigger = document.getElementById('bv-map-trigger');
+  var bvMapPanel = document.getElementById('bv-map-panel');
+  var bvMapThumb = document.getElementById('bv-map-thumb');
+  var bvMapTriggerLabel = document.getElementById('bv-map-trigger-label');
+  if (bvMapTrigger && bvMapPanel) {
+    refreshMapTriggerUI = function () { updateMapTriggerUI(); };
+    var bvMapItems = Array.prototype.slice.call(document.querySelectorAll('#bv-map-list .bc-map-picker__item'));
+    var bvMapItemAll = document.getElementById('bv-map-item-all');
+    var bvMapSearch = document.getElementById('bv-map-search');
+    var bvMapPreviewBig = document.getElementById('bv-map-preview-big');
+
+    function updateMapTriggerUI() {
+      if (active.maps.length === 0) {
+        bvMapThumb.hidden = true;
+        bvMapTriggerLabel.textContent = 'All Maps';
+      } else if (active.maps.length === 1) {
+        var item = bvMapItems.filter(function (el) { return el.getAttribute('data-slug') === active.maps[0]; })[0];
+        var thumbImg = item ? item.querySelector('.bc-map-picker__item-thumb') : null;
+        if (item && thumbImg) {
+          bvMapThumb.src = thumbImg.src;
+          bvMapThumb.hidden = false;
+          bvMapTriggerLabel.textContent = item.querySelector('span').textContent;
+        } else {
+          bvMapThumb.hidden = true;
+          bvMapTriggerLabel.textContent = 'All Maps';
+        }
+      } else {
+        bvMapThumb.hidden = true;
+        bvMapTriggerLabel.textContent = active.maps.length + ' maps selected';
+      }
+      bvMapItems.forEach(function (el) {
+        el.classList.toggle('wr-chip--selected', active.maps.indexOf(el.getAttribute('data-slug')) !== -1);
+      });
+      if (bvMapItemAll) { bvMapItemAll.classList.toggle('wr-chip--selected', active.maps.length === 0); }
+    }
+
+    function closeMapPanel() {
+      bvMapPanel.hidden = true;
+      bvMapTrigger.setAttribute('aria-expanded', 'false');
+      hideMapPreview();
+    }
+
+    function showMapPreview(el) {
+      var thumbImg = el.querySelector('.bc-map-picker__item-thumb');
+      if (!thumbImg || !thumbImg.src || thumbImg.style.display === 'none') return;
+      var r = el.getBoundingClientRect();
+      var previewW = 260;
+      var previewH = previewW * 10 / 16;
+      bvMapPreviewBig.src = thumbImg.src;
+      bvMapPreviewBig.hidden = false;
+      var left = r.left;
+      if (left + previewW > window.innerWidth - 8) { left = window.innerWidth - previewW - 8; }
+      if (left < 8) { left = 8; }
+      var top = r.top - previewH - 8;
+      if (top < 8) { top = r.bottom + 8; }
+      bvMapPreviewBig.style.left = left + 'px';
+      bvMapPreviewBig.style.top = top + 'px';
+    }
+    function hideMapPreview() { bvMapPreviewBig.hidden = true; }
+
+    bvMapTrigger.addEventListener('click', function () {
+      var open = bvMapPanel.hidden;
+      bvMapPanel.hidden = !open;
+      bvMapTrigger.setAttribute('aria-expanded', String(open));
+      if (open) { bvMapSearch.value = ''; bvMapItems.forEach(function (el) { el.hidden = false; }); bvMapSearch.focus(); }
+      else { hideMapPreview(); }
+    });
+    document.addEventListener('click', function (e) {
+      if (!bvMapPanel.hidden && !document.getElementById('bv-map-picker').contains(e.target)) { closeMapPanel(); }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (!bvMapPanel.hidden && e.key === 'Escape') { closeMapPanel(); bvMapTrigger.focus(); }
+    });
+    bvMapSearch.addEventListener('input', function () {
+      var q = this.value.trim().toLowerCase();
+      bvMapItems.forEach(function (el) {
+        el.hidden = q ? el.getAttribute('data-name').indexOf(q) === -1 : false;
+      });
+    });
+    bvMapItems.forEach(function (el) {
+      el.addEventListener('click', function () {
+        var slug = el.getAttribute('data-slug') || '';
+        if (!slug) {
+          active.maps = [];
+        } else {
+          var idx = active.maps.indexOf(slug);
+          if (idx === -1) { active.maps.push(slug); } else { active.maps.splice(idx, 1); }
+        }
+        updateMapTriggerUI();
+        applyFilters();
+        if (!slug) { closeMapPanel(); }
+      });
+      el.addEventListener('mouseenter', function () { showMapPreview(el); });
+      el.addEventListener('mouseleave', hideMapPreview);
+      el.addEventListener('focus', function () { showMapPreview(el); });
+      el.addEventListener('blur', hideMapPreview);
+    });
+    document.getElementById('bv-map-list').addEventListener('scroll', hideMapPreview);
+  }
+
+  // ── Sort - reorders the cards themselves (appendChild on an already-
+  // present child just moves it), independent of applyFilters() above,
+  // which only ever toggles `hidden` and never touches DOM order. So a
+  // sort survives filtering and vice versa - switching filters doesn't
+  // reset back to document order, and re-sorting doesn't clear filters.
+  // Sorts WITHIN each category column separately (not the cards as one
+  // flat list) - the build cards are grouped into 4 category columns (see
+  // .bv-cat-col__list), so re-appending into a single shared parent would
+  // yank every card out of its own column into just the first one.
+  var sortSelect = document.getElementById('bv-sort');
+  var catColLists = Array.prototype.slice.call(grid.querySelectorAll('.bv-cat-col__list'));
+  function sortComparator(mode) {
+    return function (a, b) {
+      if (mode === 'name-asc' || mode === 'name-desc') {
+        var ta = a.getAttribute('data-bv-title') || '';
+        var tb = b.getAttribute('data-bv-title') || '';
+        var cmp = ta < tb ? -1 : (ta > tb ? 1 : 0);
+        return mode === 'name-asc' ? cmp : -cmp;
+      }
+      // "Newest"/"Oldest" - data-bv-order is each card's position in
+      // _data/builds.yml (forloop.index), which is already chronological
+      // since new entries get appended to the bottom of that file.
+      var oa = parseInt(a.getAttribute('data-bv-order'), 10) || 0;
+      var ob = parseInt(b.getAttribute('data-bv-order'), 10) || 0;
+      return mode === 'newest' ? ob - oa : oa - ob;
+    };
+  }
+  function applySort() {
+    if (!sortSelect) return;
+    var mode = sortSelect.value;
+    catColLists.forEach(function (list) {
+      var colCards = Array.prototype.slice.call(list.querySelectorAll('.bv-card'));
+      colCards.sort(sortComparator(mode)).forEach(function (card) { list.appendChild(card); });
+    });
+  }
+  if (sortSelect) {
+    sortSelect.addEventListener('change', applySort);
+    applySort(); // default "Newest first" - reorder out of document order on load
+  }
+
+  /* ── "By class" search + collapse/expand ────────────────────────────
+     Exact same pattern as Build Creator's own Class picker (see
+     tools/build-creator/index.html) - each category column collapses to
+     just its first row by default, with a single "Show all" toggle that
+     expands every column together, and searching always shows every match
+     regardless of collapse state. Re-targeted at #bv-summary's own IDs/
+     classes (.bc-class-col/.bc-class-chip are shared with Build Creator,
+     bv-class-search/bv-class-toggle are this page's own). */
+  var classCols = Array.prototype.slice.call(document.querySelectorAll('#bv-summary .bc-class-col'));
+  var classSearch = document.getElementById('bv-class-search');
+  var classToggle = document.getElementById('bv-class-toggle');
+  var classesAllExpanded = false;
+
+  // Uses el.style.display rather than the `hidden` attribute to hide chips -
+  // .bc-class-chip declares its own `display: flex` in CSS, which (same
+  // specificity, later in the cascade than the browser's [hidden]{display:
+  // none} UA rule) wins and leaves the chip visible even while "hidden" is
+  // set. An inline style always beats a class rule, so it actually hides.
+  function computeClassFirstRow(col) {
+    var items = Array.prototype.slice.call(col.querySelectorAll('.bc-class-chip'));
+    if (!items.length) return;
+    var prevDisplay = items.map(function (el) { return el.style.display; });
+    items.forEach(function (el) { el.style.display = ''; });
+    var firstTop = items[0].offsetTop;
+    items.forEach(function (el) {
+      el.dataset.firstRow = (Math.abs(el.offsetTop - firstTop) < 4) ? '1' : '0';
+    });
+    items.forEach(function (el, i) { el.style.display = prevDisplay[i]; });
+  }
+
+  function updateClassColDisplay(col) {
+    var items = Array.prototype.slice.call(col.querySelectorAll('.bc-class-chip'));
+    var q = classSearch.value.trim().toLowerCase();
+    var searching = !!q;
+    var hasOverflow = false;
+    var anyVisible = false;
+
+    items.forEach(function (el) {
+      var matches = !searching || (el.getAttribute('data-name') || '').indexOf(q) !== -1;
+      var visible = searching ? matches : (classesAllExpanded || el.dataset.firstRow === '1');
+      if (!searching && el.dataset.firstRow !== '1') hasOverflow = true;
+      el.style.display = visible ? '' : 'none';
+      if (visible) anyVisible = true;
+    });
+
+    // A search with no matches in this category hides the whole column
+    // (header included) rather than leaving an empty card behind - same
+    // .bv-summary-grid > .wr-cardgrid__col display:flex override applies
+    // here as it does to the chips above, so this uses style.display too.
+    col.style.display = (searching && !anyVisible) ? 'none' : '';
+
+    var fade = col.querySelector('.bc-class-col__fade');
+    if (fade) fade.hidden = searching || classesAllExpanded || !hasOverflow;
+
+    return hasOverflow;
+  }
+
+  function refreshClassCols() {
+    var q = classSearch.value.trim().toLowerCase();
+    var searching = !!q;
+    var totalCount = 0;
+    var anyOverflow = false;
+    classCols.forEach(function (col) {
+      totalCount += col.querySelectorAll('.bc-class-chip').length;
+      if (updateClassColDisplay(col)) anyOverflow = true;
+    });
+
+    if (classToggle) {
+      classToggle.hidden = searching || !anyOverflow;
+      classToggle.setAttribute('aria-expanded', classesAllExpanded ? 'true' : 'false');
+      classToggle.innerHTML = classesAllExpanded ? 'Show less &#9652;' : 'Show all ' + totalCount + ' classes &#9662;';
+    }
+  }
+
+  if (classSearch && classCols.length) {
+    classCols.forEach(computeClassFirstRow);
+    refreshClassCols();
+
+    if (classToggle) {
+      classToggle.addEventListener('click', function () {
+        classesAllExpanded = !classesAllExpanded;
+        refreshClassCols();
+      });
+    }
+
+    classSearch.addEventListener('input', refreshClassCols);
+
+    var bvClassResizeTimer = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(bvClassResizeTimer);
+      bvClassResizeTimer = setTimeout(function () {
+        classCols.forEach(computeClassFirstRow);
+        refreshClassCols();
+      }, 150);
+    });
+  }
+})();
+</script>

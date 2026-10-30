@@ -1,0 +1,82 @@
+url: ""
+baseurl: ""  # set to /<repo-name> once the GitHub repo exists (deploy workflow injects it automatically)
+title: "Gears 5 Database"
+description: "Complete Gears 5 reference - characters, weapons, classes, marks, banners, bloodsprays, executions, expressions, esports, bundles, DLC, and Iron."
+tagline: "Everything Gears 5. One place."
+short_name: "GoW5DB"
+# Shown under the tagline on the home page
+work_in_progress: "Many things are still to be finished and polished here."
+# Set to the TODO list's address (e.g. an issue or a page in the GearsOfWarDatabases organisation) to show a link to
+# it under the work in progress note; empty shows no link.
+todo_url: ""
+credits:
+  xbox:
+    gamertag: "MissJamball#7618"
+    url: "https://www.xbox.com/play/user/MissJamball7618"
+  github:
+    name: "Ryan Turner"
+    user: "TheSCREWEDSoftware"
+    url: "https://github.com/TheSCREWEDSoftware"
+# Top right corner of every page
+eday_notice:
+  text: "E-Day coming soon, check"
+  link_text: "GearsOfWarDatabases"
+  url: "https://github.com/orgs/GearsOfWarDatabases/repositories"
+# Where the footer's revision links to when Actions doesn't say (GitHub Pages builds set it from GITHUB_REPOSITORY)
+repository_url: "https://github.com/TheSCREWEDSoftware/GoW5DB"
+
+# Section groups drive the navbar and homepage cards
+nav_groups:
+  - name: "Combat"
+    sections:
+      - { title: "Characters",  url: "/characters/",  icon: "&#128100;", desc: "COG, Swarm & guest characters" }
+      - { title: "Weapons",     url: "/weapons/",     icon: "&#128299;", desc: "Every weapon and its stats" }
+      - { title: "Classes",     url: "/classes/",     icon: "&#9881;",   desc: "Horde & Escape classes" }
+      - { title: "Marks",       url: "/marks/",       icon: "&#127919;", desc: "Collectible banner marks" }
+  - name: "World"
+    sections:
+      - { title: "Maps",        url: "/maps/",        icon: "&#128506;", desc: "Horde, Escape & Versus maps" }
+      - { title: "Gamemodes",   url: "/gamemodes/",   icon: "&#127918;", desc: "Every game mode explained" }
+      - { title: "Fabricator",  url: "/fabricator/",  icon: "&#128736;", desc: "Weapon & fortification prices", open: "prices,forge" }
+      - { title: "Enemies",     url: "/enemies/",     icon: "&#128128;", desc: "Horde enemies & Energy values" }
+  - name: "Customization"
+    sections:
+      - { title: "Banners",     url: "/banners/",     icon: "&#127988;", desc: "Player banners" }
+      - { title: "Bloodsprays", url: "/bloodsprays/", icon: "&#128167;", desc: "Bloodspray collection" }
+      - { title: "Executions",  url: "/executions/",  icon: "&#128481;", desc: "Execution moves" }
+      - { title: "Expressions", url: "/expressions/", icon: "&#128483;", desc: "Character expressions" }
+  - name: "Content"
+    sections:
+      - { title: "Esports",     url: "/esports/",     icon: "&#127942;", desc: "Esports skins & drops" }
+      - { title: "Bundles",     url: "/bundles/",     icon: "&#128230;", desc: "Store bundles" }
+      - { title: "DLC",         url: "/dlc/",         icon: "&#11088;",  desc: "Downloadable content" }
+      - { title: "Iron",        url: "/iron/",        icon: "&#128176;", desc: "Iron pricing & offers" }
+
+collections:
+  classes:
+    output: true
+    permalink: /classes/:name/
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+  - scope:
+      path: "_classes"
+      type: classes
+    values:
+      layout: class
+
+exclude:
+  - ref/
+  - HOW-TO-ADD-A-CLASS.md
+  - Gemfile
+  - Gemfile.lock
+  - .bundle/
+  - vendor/
+  - "*.sh"
+
+sass:
+  sass_dir: _sass
+  style: compressed

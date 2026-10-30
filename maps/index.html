@@ -1,0 +1,1058 @@
+---
+title: Maps
+---
+<div class="section-page">
+  <h1 class="section-page__title">Maps</h1>
+  <p class="section-page__intro">Every map from the in-game Maps menu. <strong>PVP and PVE (Horde)</strong> maps are clickable for a bigger preview - Escape hives don't have one captured yet.</p>
+
+  {%- comment %} Every chip below (Mode/Game/Minimap Data) is a
+  .xref-link--tip, same CSS-only hover/focus tooltip mechanism used
+  everywhere else on the site (see .xref-tip in styles/main.scss) - each
+  one's tooltip lists every map it currently matches, with that map's own
+  grid thumbnail, so hovering a chip previews what clicking it will filter
+  down to before you commit. Games_order/extras below stay hand-rolled
+  (not a shared include) matching this file's own existing style rather
+  than introducing a new abstraction for three call sites. {% endcomment -%}
+  <div class="maps-filter" id="maps-filter">
+    <div class="maps-filter__row">
+      <span class="maps-filter__label">Mode:</span>
+      {%- for group in site.data.maps %}
+      <button type="button" class="maps-filter__chip maps-filter__chip--mode maps-filter__chip--{{ group.name | slugify }}{% if group.maps.size > 0 %} xref-link--tip{% endif %}" data-mode="{{ group.name }}">
+        {{ group.name }} <span class="maps-filter__chip-count">({{ group.maps | size }})</span>
+        {%- if group.maps.size > 0 %}
+        {%- assign tip_cols = group.maps.size -%}
+        {%- if tip_cols > 3 %}{%- assign tip_cols = 3 %}{%- endif -%}
+        <span class="xref-tip maps-filter__chip-tip" style="--tip-cols: {{ tip_cols }};">
+          {%- for map in group.maps %}
+          {%- assign tip_mslug = map.name | slugify -%}
+          <span class="maps-filter__chip-tip-row"><img src="{{ '/images/maps/' | append: tip_mslug | append: '-small.jpg' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span class="maps-filter__chip-tip-fallback">Image Not Available Currently</span><span>{{ map.name }}</span></span>
+          {%- endfor %}
+        </span>
+        {%- endif %}
+      </button>
+      {%- endfor %}
+    </div>
+    <div class="maps-filter__row">
+      <span class="maps-filter__label">Game:</span>
+      {%- assign games_order = "Gears of War,Gears of War 2,Gears of War 3,Gears of War 4,Gears 5" | split: "," -%}
+      {%- for g in games_order %}
+      {%- assign gcount = 0 -%}
+      {%- for group in site.data.maps -%}{%- for map in group.maps -%}{%- if map.game == g -%}{%- assign gcount = gcount | plus: 1 -%}{%- endif -%}{%- endfor -%}{%- endfor -%}
+      <button type="button" class="maps-filter__chip maps-filter__chip--game maps-filter__chip--{{ g | slugify }}{% if gcount > 0 %} xref-link--tip{% endif %}" data-game="{{ g }}">
+        {{ g }} <span class="maps-filter__chip-count">({{ gcount }})</span>
+        {%- if gcount > 0 %}
+        {%- assign tip_cols = gcount -%}
+        {%- if tip_cols > 3 %}{%- assign tip_cols = 3 %}{%- endif -%}
+        <span class="xref-tip maps-filter__chip-tip" style="--tip-cols: {{ tip_cols }};">
+          {%- for group in site.data.maps -%}{%- for map in group.maps -%}{%- if map.game == g -%}
+          {%- assign tip_mslug = map.name | slugify -%}
+          <span class="maps-filter__chip-tip-row"><img src="{{ '/images/maps/' | append: tip_mslug | append: '-small.jpg' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span class="maps-filter__chip-tip-fallback">Image Not Available Currently</span><span>{{ map.name }}</span></span>
+          {%- endif -%}{%- endfor -%}{%- endfor -%}
+        </span>
+        {%- endif %}
+      </button>
+      {%- endfor %}
+    </div>
+    <div class="maps-filter__row">
+      <span class="maps-filter__label">Minimap Data:</span>
+      {%- comment %} Same <mode>_total-aware "how many maps actually have
+      this" count the per-card badges use (see the main grid loop below and
+      _data/map_dots.yml's header comment) - duplicated here rather than
+      shared because it has to run before that loop even starts (the filter
+      bar sits above the grid) and each pass only touches ~70 maps x 4
+      types, cheap at Jekyll build time. {% endcomment -%}
+      {%- assign extra_types = "easter_egg,guides,pvp,pve" | split: "," -%}
+      {%- assign extra_slugs = "easter-egg,guides,pvp,pve" | split: "," -%}
+      {%- assign extra_labels = "Easter Egg,Guide,PVP,PVE" | split: "," -%}
+      {%- assign extra_titles = "This map has Easter Egg Minimap Data, which you can see markers on|This map has Guides Minimap Data, which you can see markers on|This map has PVP Minimap Data, which you can see markers on|This map has PVE Minimap Data, which you can see markers on" | split: "|" -%}
+      {%- for etype in extra_types %}
+      {%- assign eslug = extra_slugs[forloop.index0] -%}
+      {%- assign elabel = extra_labels[forloop.index0] -%}
+      {%- assign etitle = extra_titles[forloop.index0] -%}
+      {%- assign etype_total_key = etype | append: '_total' -%}
+      {%- assign ecount = 0 -%}
+      {%- for group in site.data.maps -%}
+        {%- for map in group.maps -%}
+          {%- assign emslug = map.name | slugify -%}
+          {%- assign edotsize = site.data.map_dots[emslug][etype] | size -%}
+          {%- assign ehas = site.data.map_dots[emslug][etype_total_key] | default: edotsize -%}
+          {%- if ehas > 0 -%}{%- assign ecount = ecount | plus: 1 -%}{%- endif -%}
+        {%- endfor -%}
+      {%- endfor -%}
+      <button type="button" class="maps-filter__chip maps-filter__chip--extra maps-filter__chip--{{ eslug }}{% if ecount > 0 %} xref-link--tip{% endif %}" data-extra="{{ eslug }}" title="{{ etitle }}">
+        {{ elabel }} <span class="maps-filter__chip-count">({{ ecount }})</span>
+        {%- if ecount > 0 %}
+        {%- assign tip_cols = ecount -%}
+        {%- if tip_cols > 3 %}{%- assign tip_cols = 3 %}{%- endif -%}
+        <span class="xref-tip maps-filter__chip-tip" style="--tip-cols: {{ tip_cols }};">
+          {%- for group in site.data.maps -%}
+            {%- for map in group.maps -%}
+              {%- assign emslug = map.name | slugify -%}
+              {%- assign edotsize = site.data.map_dots[emslug][etype] | size -%}
+              {%- assign ehas = site.data.map_dots[emslug][etype_total_key] | default: edotsize -%}
+              {%- if ehas > 0 %}
+          <span class="maps-filter__chip-tip-row"><img src="{{ '/images/maps/' | append: emslug | append: '-small.jpg' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span class="maps-filter__chip-tip-fallback">Image Not Available Currently</span><span>{{ map.name }}</span></span>
+              {%- endif -%}
+            {%- endfor -%}
+          {%- endfor -%}
+        </span>
+        {%- endif %}
+      </button>
+      {%- endfor %}
+    </div>
+    <div class="maps-filter__row">
+      <span class="maps-filter__label">Debug:</span>
+      {%- comment %} Same has_layout check the per-card "DEBUG: Missing
+      Minimap" badge and the Map Screenshot Audit table below already do
+      (see has_layout further down in the main grid loop, and again in the
+      audit table) - counted here too, separately, since the filter bar
+      sits above both of those and needs its own count before either loop
+      has run. A two-position switch rather than a single toggle chip -
+      "with" and "without" are mutually exclusive (a map can't be both),
+      so it reads as one control with two settled positions, like a light
+      switch, instead of a plain on/off chip that only ever expressed the
+      "without" direction. Wired directly by ID in the JS (maps-filter-
+      debug-switch, data-debug-mode on each half) rather than through
+      wireChips() - that helper's multi-select OR-within-group logic
+      doesn't fit a two-position exclusive switch. {% endcomment -%}
+      {%- assign missing_layout_count = 0 -%}
+      {%- assign has_layout_count = 0 -%}
+      {%- for mg in site.data.maps -%}
+        {%- for mm in mg.maps -%}
+          {%- assign mm_slug = mm.name | slugify -%}
+          {%- assign mm_layout_path = '/images/maps/' | append: mm_slug | append: '-layout.jpg' -%}
+          {%- assign mm_has_layout = site.static_files | where: "path", mm_layout_path | first -%}
+          {%- if mm_has_layout -%}
+            {%- assign has_layout_count = has_layout_count | plus: 1 -%}
+          {%- else -%}
+            {%- assign missing_layout_count = missing_layout_count | plus: 1 -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endfor -%}
+      <div class="maps-filter__switch" id="maps-filter-debug-switch" role="group" aria-label="Filter by whether a map's in-game Minimap/PVP/PVE/Guides screenshot exists yet">
+        <button type="button" class="maps-filter__switch-btn maps-filter__switch-btn--with{% if has_layout_count > 0 %} xref-link--tip{% endif %}" data-debug-mode="with" title="Only show maps that already have their in-game Minimap/PVP/PVE/Guides screenshot (-layout.jpg)">
+          With Minimap Image <span class="maps-filter__chip-count">({{ has_layout_count }})</span>
+          {%- if has_layout_count > 0 %}
+          {%- assign tip_cols = has_layout_count -%}
+          {%- if tip_cols > 3 %}{%- assign tip_cols = 3 %}{%- endif -%}
+          <span class="xref-tip maps-filter__chip-tip" style="--tip-cols: {{ tip_cols }};">
+            {%- for mg in site.data.maps -%}
+              {%- for mm in mg.maps -%}
+                {%- assign mm_slug = mm.name | slugify -%}
+                {%- assign mm_layout_path = '/images/maps/' | append: mm_slug | append: '-layout.jpg' -%}
+                {%- assign mm_has_layout = site.static_files | where: "path", mm_layout_path | first -%}
+                {%- if mm_has_layout -%}
+            <span class="maps-filter__chip-tip-row"><img src="{{ '/images/maps/' | append: mm_slug | append: '-small.jpg' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span class="maps-filter__chip-tip-fallback">Image Not Available Currently</span><span>{{ mm.name }}</span></span>
+                {%- endif -%}
+              {%- endfor -%}
+            {%- endfor -%}
+          </span>
+          {%- endif %}
+        </button>
+        <button type="button" class="maps-filter__switch-btn maps-filter__switch-btn--without{% if missing_layout_count > 0 %} xref-link--tip{% endif %}" data-debug-mode="without" title="Only show maps that don't have their in-game Minimap/PVP/PVE/Guides screenshot (-layout.jpg) captured yet">
+          Without Minimap Image <span class="maps-filter__chip-count">({{ missing_layout_count }})</span>
+          {%- if missing_layout_count > 0 %}
+          {%- assign tip_cols = missing_layout_count -%}
+          {%- if tip_cols > 3 %}{%- assign tip_cols = 3 %}{%- endif -%}
+          <span class="xref-tip maps-filter__chip-tip" style="--tip-cols: {{ tip_cols }};">
+            {%- for mg in site.data.maps -%}
+              {%- for mm in mg.maps -%}
+                {%- assign mm_slug = mm.name | slugify -%}
+                {%- assign mm_layout_path = '/images/maps/' | append: mm_slug | append: '-layout.jpg' -%}
+                {%- assign mm_has_layout = site.static_files | where: "path", mm_layout_path | first -%}
+                {%- unless mm_has_layout -%}
+            <span class="maps-filter__chip-tip-row"><img src="{{ '/images/maps/' | append: mm_slug | append: '-small.jpg' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span class="maps-filter__chip-tip-fallback">Image Not Available Currently</span><span>{{ mm.name }}</span></span>
+                {%- endunless -%}
+              {%- endfor -%}
+            {%- endfor -%}
+          </span>
+          {%- endif %}
+        </button>
+      </div>
+    </div>
+    <button type="button" class="maps-filter__clear" id="maps-filter-clear">Clear filters</button>
+  </div>
+
+  {%- for group in site.data.maps %}
+  {%- assign clickable = false %}
+  {%- if group.name == "PVP and PVE (Horde)" %}{%- assign clickable = true %}{%- endif %}
+  <section class="modes-category" data-mode="{{ group.name }}">
+    <div class="modes-category__header">
+      <h2 class="modes-category__title">{{ group.name }}</h2>
+      <span class="modes-category__count">{{ group.maps | size }}</span>
+    </div>
+
+    <div class="maps-grid">
+      {%- for map in group.maps %}
+      {%- assign mslug = map.name | slugify %}
+      {%- assign small_src = '/images/maps/' | append: mslug | append: '-small.jpg' | relative_url %}
+      {%- assign big_src = '/images/maps/' | append: mslug | append: '.jpg' | relative_url %}
+      {%- assign layout_src = '/images/maps/' | append: mslug | append: '-layout.jpg' | relative_url %}
+      {%- assign easter_egg_path = '/images/maps/' | append: mslug | append: '-easter-egg.jpg' -%}
+      {%- assign easter_egg_src = easter_egg_path | relative_url %}
+      {%- assign has_easter_egg = site.static_files | where: "path", easter_egg_path | first -%}
+      {%- comment %} Minimap Data badge/filter counts - all four read straight
+      from map_dots.yml's point sets (see that file's header comment), NOT
+      from has_easter_egg above (that's only about whether the -easter-egg.jpg
+      image file exists, which drives the modal's "Show Easter Egg" toggle -
+      a separate, unrelated concern from whether markers are calibrated).
+      Each falls back to a plain dot count UNLESS map_dots.yml gives an
+      explicit <mode>_total override (see that file's header comment) for
+      when the dots are waypoints of fewer distinct things than there are
+      dots - e.g. Ritual's easter_egg_total: 1, so its 14-dot waypoint trail
+      reads "Easter Egg (1)" instead of "Easter Egg (14)". {% endcomment -%}
+      {%- assign ee_dot_size = site.data.map_dots[mslug].easter_egg | size -%}
+      {%- assign guide_dot_size = site.data.map_dots[mslug].guides | size -%}
+      {%- assign pvp_dot_size = site.data.map_dots[mslug].pvp | size -%}
+      {%- assign pve_dot_size = site.data.map_dots[mslug].pve | size -%}
+      {%- assign easter_egg_count = site.data.map_dots[mslug].easter_egg_total | default: ee_dot_size -%}
+      {%- assign guide_count = site.data.map_dots[mslug].guides_total | default: guide_dot_size -%}
+      {%- assign pvp_count = site.data.map_dots[mslug].pvp_total | default: pvp_dot_size -%}
+      {%- assign pve_count = site.data.map_dots[mslug].pve_total | default: pve_dot_size -%}
+      {%- comment %} DEBUG - same has_layout check the Map Screenshot Audit
+      table below already does per map, just surfaced directly on each
+      card's own image instead of making you go find that map's row in the
+      audit table. Remove this whole block (and its CSS/.map-card__debug*)
+      once every map has its in-game minimap screenshot captured. {% endcomment -%}
+      {%- assign layout_path = '/images/maps/' | append: mslug | append: '-layout.jpg' -%}
+      {%- assign has_layout = site.static_files | where: "path", layout_path | first -%}
+      {%- if clickable %}
+      <button type="button" class="map-card map-card--clickable" data-map-slug="{{ mslug }}" data-map-big="{{ big_src }}" data-map-layout="{{ layout_src }}" data-map-easter-egg="{{ easter_egg_src }}" data-map-name="{{ map.name }}" data-map-game="{{ map.game }}" data-mode="{{ group.name }}" data-game="{{ map.game }}" data-easter-egg="{% if easter_egg_count > 0 %}1{% else %}0{% endif %}" data-guides="{% if guide_count > 0 %}1{% else %}0{% endif %}" data-pvp="{% if pvp_count > 0 %}1{% else %}0{% endif %}" data-pve="{% if pve_count > 0 %}1{% else %}0{% endif %}" data-has-layout="{% if has_layout %}1{% else %}0{% endif %}">
+      {%- else %}
+      <div class="map-card" data-mode="{{ group.name }}" data-game="{{ map.game }}" data-easter-egg="{% if easter_egg_count > 0 %}1{% else %}0{% endif %}" data-guides="{% if guide_count > 0 %}1{% else %}0{% endif %}" data-pvp="{% if pvp_count > 0 %}1{% else %}0{% endif %}" data-pve="{% if pve_count > 0 %}1{% else %}0{% endif %}" data-has-layout="{% if has_layout %}1{% else %}0{% endif %}">
+      {%- endif %}
+        <div class="map-card__img-wrap">
+          <img src="{{ small_src }}" alt="{{ map.name }}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+          <span class="map-card__img-fallback">Image Not Available Currently</span>
+          {%- unless has_layout %}
+          <mark class="kw kw--value kw--expensive map-card__debug-layout">DEBUG: Missing Minimap</mark>
+          {%- endunless %}
+          {%- if easter_egg_count > 0 or guide_count > 0 or pvp_count > 0 or pve_count > 0 %}
+          <div class="map-card__minimap-badges">
+            {%- if easter_egg_count > 0 %}
+            <span class="map-card__minimap-badge map-card__minimap-badge--easter-egg" title="This map has Easter Egg Minimap Data, which you can see markers on">Easter Egg ({{ easter_egg_count }})</span>
+            {%- endif %}
+            {%- if guide_count > 0 %}
+            <span class="map-card__minimap-badge map-card__minimap-badge--guides" title="This map has Guides Minimap Data, which you can see markers on">Guides ({{ guide_count }})</span>
+            {%- endif %}
+            {%- if pvp_count > 0 %}
+            <span class="map-card__minimap-badge map-card__minimap-badge--pvp" title="This map has PVP Minimap Data, which you can see markers on">PVP ({{ pvp_count }})</span>
+            {%- endif %}
+            {%- if pve_count > 0 %}
+            <span class="map-card__minimap-badge map-card__minimap-badge--pve" title="This map has PVE Minimap Data, which you can see markers on">PVE ({{ pve_count }})</span>
+            {%- endif %}
+          </div>
+          {%- endif %}
+        </div>
+        <div class="map-card__info">
+          <span class="map-card__name">{{ map.name }}</span>
+          <span class="map-badge info-badge map-badge--{{ map.game | slugify }}" tabindex="0">{{ map.game }}<span class="map-badge__tip">This map was introduced in: <span class="map-badge__tip-game">{{ map.game }}</span></span></span>
+        </div>
+      {%- if clickable %}
+      </button>
+      {%- else %}
+      </div>
+      {%- endif %}
+      {%- endfor %}
+    </div>
+  </section>
+  {%- endfor %}
+
+  <!-- DEBUG: map image asset completeness + style audit - every map should
+  have a small (grid thumbnail) and big (modal) image, captured from the
+  LOADING SCREEN (not the main menu, which renders a ghosted double-exposure
+  look); the in-game layout/minimap shot is optional and only captured for a
+  handful of maps so far (see the comment atop _data/maps.yml). Style can't
+  be detected at build time, so site.data.map_screenshot_good (see
+  _data/map_screenshot_good.yml) is a manually-maintained allowlist of slugs
+  confirmed to have the correct loading-screen capture - everything else
+  with an existing big image is flagged as still needing a redo. -->
+  {%- assign map_any_missing = false -%}
+  {%- for group in site.data.maps -%}
+    {%- for map in group.maps -%}
+      {%- assign mslug = map.name | slugify -%}
+      {%- assign small_path = "/images/maps/" | append: mslug | append: "-small.jpg" -%}
+      {%- assign big_path = "/images/maps/" | append: mslug | append: ".jpg" -%}
+      {%- assign layout_path = "/images/maps/" | append: mslug | append: "-layout.jpg" -%}
+      {%- assign has_small = site.static_files | where: "path", small_path | first -%}
+      {%- assign has_big = site.static_files | where: "path", big_path | first -%}
+      {%- assign has_layout = site.static_files | where: "path", layout_path | first -%}
+      {%- assign is_good_style = false -%}
+      {%- if site.data.map_screenshot_good contains mslug -%}{%- assign is_good_style = true -%}{%- endif -%}
+      {%- unless has_small and has_big and has_layout and is_good_style -%}{%- assign map_any_missing = true -%}{%- endunless -%}
+    {%- endfor -%}
+  {%- endfor -%}
+  {%- if map_any_missing %}
+  <section class="class-section class-audit">
+    <details class="fab-collapsible">
+      <summary class="class-audit__title" title="This only shows up when at least one map is missing its small, big, or in-game layout image, or its big image isn't a confirmed loading-screen-style capture - it disappears once every map has all three images and a confirmed-correct style.">[DEBUG] - Map Screenshot Audit</summary>
+      <div class="settings-table__scroll">
+        <table class="settings-table map-audit__table">
+          <thead>
+            <tr>
+              <th>Map</th>
+              <th>Mode</th>
+              <th>Small</th>
+              <th>Big</th>
+              <th>Style</th>
+              <th>Minimap</th>
+            </tr>
+          </thead>
+          <tbody>
+            {%- for group in site.data.maps -%}
+              {%- for map in group.maps -%}
+                {%- assign mslug = map.name | slugify -%}
+                {%- assign small_path = "/images/maps/" | append: mslug | append: "-small.jpg" -%}
+                {%- assign big_path = "/images/maps/" | append: mslug | append: ".jpg" -%}
+                {%- assign layout_path = "/images/maps/" | append: mslug | append: "-layout.jpg" -%}
+                {%- assign has_small = site.static_files | where: "path", small_path | first -%}
+                {%- assign has_big = site.static_files | where: "path", big_path | first -%}
+                {%- assign has_layout = site.static_files | where: "path", layout_path | first -%}
+                {%- assign is_good_style = false -%}
+                {%- if site.data.map_screenshot_good contains mslug -%}{%- assign is_good_style = true -%}{%- endif -%}
+            <tr>
+              <td>{{ map.name }}</td>
+              <td>{{ group.name }}</td>
+              <td class="class-audit__cell{% if has_small %} class-audit__cell--ok{% else %} class-audit__cell--missing{% endif %}">{% if has_small %}&#9989;{% else %}&#10060;{% endif %}</td>
+              <td class="class-audit__cell{% if has_big %} class-audit__cell--ok{% else %} class-audit__cell--missing{% endif %}">{% if has_big %}&#9989;{% else %}&#10060;{% endif %}</td>
+              <td class="class-audit__cell{% if is_good_style %} class-audit__cell--ok{% elsif has_big %} class-audit__cell--missing{% else %} class-audit__cell--na{% endif %}" title="{% unless is_good_style %}{% if has_big %}Main-menu style (ghosted) - needs a loading-screen recapture{% else %}No big image yet{% endif %}{% endunless %}">{% if is_good_style %}&#9989;{% elsif has_big %}&#10060;{% else %}&mdash;{% endif %}</td>
+              <td class="class-audit__cell{% if has_layout %} class-audit__cell--ok{% else %} class-audit__cell--missing{% endif %}">{% if has_layout %}&#9989;{% else %}&#10060;{% endif %}</td>
+            </tr>
+              {%- endfor -%}
+            {%- endfor -%}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+  {%- endif %}
+</div>
+
+<div class="map-modal" id="map-modal" hidden>
+  <div class="map-modal__backdrop" id="map-modal-backdrop"></div>
+  <button type="button" class="map-modal__close" id="map-modal-close" aria-label="Close">&#10005;</button>
+  <div class="map-modal__stage">
+    <button type="button" class="map-modal__nav map-modal__nav--prev" id="map-modal-prev" aria-label="Previous map">&#10094;</button>
+    <div class="map-modal__panel" role="dialog" aria-modal="true" aria-labelledby="map-modal-name">
+      <div class="map-modal__meta">
+        <span class="map-modal__name" id="map-modal-name"></span>
+        <span class="map-badge info-badge" id="map-modal-game" tabindex="0">
+          <span id="map-modal-game-label"></span>
+          <span class="map-badge__tip" id="map-modal-game-tip"></span>
+        </span>
+        <button type="button" class="map-modal__layout-toggle" id="map-modal-layout-toggle" hidden>Show In-Game Map</button>
+        <button type="button" class="map-modal__layout-toggle map-modal__easter-egg-toggle" id="map-modal-easter-egg-toggle" hidden>&#x1F95A; Easter Egg</button>
+      </div>
+      <div class="map-modal__img-wrap">
+        <img class="map-modal__img" id="map-modal-img" src="" alt="" />
+        <span class="map-modal__img-fallback" id="map-modal-img-fallback" hidden>Image Not Available Currently</span>
+        <div class="map-modal__dots" id="map-modal-dots" hidden></div>
+      </div>
+      <!-- Shown when a dot with attached images (see the `images` field in
+           _data/map_dots.yml / the Map Creator's per-point image panel)
+           is clicked - cycles through them, below the map image, in the
+           order they were authored in. Hidden the rest of the time. -->
+      <div class="map-modal__gallery" id="map-modal-gallery" hidden>
+        <div class="map-modal__gallery-stage">
+          <button type="button" class="map-modal__gallery-nav map-modal__gallery-nav--prev" id="map-modal-gallery-prev" aria-label="Previous image">&#10094;</button>
+          <img class="map-modal__gallery-img" id="map-modal-gallery-img" src="" alt="" />
+          <button type="button" class="map-modal__gallery-nav map-modal__gallery-nav--next" id="map-modal-gallery-next" aria-label="Next image">&#10095;</button>
+          <button type="button" class="map-modal__gallery-close" id="map-modal-gallery-close" aria-label="Close images">&#10005;</button>
+        </div>
+        <div class="map-modal__gallery-counter" id="map-modal-gallery-counter"></div>
+      </div>
+    </div>
+    <button type="button" class="map-modal__nav map-modal__nav--next" id="map-modal-next" aria-label="Next map">&#10095;</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var modal = document.getElementById('map-modal');
+  if (!modal) return;
+  var img = document.getElementById('map-modal-img');
+  var imgFallback = document.getElementById('map-modal-img-fallback');
+  // Persistent (not reassigned per-call) so it covers every way `img.src`
+  // gets set below - the initial big photo in show(), and both toggles
+  // switching to the layout/easter-egg shot - rather than needing its own
+  // onerror wired up at each call site. checkLayout/checkEasterEgg already
+  // gate whether those two toggles are even shown, so in practice this
+  // mainly catches the big photo itself missing.
+  img.onerror = function () {
+    img.style.display = 'none';
+    if (imgFallback) imgFallback.hidden = false;
+  };
+  img.onload = function () {
+    img.style.display = '';
+    if (imgFallback) imgFallback.hidden = true;
+    renderDots();
+  };
+  var dotsWrap = document.getElementById('map-modal-dots');
+  var layoutToggle = document.getElementById('map-modal-layout-toggle');
+  var easterEggToggle = document.getElementById('map-modal-easter-egg-toggle');
+  var nameEl = document.getElementById('map-modal-name');
+  var gameEl = document.getElementById('map-modal-game');
+  var gameLabelEl = document.getElementById('map-modal-game-label');
+  var gameTipEl = document.getElementById('map-modal-game-tip');
+  // Mirrors the Liquid `slugify` used to build each game's chip/badge
+  // modifier class in the SCSS (see .map-badge--gears-of-war etc.).
+  var GAME_CLASSES = {
+    'Gears of War': 'map-badge--gears-of-war',
+    'Gears of War 2': 'map-badge--gears-of-war-2',
+    'Gears of War 3': 'map-badge--gears-of-war-3',
+    'Gears of War 4': 'map-badge--gears-of-war-4',
+    'Gears 5': 'map-badge--gears-5'
+  };
+  var backdrop = document.getElementById('map-modal-backdrop');
+  var closeBtn = document.getElementById('map-modal-close');
+  var prevBtn = document.getElementById('map-modal-prev');
+  var nextBtn = document.getElementById('map-modal-next');
+  var lastFocused = null;
+
+  // ── Per-dot image gallery ────────────────────────────────────────────
+  var galleryWrap = document.getElementById('map-modal-gallery');
+  var galleryImg = document.getElementById('map-modal-gallery-img');
+  var galleryPrevBtn = document.getElementById('map-modal-gallery-prev');
+  var galleryNextBtn = document.getElementById('map-modal-gallery-next');
+  var galleryCloseBtn = document.getElementById('map-modal-gallery-close');
+  var galleryCounter = document.getElementById('map-modal-gallery-counter');
+  var galleryImages = [];
+  var galleryIdx = 0;
+
+  function galleryImagePath(filename) {
+    return '{{ "/images/maps/dots/" | relative_url }}' + filename;
+  }
+  function updateGalleryImg() {
+    if (!galleryImages.length) return;
+    galleryImg.src = galleryImagePath(galleryImages[galleryIdx]);
+    galleryCounter.textContent = (galleryIdx + 1) + ' / ' + galleryImages.length;
+    var multi = galleryImages.length > 1;
+    galleryPrevBtn.hidden = !multi;
+    galleryNextBtn.hidden = !multi;
+  }
+  function openGallery(images) {
+    if (!galleryWrap || !images || !images.length) return;
+    galleryImages = images;
+    galleryIdx = 0;
+    updateGalleryImg();
+    galleryWrap.hidden = false;
+  }
+  function closeGallery() {
+    if (!galleryWrap) return;
+    galleryWrap.hidden = true;
+    galleryImages = [];
+    galleryIdx = 0;
+  }
+  if (galleryPrevBtn) galleryPrevBtn.addEventListener('click', function () {
+    if (!galleryImages.length) return;
+    galleryIdx = (galleryIdx - 1 + galleryImages.length) % galleryImages.length;
+    updateGalleryImg();
+  });
+  if (galleryNextBtn) galleryNextBtn.addEventListener('click', function () {
+    if (!galleryImages.length) return;
+    galleryIdx = (galleryIdx + 1) % galleryImages.length;
+    updateGalleryImg();
+  });
+  if (galleryCloseBtn) galleryCloseBtn.addEventListener('click', closeGallery);
+
+  // Ordered list of every clickable map, so arrows/swipe can step through
+  // them regardless of which card was opened first.
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.map-card--clickable'));
+  var items = cards.map(function (card) {
+    return {
+      slug: card.getAttribute('data-map-slug'),
+      big: card.getAttribute('data-map-big'),
+      layout: card.getAttribute('data-map-layout'),
+      easterEgg: card.getAttribute('data-map-easter-egg'),
+      name: card.getAttribute('data-map-name'),
+      game: card.getAttribute('data-map-game')
+    };
+  });
+  var current = -1;
+  // 'photo' | 'layout' | 'easter-egg' - which image the panel is ACTUALLY
+  // showing right now for the current map. Falls back to 'photo' on any map
+  // that doesn't have the preferred view (see preferredView below) - there's
+  // nothing else to show it.
+  var viewMode = 'photo';
+  // What the user last asked for via the toggle buttons (or a bookmarked
+  // #view= link), independent of whether the CURRENT map can honor it. Kept
+  // separate from viewMode so that arrowing past a map with no in-game map
+  // captured yet doesn't lose the preference - land on Foo (has a layout,
+  // showing it) -> next to Bar (no layout, falls back to its photo, but
+  // preferredView is still 'layout') -> next to Baz (has one again) picks
+  // back up on the layout, rather than requiring the toggle to be clicked
+  // again just because one map in between happened to be missing it.
+  var preferredView = 'photo';
+  var suppressHash = false; // true while we're restoring state FROM the hash, so we don't immediately rewrite it
+
+  // Keep the URL hash in sync with whatever's currently open, so a page
+  // refresh (or a shared/bookmarked link) can restore the same map and the
+  // same view (photo vs in-game map vs easter egg) instead of just losing
+  // the preview.
+  function updateHash() {
+    if (suppressHash) return;
+    var item = items[current];
+    if (!item || modal.hidden) {
+      if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+      return;
+    }
+    var hash = '#map=' + encodeURIComponent(item.slug || '') + (viewMode !== 'photo' ? '&view=' + viewMode : '');
+    history.replaceState(null, '', hash);
+  }
+
+  function parseHash() {
+    var raw = location.hash.replace(/^#/, '');
+    if (!raw) return null;
+    var params = {};
+    raw.split('&').forEach(function (pair) {
+      var eq = pair.indexOf('=');
+      if (eq === -1) return;
+      params[decodeURIComponent(pair.slice(0, eq))] = decodeURIComponent(pair.slice(eq + 1));
+    });
+    if (!params.map) return null;
+    return params;
+  }
+
+  // A map's layout/easter-egg shot isn't guaranteed to exist yet - check
+  // once per map (an Image() load/error probe) and cache the result on the
+  // item itself (as `hasLayout`/`hasEasterEgg`), rather than re-probing
+  // every time the modal is reopened on it.
+  function checkOptionalImage(item, urlProp, cacheProp, callback) {
+    if (item[cacheProp] !== undefined) { callback(item[cacheProp]); return; }
+    if (!item[urlProp]) { item[cacheProp] = false; callback(false); return; }
+    var probe = new Image();
+    probe.onload = function () { item[cacheProp] = true; callback(true); };
+    probe.onerror = function () { item[cacheProp] = false; callback(false); };
+    probe.src = item[urlProp];
+  }
+  function checkLayout(item, callback) { checkOptionalImage(item, 'layout', 'hasLayout', callback); }
+  function checkEasterEgg(item, callback) { checkOptionalImage(item, 'easterEgg', 'hasEasterEgg', callback); }
+
+  // Switches the currently-open map to the 'layout' or 'easter-egg' view,
+  // if (and only if) that map actually has one - falls back to leaving it on
+  // 'photo' (already the default from show()) otherwise, rather than
+  // showing a broken image. Shared by restoreFromHash (a bookmarked/shared
+  // #view=layout link) and next()/prev() (carrying the current view mode
+  // forward across maps - see their comments below), so both stay in sync
+  // with a single place that knows how to make the switch.
+  function applyView(mode, item, callback) {
+    if (mode === 'layout') {
+      checkLayout(item, function (hasLayout) {
+        if (items[current] !== item) { if (callback) callback(); return; }
+        if (hasLayout) {
+          viewMode = 'layout';
+          img.src = item.layout;
+          img.alt = item.name + ' in-game map';
+          if (layoutToggle) layoutToggle.textContent = 'Show Photo';
+        }
+        if (callback) callback();
+      });
+    } else if (mode === 'easter-egg') {
+      checkEasterEgg(item, function (hasEasterEgg) {
+        if (items[current] !== item) { if (callback) callback(); return; }
+        if (hasEasterEgg) {
+          viewMode = 'easter-egg';
+          img.src = item.easterEgg;
+          img.alt = item.name + ' easter egg';
+          if (easterEggToggle) easterEggToggle.textContent = 'Show Photo';
+          renderDots();
+        }
+        if (callback) callback();
+      });
+    } else if (callback) {
+      callback();
+    }
+  }
+
+  // Precise marker positions for each map's "easter egg" view, as
+  // percentages of the image (0-100). `angle` (degrees, standard atan2
+  // convention) is optional - when present, a small needle is drawn on the
+  // dot showing which way that marker was facing. `group` (optional)
+  // buckets dots into a color + label scheme - all dots sharing a group get
+  // the same color and are numbered within that group (1st group-A dot is
+  // labeled "A-1", 2nd is "A-2", etc). `shape` (optional) picks the dot's
+  // outline: circle (default) | square | diamond | triangle.
+  //
+  // Sourced straight from _data/map_dots.yml (edited via the calibrator at
+  // /tools/map-calibrator/) so adding/adjusting a map's dots never requires
+  // touching this file - just the YAML.
+  var EASTER_EGG_DOTS = {};
+  (function () {
+    var raw = {{ site.data.map_dots | jsonify }};
+    Object.keys(raw).forEach(function (slug) {
+      if (raw[slug] && raw[slug].easter_egg && raw[slug].easter_egg.length) {
+        EASTER_EGG_DOTS[slug] = raw[slug].easter_egg;
+      }
+    });
+  })();
+
+  // A-Z group palette - cycles through 5 clean, distinct named hues (green,
+  // red, blue, yellow, purple) in that fixed order, so no two consecutive
+  // letters ever land in the same color family. A-D also mirror
+  // $color-marker-a/b/c/d in _sass/variables.scss (keep both in sync if a
+  // color changes). Format is "r, g, b" so it can be dropped straight into
+  // the --marker-rgb custom property the CSS reads for fills/borders/glow.
+  // Keep this identical to GROUP_COLORS in tools/map-calibrator/index.html.
+  var GROUP_COLORS = {
+    A: '37, 244, 71',
+    B: '245, 71, 71',
+    C: '111, 167, 246',
+    D: '246, 214, 49',
+    E: '190, 111, 246',
+    F: '12, 223, 47',
+    G: '243, 27, 27',
+    H: '68, 141, 243',
+    I: '240, 202, 10',
+    J: '170, 68, 243',
+    K: '95, 247, 120',
+    L: '248, 129, 129',
+    M: '169, 202, 249',
+    N: '249, 225, 108',
+    O: '216, 169, 249',
+    P: '18, 243, 55',
+    Q: '244, 52, 52',
+    R: '92, 156, 245',
+    S: '246, 210, 30',
+    T: '181, 92, 245',
+    U: '66, 245, 96',
+    V: '247, 100, 100',
+    W: '140, 185, 248',
+    X: '248, 220, 79',
+    Y: '203, 140, 248',
+    Z: '11, 213, 45'
+  };
+  // Dedicated color for points with no group at all - keep in sync with
+  // UNGROUPED_RGB in tools/map-calibrator/index.html. Without this, an
+  // ungrouped dot never gets --marker-rgb set and just inherits the CSS
+  // default (group A's green), making it look like a secret group A member.
+  var UNGROUPED_RGB = '0, 229, 255';
+
+  // object-fit: contain can letterbox the <img> - its element box may be
+  // bigger than the picture actually drawn inside it - so the dots overlay
+  // has to be sized/positioned to match the *rendered* picture rect, not
+  // the element's own box, or percentage coordinates would drift off the
+  // real pixels they're meant to mark.
+  function positionDotsWrap() {
+    if (!dotsWrap || !img.naturalWidth || !img.naturalHeight) return;
+    var wrapRect = img.parentElement.getBoundingClientRect();
+    var imgRect = img.getBoundingClientRect();
+    // Use getBoundingClientRect() (border-box) for BOTH the element's size
+    // and its position, rather than mixing it with clientWidth/clientHeight
+    // (content-box, excludes the 1px border on .map-modal__img) - that
+    // mismatch was quietly shifting every dot by a pixel or two.
+    var elW = imgRect.width;
+    var elH = imgRect.height;
+    if (!elW || !elH) return;
+    var scale = Math.min(elW / img.naturalWidth, elH / img.naturalHeight);
+    var renderW = img.naturalWidth * scale;
+    var renderH = img.naturalHeight * scale;
+    var offsetX = (elW - renderW) / 2;
+    var offsetY = (elH - renderH) / 2;
+    dotsWrap.style.left = ((imgRect.left - wrapRect.left) + offsetX) + 'px';
+    dotsWrap.style.top = ((imgRect.top - wrapRect.top) + offsetY) + 'px';
+    dotsWrap.style.width = renderW + 'px';
+    dotsWrap.style.height = renderH + 'px';
+  }
+
+  // Rebuilds the clickable-dot overlay for whatever's currently showing -
+  // a no-op (dots cleared/hidden) unless we're on the easter-egg view of a
+  // map that actually has coordinates recorded for it.
+  function renderDots() {
+    if (!dotsWrap) return;
+    dotsWrap.innerHTML = '';
+    closeGallery();
+    var item = items[current];
+    var coords = (item && viewMode === 'easter-egg') ? EASTER_EGG_DOTS[item.slug] : null;
+    if (!coords || !coords.length) { dotsWrap.hidden = true; return; }
+    positionDotsWrap();
+    var groupCounts = {}; // running per-group tally, so labels come out A-1, A-2, ... B-1, ...
+    coords.forEach(function (pt, i) {
+      var dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = 'map-modal__dot'
+        + (pt.shape && pt.shape !== 'circle' ? ' map-modal__dot--' + pt.shape : '')
+        + (pt.fill === false ? ' map-modal__dot--outline' : '');
+      dot.style.left = pt.x + '%';
+      dot.style.top = pt.y + '%';
+      if (pt.size) {
+        dot.style.width = pt.size + 'px';
+        dot.style.height = pt.size + 'px';
+        dot.style.fontSize = (pt.size * 0.4) + 'px';
+      }
+      var label = String(i + 1);
+      if (pt.group) {
+        groupCounts[pt.group] = (groupCounts[pt.group] || 0) + 1;
+        label = pt.group + '-' + groupCounts[pt.group];
+      }
+      dot.style.setProperty('--marker-rgb', (pt.group && GROUP_COLORS[pt.group]) || UNGROUPED_RGB);
+      dot.textContent = label;
+      dot.setAttribute('aria-label', 'Marked position ' + label);
+      if (typeof pt.angle === 'number') {
+        var needle = document.createElement('span');
+        needle.className = 'map-modal__dot-orientation';
+        needle.style.transform = 'rotate(' + pt.angle + 'deg)';
+        dot.appendChild(needle);
+      }
+      if (pt.images && pt.images.length) {
+        dot.addEventListener('click', function (e) {
+          e.stopPropagation();
+          openGallery(pt.images);
+        });
+      }
+      dotsWrap.appendChild(dot);
+    });
+    dotsWrap.hidden = false;
+  }
+
+  function show(index) {
+    if (!items.length) return;
+    current = (index + items.length) % items.length;
+    var item = items[current];
+    viewMode = 'photo';
+    if (dotsWrap) { dotsWrap.hidden = true; dotsWrap.innerHTML = ''; }
+    closeGallery();
+    // img's own onerror/onload (set once, above) handle showing/hiding
+    // both the image and the "Image Not Available Currently" fallback -
+    // just reset display/fallback back to their optimistic default here so
+    // a stale hidden-image state from whatever was open before doesn't
+    // flash before the new src finishes loading (or fails).
+    img.style.display = '';
+    if (imgFallback) imgFallback.hidden = true;
+    img.src = item.big;
+    img.alt = item.name;
+    if (layoutToggle) {
+      layoutToggle.hidden = true;
+      layoutToggle.textContent = 'Show In-Game Map';
+      checkLayout(item, function (hasLayout) {
+        // Guard against the user having already clicked to a different
+        // map by the time this (async) check resolves.
+        if (items[current] !== item) return;
+        layoutToggle.hidden = !hasLayout;
+      });
+    }
+    if (easterEggToggle) {
+      easterEggToggle.hidden = true;
+      easterEggToggle.textContent = '🥚 Easter Egg';
+      checkEasterEgg(item, function (hasEasterEgg) {
+        if (items[current] !== item) return;
+        easterEggToggle.hidden = !hasEasterEgg;
+      });
+    }
+    nameEl.textContent = item.name;
+    if (gameLabelEl) gameLabelEl.textContent = item.game;
+    if (gameTipEl) {
+      gameTipEl.textContent = '';
+      gameTipEl.appendChild(document.createTextNode('This map was introduced in: '));
+      var gameSpan = document.createElement('span');
+      gameSpan.className = 'map-badge__tip-game';
+      gameSpan.textContent = item.game;
+      gameTipEl.appendChild(gameSpan);
+    }
+    if (gameEl) {
+      Object.keys(GAME_CLASSES).forEach(function (g) { gameEl.classList.remove(GAME_CLASSES[g]); });
+      var cls = GAME_CLASSES[item.game];
+      if (cls) gameEl.classList.add(cls);
+    }
+    updateHash();
+  }
+
+  function open(index) {
+    modal.hidden = false;
+    // A fresh open (clicking a card from the grid) always starts on the
+    // photo, same as show() itself - restoreFromHash overrides this right
+    // after calling open() when the URL asked for a specific view.
+    preferredView = 'photo';
+    show(index);
+    lastFocused = document.activeElement;
+    closeBtn.focus();
+    // Standards mode treats <html>, not <body>, as the element that
+    // actually scrolls the page - locking only body.style.overflow can
+    // leave a scrollbar for the page behind the modal, so both get it.
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function close() {
+    modal.hidden = true;
+    img.src = '';
+    if (imgFallback) imgFallback.hidden = true;
+    closeGallery();
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+    if (lastFocused && lastFocused.focus) lastFocused.focus();
+    updateHash();
+  }
+
+  // show() always resets to 'photo' (see its own comment) since a fresh
+  // open() should start on the photo, but arrowing to the next/previous map
+  // mid-browse should feel like flipping pages of the SAME view you were
+  // already on - if you were looking at River's in-game map and hit next,
+  // landing on Mercy's photo (even though Mercy has a map too) reads as a
+  // bug, not a reset. Carry the mode forward and only fall back to photo if
+  // the new map doesn't actually have that view.
+  function next() { show(current + 1); if (preferredView !== 'photo') applyView(preferredView, items[current], updateHash); }
+  function prev() { show(current - 1); if (preferredView !== 'photo') applyView(preferredView, items[current], updateHash); }
+
+  if (layoutToggle) {
+    layoutToggle.addEventListener('click', function () {
+      var item = items[current];
+      if (!item) return;
+      viewMode = (viewMode === 'layout') ? 'photo' : 'layout';
+      preferredView = viewMode;
+      img.src = (viewMode === 'layout') ? item.layout : item.big;
+      img.alt = (viewMode === 'layout') ? item.name + ' in-game map' : item.name;
+      layoutToggle.textContent = (viewMode === 'layout') ? 'Show Photo' : 'Show In-Game Map';
+      if (easterEggToggle && !easterEggToggle.hidden) easterEggToggle.textContent = '🥚 Easter Egg';
+      renderDots();
+      updateHash();
+    });
+  }
+
+  if (easterEggToggle) {
+    easterEggToggle.addEventListener('click', function () {
+      var item = items[current];
+      if (!item) return;
+      viewMode = (viewMode === 'easter-egg') ? 'photo' : 'easter-egg';
+      preferredView = viewMode;
+      img.src = (viewMode === 'easter-egg') ? item.easterEgg : item.big;
+      img.alt = (viewMode === 'easter-egg') ? item.name + ' easter egg' : item.name;
+      easterEggToggle.textContent = (viewMode === 'easter-egg') ? 'Show Photo' : '🥚 Easter Egg';
+      if (layoutToggle && !layoutToggle.hidden) layoutToggle.textContent = 'Show In-Game Map';
+      renderDots();
+      updateHash();
+    });
+  }
+
+  cards.forEach(function (card, i) {
+    card.addEventListener('click', function (e) {
+      // The game-badge in the corner has its own tap-to-toggle tooltip
+      // (see footer.html) - don't also open the full map preview when
+      // that's what the user tapped.
+      if (e.target.closest('.map-badge')) return;
+      open(i);
+    });
+  });
+
+  backdrop.addEventListener('click', close);
+  closeBtn.addEventListener('click', close);
+  prevBtn.addEventListener('click', prev);
+  nextBtn.addEventListener('click', next);
+
+  document.addEventListener('keydown', function (e) {
+    if (modal.hidden) return;
+    if (e.key === 'Escape') {
+      if (galleryWrap && !galleryWrap.hidden) closeGallery();
+      else close();
+    }
+    else if (e.key === 'ArrowLeft') prev();
+    else if (e.key === 'ArrowRight') next();
+  });
+
+  // Swipe left/right on touch devices (mobile) to move between maps.
+  var touchStartX = null;
+  var touchStartY = null;
+  modal.addEventListener('touchstart', function (e) {
+    if (!e.touches || e.touches.length !== 1) return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  modal.addEventListener('touchend', function (e) {
+    if (touchStartX === null) return;
+    var touch = e.changedTouches && e.changedTouches[0];
+    if (!touch) return;
+    var dx = touch.clientX - touchStartX;
+    var dy = touch.clientY - touchStartY;
+    touchStartX = null;
+    touchStartY = null;
+    // Ignore mostly-vertical swipes and small accidental drags.
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx < 0) next(); else prev();
+  }, { passive: true });
+
+  // On load (fresh visit, refresh, or a shared/bookmarked link), reopen
+  // whichever map+view was encoded in the URL hash by updateHash() above.
+  (function restoreFromHash() {
+    var params = parseHash();
+    if (!params) return;
+    var idx = -1;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].slug === params.map) { idx = i; break; }
+    }
+    if (idx === -1) return;
+    suppressHash = true;
+    open(idx);
+    var item = items[idx];
+    if (params.view === 'layout' || params.view === 'easter-egg') {
+      // Seed the preference immediately (not inside the async callback) so
+      // that a rapid next()/prev() fired before the image-existence check
+      // resolves still carries the right preference forward.
+      preferredView = params.view;
+      // Bail (inside applyView's own guard) if the user already navigated
+      // elsewhere before this async image-existence check resolved.
+      applyView(params.view, item, function () {
+        suppressHash = false;
+        updateHash();
+      });
+    } else {
+      suppressHash = false;
+    }
+  })();
+
+  // Dots are positioned in absolute pixels (derived from the image's
+  // rendered rect), so they need to be recomputed whenever that rect can
+  // change - a viewport resize being the main case since open/close and
+  // view-switching already trigger renderDots() directly.
+  window.addEventListener('resize', function () {
+    if (!modal.hidden && viewMode === 'easter-egg') positionDotsWrap();
+  });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  // Figures out which way each map-badge's tooltip should open: below the
+  // badge and growing rightward by default (growing leftward would run the
+  // tooltip straight over the map name, which sits immediately to the
+  // badge's left in the same row) - but if the card is close enough to the
+  // bottom of the viewport that "below" would run off-screen, it pops out
+  // to the side instead, still growing rightward.
+  var PLACEMENTS = ['map-badge--below-right', 'map-badge--below-left', 'map-badge--side-right', 'map-badge--side-left'];
+  var MARGIN = 10;
+
+  function positionTip(badge) {
+    var tip = badge.querySelector('.map-badge__tip');
+    if (!tip) return;
+    badge.classList.remove.apply(badge.classList, PLACEMENTS);
+
+    var badgeRect = badge.getBoundingClientRect();
+    var tipRect = tip.getBoundingClientRect();
+    var vh = document.documentElement.clientHeight;
+
+    var fitsBelow = (badgeRect.bottom + MARGIN + tipRect.height) < vh;
+
+    badge.classList.add(fitsBelow ? 'map-badge--below-right' : 'map-badge--side-right');
+  }
+
+  document.querySelectorAll('.map-badge').forEach(function (badge) {
+    badge.addEventListener('mouseenter', function () { positionTip(badge); });
+    badge.addEventListener('focus', function () { positionTip(badge); });
+    badge.addEventListener('click', function () { positionTip(badge); });
+  });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  // Mode chips (PVP and PVE (Horde) / PVE (Escape)) and game chips (Gears
+  // of War, Gears 5, etc.) each behave like the existing class-page trait
+  // filter: click to toggle a chip on/off, no chips active in a group means
+  // "don't filter by this", and a card only shows if it matches at least
+  // one active chip in *every* group that has any active chips.
+  var filterBar = document.getElementById('maps-filter');
+  if (!filterBar) return;
+  var modeChips = Array.prototype.slice.call(filterBar.querySelectorAll('.maps-filter__chip--mode'));
+  var gameChips = Array.prototype.slice.call(filterBar.querySelectorAll('.maps-filter__chip--game'));
+  var extraChips = Array.prototype.slice.call(filterBar.querySelectorAll('.maps-filter__chip--extra'));
+  // Two-position exclusive switch ("With Minimap Image" / "Without Minimap
+  // Data") rather than an OR-group like the three above or a plain on/off
+  // chip - debugMode is null (switch untouched, no filtering) or exactly
+  // one of 'with'/'without', never both, so it's wired directly by ID
+  // below instead of through wireChips()/an activeList array.
+  var debugSwitch = document.getElementById('maps-filter-debug-switch');
+  var debugSwitchBtns = debugSwitch ? Array.prototype.slice.call(debugSwitch.querySelectorAll('.maps-filter__switch-btn')) : [];
+  var debugMode = null;
+  var clearBtn = document.getElementById('maps-filter-clear');
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.map-card'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('.modes-category'));
+  var activeModes = [];
+  var activeGames = [];
+  // Unlike mode/game (one value per card, OR-within-group picks "any of
+  // these"), a card can have BOTH extras at once - same OR-within-group
+  // rule still applies here though: selecting Easter Egg + Guides shows
+  // maps with either one, not only maps with both.
+  var activeExtras = [];
+
+  function apply() {
+    var anyActive = activeModes.length > 0 || activeGames.length > 0 || activeExtras.length > 0 || !!debugMode;
+    clearBtn.classList.toggle('is-visible', anyActive);
+
+    cards.forEach(function (card) {
+      var mode = card.getAttribute('data-mode');
+      var game = card.getAttribute('data-game');
+      var modeOk = activeModes.length === 0 || activeModes.indexOf(mode) !== -1;
+      var gameOk = activeGames.length === 0 || activeGames.indexOf(game) !== -1;
+      var extraOk = activeExtras.length === 0 || activeExtras.some(function (extra) {
+        return card.getAttribute('data-' + extra) === '1';
+      });
+      // DEBUG - the "With Minimap Image" / "Without Minimap Image" switch:
+      // unlike the extras above (which read whatever calibrated MARKER
+      // data exists), this reads data-has-layout, whether the in-game
+      // Minimap/PVP/PVE/Guides SCREENSHOT file itself exists yet (same
+      // has_layout check as the per-card "DEBUG: Missing Minimap" badge
+      // and the audit table below) - a genuinely different, narrower
+      // question, so it stays its own standalone control rather than
+      // folding into the Minimap Data row above.
+      var debugOk = !debugMode || (debugMode === 'with' ? card.getAttribute('data-has-layout') === '1' : card.getAttribute('data-has-layout') === '0');
+      card.classList.toggle('is-hidden-by-filter', !(modeOk && gameOk && extraOk && debugOk));
+    });
+
+    sections.forEach(function (section) {
+      var visible = section.querySelectorAll('.map-card:not(.is-hidden-by-filter)').length;
+      section.classList.toggle('is-hidden-by-filter', visible === 0);
+      var countEl = section.querySelector('.modes-category__count');
+      if (countEl) countEl.textContent = visible;
+    });
+  }
+
+  function wireChips(chips, activeList, attr) {
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var value = chip.getAttribute(attr);
+        var idx = activeList.indexOf(value);
+        if (idx === -1) {
+          activeList.push(value);
+          chip.classList.add('is-active');
+        } else {
+          activeList.splice(idx, 1);
+          chip.classList.remove('is-active');
+        }
+        apply();
+      });
+    });
+  }
+
+  wireChips(modeChips, activeModes, 'data-mode');
+  wireChips(gameChips, activeGames, 'data-game');
+  wireChips(extraChips, activeExtras, 'data-extra');
+
+  // Clicking a half of the switch that's already active turns the whole
+  // switch off (debugMode back to null, no filtering) - clicking the
+  // OTHER half flips straight to that side, same as a real two-position
+  // switch that can also sit in a neutral middle. Only one button ever
+  // has .is-active at a time (see the CSS: .is-active fills that whole
+  // side, not just the OR-style pill highlight the other filter chips use).
+  debugSwitchBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var mode = btn.getAttribute('data-debug-mode');
+      debugMode = (debugMode === mode) ? null : mode;
+      debugSwitchBtns.forEach(function (b) {
+        b.classList.toggle('is-active', b.getAttribute('data-debug-mode') === debugMode);
+      });
+      apply();
+    });
+  });
+
+  clearBtn.addEventListener('click', function () {
+    activeModes.length = 0;
+    activeGames.length = 0;
+    activeExtras.length = 0;
+    debugMode = null;
+    modeChips.concat(gameChips).concat(extraChips).forEach(function (c) { c.classList.remove('is-active'); });
+    debugSwitchBtns.forEach(function (b) { b.classList.remove('is-active'); });
+    apply();
+  });
+})();
+</script>

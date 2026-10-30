@@ -1,0 +1,1561 @@
+---
+title: Fabricator
+---
+<div class="section-page section-page--wide">
+  {%- assign mechanic_class = site.classes | where: "slug", "mechanic" | first %}
+  {%- assign robotics_class = site.classes | where: "slug", "robotics-expert" | first %}
+  {%- assign architect_class = site.classes | where: "slug", "architect" | first %}
+  {%- assign jack_class = site.classes | where: "slug", "jack" | first %}
+  {%- assign jack_optimizer_card = jack_class.cards | where: "slug", "optimizer" | first %}
+
+  <div class="section-page__header">
+    <h1 class="section-page__title">Fabricator</h1>
+  </div>
+
+  {%- capture eng_classes_text %}[[mechanic]], [[robotics-expert]], [[architect]]{% endcapture %}
+  <p class="section-page__intro">Everything the Fabricator sells in Horde, in the exact in-game grid order.
+  Prices in Energy. <span class="engineer-badge info-badge" tabindex="0">Engineer<span class="engineer-badge__tip">Builds all fortifications at a <mark class="kw kw--value">15%</mark> discount and carries them faster.</span></span>
+  classes ({% include render-desc.html text=eng_classes_text page=page %}) build fortifications at a
+  <mark class="kw kw--value">15%</mark> discount and carry them faster - weapon prices are the same for everyone.</p>
+
+  <section class="modes-category xref-target" id="fortifications">
+    <details class="modes-category-collapse fab-collapsible" data-collapse-key="section-fortifications" open>
+      <summary class="modes-category__header modes-category__header--toggle">
+        <h2 class="modes-category__title">Fortifications</h2>
+        <button type="button" class="fab-toggle-all" data-toggle-all-mech data-state="collapsed">Expand All</button>
+      </summary>
+      <div class="modes-category__body">
+
+    {%- assign eng_mod = nil %}
+    {%- assign mech_mod = nil %}
+    {%- for m in site.data.fabricator.modifiers.cheaper %}
+      {%- if m.levels %}{%- assign mech_mod = m %}{%- else %}{%- assign eng_mod = m %}{%- endif %}
+    {%- endfor %}
+    {%- assign boost_mod = site.data.fabricator.modifiers.power_boost %}
+    {%- assign drain_mod = site.data.fabricator.modifiers.expensive | first %}
+    {%- assign ultra_mod = site.data.fabricator.modifiers.expensive | last %}
+    {%- assign hp_perk_mod = site.data.fabricator.modifiers.hp_perk %}
+
+    <div class="fab-grid">
+      {%- assign fab = site.data.fabricator.fabricator %}
+      {%- if fab %}
+      <div class="fab-tile fab-tile--wide xref-target" id="{{ fab.slug }}">
+        <div class="fab-tile__header">
+          {% assign fab_img = '/images/fortifications/' | append: fab.slug | append: '.png' %}
+          <div class="fab-tile__glyph-wrap">
+            <img class="fab-tile__glyph" src="{{ fab_img | relative_url }}" alt="" aria-hidden="true" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <div class="fab-tile__glyph-placeholder" style="display:none;" aria-hidden="true">{{ fab.name | slice: 0 }}</div>
+          </div>
+          <h3 class="fab-tile__name">{{ fab.name }}</h3>
+          <span class="fab-tile__hp-inline"><span class="fab-tile__icon fab-tile__icon--heart">&#10084;</span> <mark class="kw kw--value">{{ fab.hp }}</mark></span>
+        </div>
+        <div class="fab-tile__top">
+          <span class="type-badge">{{ fab.badge }}</span>
+        </div>
+        {%- if fab.desc %}<p class="mode-variant__desc">{{ fab.desc }}</p>{% endif %}
+        <p class="fab-tile__cost">
+          <span class="fab-tile__cost-val"><span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span> <mark class="kw kw--value">{{ fab.buyback }}</mark></span>
+          <span class="fab-tile__cost-sep">|</span>
+          <span class="fab-tile__cost-tag">Buy Back (when destroyed)</span>
+        </p>
+        {%- if hp_perk_mod %}
+        <details class="fab-tile__mech fab-collapsible" data-collapse-key="hp-perk">
+          <summary class="fab-tile__mech-title" title="{{ hp_perk_mod.desc | strip_html | escape }}"><span class="fab-tile__icon fab-tile__icon--heart">&#10084;</span> Perk: {{ hp_perk_mod.name }}</summary>
+          {%- comment %} The Fabricator has no LV1-4 panels like every other
+          fortification tile below it - just one fixed HP - so there's no
+          per-level lookup needed, just this one base value. data-fab-hp
+          anchors the small dedicated JS below that fills in every rank
+          column (the shared per-level computation loop only ever looks
+          inside [data-level-panel], which this tile doesn't have).
+          {% endcomment %}
+          <div class="fab-tile__perk-table-wrap" data-fab-hp="{{ fab.hp }}">
+            <table class="fab-tile__perk-table">
+              <thead>
+                <tr>
+                  <th>No Perk</th>
+                  {%- for v in hp_perk_mod.values %}
+                  <th title="Rank {{ forloop.index }}: +{{ v }}%">{{ forloop.index }}</th>
+                  {%- endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="fab-tile__icon fab-tile__icon--heart">&#10084;</span> <mark class="kw kw--value{% if fab.hp == '?' %} kw--unknown{% endif %}">{{ fab.hp }}</mark></td>
+                  {%- for v in hp_perk_mod.values %}
+                  <td><mark class="kw kw--cheap{% if fab.hp == '?' %} kw--unknown{% endif %}" data-hp-perk-display="{{ forloop.index }}" title="Rank {{ forloop.index }}: +{{ v }}%">{% if fab.hp == '?' %}?{% endif %}</mark></td>
+                  {%- endfor %}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+        {%- endif %}
+      </div>
+      {%- endif %}
+      {%- for f in site.data.fabricator.fortifications %}
+      <div class="fab-tile xref-target" id="{{ f.slug }}" data-fort>
+        <div class="fab-tile__header">
+          {% assign fort_img = '/images/fortifications/' | append: f.slug | append: '.png' %}
+          <div class="fab-tile__glyph-wrap">
+            <img class="fab-tile__glyph" src="{{ fort_img | relative_url }}" alt="" aria-hidden="true" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <div class="fab-tile__glyph-placeholder" style="display:none;" aria-hidden="true">{{ f.name | slice: 0 }}</div>
+          </div>
+          <h3 class="fab-tile__name">{{ f.name }} <mark class="kw kw--value fab-tile__lv" data-lv-label>LVL1</mark></h3>
+          <span class="fab-tile__hp-inline" data-hp-label><span class="fab-tile__icon fab-tile__icon--heart">&#10084;</span> <mark class="kw kw--value" data-hp-value>{{ f.levels[0].hp }}</mark></span>
+        </div>
+        <div class="fab-tile__top">
+          <span class="type-badge type-badge--ftype-{{ f.badge | downcase }}">{{ f.badge }}</span>
+        </div>
+        <div class="fab-tile__panels level-stack">
+        {%- for l in f.levels %}
+        <div class="fab-tile__price" data-level-panel="{{ forloop.index }}" data-hp="{{ l.hp }}" {% unless forloop.index == 1 %}data-level-hidden{% endunless %}>
+          {%- capture buyback_row %}
+          <p class="fab-tile__cost fab-tile__cost--sub">
+            <span class="fab-tile__cost-val"><span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span> <mark class="kw kw--value{% if l.buyback == '?' %} kw--unknown{% endif %}{% if l.buyback contains '~' %} kw--estimated{% endif %}"{% if l.buyback contains '~' %} title="Estimated - captured in a match with unknown modifiers"{% endif %}>{{ l.buyback }}</mark></span>
+            <span class="fab-tile__cost-sep">|</span>
+            <span class="fab-tile__cost-tag" title="Cost to rebuild this fortification at this level after it is destroyed.">Buy Back (when destroyed)</span>
+          </p>
+          {%- endcapture %}
+          {%- capture perk_block %}
+          {%- if hp_perk_mod %}
+          <details class="fab-tile__mech fab-collapsible" data-collapse-key="hp-perk">
+            <summary class="fab-tile__mech-title" title="{{ hp_perk_mod.desc | strip_html | escape }}"><span class="fab-tile__icon fab-tile__icon--heart">&#10084;</span> Perk: {{ hp_perk_mod.name }}</summary>
+            {%- for v in hp_perk_mod.values %}
+            <p class="fab-tile__cost fab-tile__cost--sub">
+              <span class="fab-tile__cost-val"><span class="fab-tile__icon fab-tile__icon--heart">&#10084;</span> <mark class="kw kw--value{% if l.hp == '?' %} kw--unknown{% endif %}">{{ l.hp }}</mark> <span class="fab-tile__cost-arrow" aria-hidden="true">&#8594;</span> <mark class="kw kw--cheap{% if l.hp == '?' %} kw--unknown{% endif %}" data-hp-perk-display="{{ forloop.index }}">{% if l.hp == '?' %}?{% endif %}</mark></span>
+              <span class="fab-tile__cost-sep">|</span>
+              <span class="fab-tile__cost-tag">Perk Level {{ forloop.index }} (<mark class="kw kw--cheap">+{{ v }}%</mark>)</span>
+            </p>
+            {%- endfor %}
+          </details>
+          {%- endif %}
+          {%- endcapture %}
+          {%- if forloop.index == 1 %}
+            {%- assign _tag_title = "Buy from the Fabricator (builds a Level 1)" -%}
+          {%- else %}
+            {%- assign _tag_title = "Upgrade from " | append: forloop.index0 | append: " to " | append: forloop.index -%}
+          {%- endif %}
+          <p class="fab-tile__cost" data-base-price="{{ l.price }}">
+            <span class="fab-tile__cost-val"><span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span> <mark class="kw kw--value{% if l.price == '?' %} kw--unknown{% endif %}" title="{{ _tag_title }}">{{ l.price }}</mark></span>
+            <span class="fab-tile__cost-sep">|</span>
+            <span class="fab-tile__cost-tag" title="{{ _tag_title }}">{% if forloop.index == 1 %}Buy{% else %}Upgrade{% endif %}</span>
+          </p>
+          <p class="fab-tile__cost fab-tile__cost--sub">
+            <span class="fab-tile__cost-val"><span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span> <mark class="kw kw--value kw--cheap" data-eng-display></mark></span>
+            <span class="fab-tile__cost-sep">|</span>
+            <span class="fab-tile__cost-tag"{% if eng_mod.desc %} title="{{ eng_mod.desc | strip_html | escape }}"{% endif %}>Engineer Discount (<mark class="kw kw--cheap">-{{ eng_mod.value }}%</mark>)</span>
+          </p>
+          <p class="fab-tile__cost fab-tile__cost--sub">
+            <span class="fab-tile__cost-val"><span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span> <mark class="kw kw--value kw--cheap" data-boost-display></mark></span>
+            <span class="fab-tile__cost-sep">|</span>
+            <span class="fab-tile__cost-tag"{% if boost_mod.desc %} title="{{ boost_mod.desc | strip_html | escape }}"{% endif %}><a class="xref-link" href="{{ '/gamemodes/' | relative_url }}#mod-power-boost">Power Boost Modifier</a> (<mark class="kw kw--cheap">-{{ boost_mod.value }}%</mark>)</span>
+          </p>
+          <p class="fab-tile__cost fab-tile__cost--sub">
+            <span class="fab-tile__cost-val"><span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span> <mark class="kw kw--value kw--expensive" data-drain-display></mark></span>
+            <span class="fab-tile__cost-sep">|</span>
+            <span class="fab-tile__cost-tag"{% if drain_mod.desc %} title="{{ drain_mod.desc | strip_html | escape }}"{% endif %}><a class="xref-link" href="{{ '/gamemodes/' | relative_url }}#mod-power-drain">Power Drain Modifier</a> (<mark class="kw kw--expensive">+{{ drain_mod.value }}%</mark>)</span>
+          </p>
+          <p class="fab-tile__cost fab-tile__cost--sub">
+            <span class="fab-tile__cost-val"><span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span> <mark class="kw kw--value kw--expensive" data-ultra-display></mark></span>
+            <span class="fab-tile__cost-sep">|</span>
+            <span class="fab-tile__cost-tag"{% if ultra_mod.desc %} title="{{ ultra_mod.desc | strip_html | escape }}"{% endif %}><a class="xref-link" href="{{ '/gamemodes/' | relative_url }}#mod-ultra-power-drain">Ultra Power Drain Modifier</a> (<mark class="kw kw--expensive">+{{ ultra_mod.value }}%</mark>)</span>
+          </p>
+          {%- if l.buyback %}{{ buyback_row }}{% endif %}
+          {{ perk_block }}
+          {%- if mech_mod and forloop.index == 1 %}
+          <details class="fab-tile__mech fab-collapsible" data-collapse-key="mech">
+            <summary class="fab-tile__mech-title" title="Initial build only - Efficient Fabrication does not apply to upgrading a fortification to a higher level. Mechanic already builds as an Engineer, so this price sums the {{ eng_mod.value }}% Engineer discount with the card's own discount.">Mechanic Card: {% if mechanic_class %}<a class="xref-link" href="{{ mechanic_class.url | relative_url }}#efficient-fabrication">{% endif %}Efficient Fabrication{% if mechanic_class %}</a>{% endif %}</summary>
+            {%- for lvl in mech_mod.levels %}
+            <p class="fab-tile__cost fab-tile__cost--sub">
+              <span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span>
+              <span class="fab-tile__cost-val" title="Engineer Discount + Card Discount"><mark class="kw kw--value kw--cheap" data-mech-display="{{ forloop.index }}"></mark></span>
+              <span class="fab-tile__cost-sep">|</span>
+              <span class="fab-tile__cost-val" title="Power Boost Modifier + Card Discount"><mark class="kw kw--value kw--cheap" data-mech-boost-display="{{ forloop.index }}"></mark></span>
+              <span class="fab-tile__cost-sep">|</span>
+              <span class="fab-tile__cost-val" title="Power Drain Modifier + Card Discount"><mark class="kw kw--value kw--expensive" data-mech-drain-display="{{ forloop.index }}"></mark></span>
+              <span class="fab-tile__cost-sep">|</span>
+              <span class="fab-tile__cost-val" title="Ultra Power Drain Modifier + Card Discount"><mark class="kw kw--value kw--expensive" data-mech-ultra-display="{{ forloop.index }}"></mark></span>
+              <span class="fab-tile__cost-sep">|</span>
+              <span class="fab-tile__cost-tag">Level {{ forloop.index }} (<mark class="kw kw--cheap">-{{ lvl }}%</mark>)</span>
+            </p>
+            {%- endfor %}
+          </details>
+          {%- endif %}
+        </div>
+        {%- endfor %}
+        </div>
+        <div class="fab-tile__pips" role="group" aria-label="{{ f.name }} level">
+          {%- for l in f.levels %}
+          <button type="button" class="class-card__level-pip class-card__level-pip--btn{% if forloop.index == 1 %} class-card__level-pip--active{% endif %}" data-level="{{ forloop.index }}" title="Show level {{ forloop.index }}">{{ forloop.index }}</button>
+          {%- endfor %}
+        </div>
+      </div>
+      {%- endfor %}
+    </div>
+    {%- capture fort_flatfee_text %}For [[weapon-locker]] and [[forge]], every level costs the same flat fee.{% endcapture %}
+    {%- capture forge_melts_text %}The [[forge]] melts weapons into extra Energy.{% endcapture %}
+    <p class="mode-card__desc">Fortifications are upgraded from LV1 to LV4, and every level - LV4 included - costs Energy. {% include render-desc.html text=fort_flatfee_text page=page %} Prices marked <mark class="kw kw--value kw--unknown">?</mark> are not
+    captured yet. Engineer classes also carry fortifications faster. {% include render-desc.html text=forge_melts_text page=page %}</p>
+      </div>
+    </details>
+  </section>
+
+  <section class="modes-category xref-target" id="weapons">
+    <details class="modes-category-collapse fab-collapsible" data-collapse-key="section-weapons" open>
+      <summary class="modes-category__header modes-category__header--toggle">
+        <h2 class="modes-category__title">Weapons</h2>
+      </summary>
+      <div class="modes-category__body">
+    <div class="fab-grid">
+      {%- for w in site.data.fabricator.weapons %}
+      {%- assign w_tier = "" -%}
+      {%- if w.category == "Grenade" -%}{%- assign w_tier = "grenade" -%}
+      {%- elsif w.category == "Pistol" or w.slug == "repair-tool" -%}{%- assign w_tier = "pistol" -%}
+      {%- elsif w.forge -%}{%- assign w_tier = w.forge[0] -%}
+      {%- endif -%}
+      {%- comment %} The Repair Tool's actual category/sub ("Utility"/"Tool")
+      is still what drives its grouping/coloring above (it's treated as a
+      Pistol-slot item), but as a badge label that reads as generic as
+      "Utility - Tool" undersells what it actually does - show what it does
+      instead. {% endcomment %}
+      {%- if w.slug == "repair-tool" -%}
+        {%- assign w_badge = "Repair / Rearm" -%}
+        {%- assign w_sub = "" -%}
+      {%- else -%}
+        {%- assign w_badge = w.category -%}
+        {%- assign w_sub = w.sub -%}
+      {%- endif -%}
+      <div class="fab-tile xref-target" id="{{ w.slug }}"{% if w.forge %} data-forge-pips{% endif %}>
+        <div class="fab-tile__header">
+          {% assign w_img = '/images/weapons/' | append: w.slug | append: '.png' %}
+          <div class="fab-tile__glyph-wrap">
+            <img class="fab-tile__glyph" src="{{ w_img | relative_url }}" alt="" aria-hidden="true" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <div class="fab-tile__glyph-placeholder" style="display:none;" aria-hidden="true">{{ w.name | slice: 0 }}</div>
+          </div>
+          <h3 class="fab-tile__name">{{ w.name }}</h3>
+          <span class="fab-tile__price-inline" title="Buy"><span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span> <mark class="kw kw--value">{{ w.price }}</mark></span>
+        </div>
+        <div class="fab-tile__top">
+          <span class="type-badge{% if w_tier != "" %} type-badge--wtier-{{ w_tier }}{% endif %}">{{ w_badge }}</span>
+          {%- if w_sub and w_sub != "" %}
+          <span class="type-badge type-badge--subtype">{{ w_sub }}</span>
+          {%- endif %}
+          {%- if w.execution %}
+          <span class="type-badge type-badge--execution" title="Execution - finishing move: {{ w.execution }}">Execution: {{ w.execution }}</span>
+          {%- endif %}
+        </div>
+        {%- if w.forge %}
+        <div class="fab-tile__cost-slot fab-tile__cost-slot--forge level-stack">
+          {%- for i in (1..4) -%}
+          {%- assign fidx = i | minus: 1 -%}
+          <p class="fab-tile__cost fab-tile__cost--sub" data-level-panel="{{ i }}" {% unless i == 1 %}data-level-hidden{% endunless %} title="Energy paid out when this weapon is fed into the Forge at this level.">
+            <span class="fab-tile__cost-val"><span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span> <mark class="kw kw--value">{{ w.forge[fidx] }}</mark></span>
+            <span class="fab-tile__cost-tag">Forge Value</span>
+          </p>
+          {%- endfor %}
+        </div>
+        <details class="fab-tile__mech fab-collapsible" data-jack-card data-collapse-key="jack" data-forge-values="{{ w.forge | join: ',' }}">
+          <summary class="fab-tile__mech-title" title="Dismantle value while Jack's Optimizer card is active, at each of its 6 card levels (+50% to +150%) - scales with whichever Forge level is picked above, just like the Mechanic Card breakdown scales with fortification level.">Jack's Card: {% if jack_class %}<a class="xref-link" href="{{ jack_class.url | relative_url }}#optimizer">{% endif %}Optimizer{% if jack_class %}</a>{% endif %}</summary>
+          {%- for lvl in (1..6) %}
+          {%- assign _jack_lvl_idx = lvl | minus: 1 %}
+          <p class="fab-tile__cost fab-tile__cost--sub">
+            <span class="fab-tile__cost-val"><span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span> <mark class="kw kw--value" data-jack-display="{{ lvl }}"></mark></span>
+            <span class="fab-tile__cost-tag">Card Level {{ lvl }}{% if jack_optimizer_card.levels[_jack_lvl_idx].X %} (<mark class="kw kw--cheap">+{{ jack_optimizer_card.levels[_jack_lvl_idx].X }}</mark>){% endif %}</span>
+          </p>
+          {%- endfor %}
+        </details>
+        <div class="fab-tile__pips" role="group" aria-label="{{ w.name }} Forge level">
+          {%- for i in (1..4) %}
+          <button type="button" class="class-card__level-pip class-card__level-pip--btn{% if i == 1 %} class-card__level-pip--active{% endif %}" data-level="{{ i }}" title="Show Forge level {{ i }} value">{{ i }}</button>
+          {%- endfor %}
+        </div>
+        {%- endif %}
+      </div>
+      {%- endfor %}
+    </div>
+      </div>
+    </details>
+  </section>
+
+  <section class="modes-category xref-target" id="price-comparison">
+    <details class="modes-category-collapse fab-collapsible" data-collapse-key="section-prices">
+      <summary class="modes-category__header modes-category__header--toggle">
+        <h2 class="modes-category__title">All Prices</h2>
+      </summary>
+      <div class="modes-category__body">
+    <p class="mode-card__desc">Every fortification and weapon, cheapest first (ties broken alphabetically).
+    Fortification prices are their initial LV1 build cost, and update live with the modifiers below - weapon prices
+    never change, so they stay fixed while you toggle them.</p>
+    {%- assign hp_perk_mod = site.data.fabricator.modifiers.hp_perk %}
+    <p class="fab-compare__controls-note">Class Discount and Difficulty Modifier only apply to <mark class="kw kw--value">Fortifications</mark>' Price - Item (weapon) prices are flat and never change. The Health Perk only applies to <mark class="kw kw--value">Fortifications</mark>' HP, and each row also has its own Health Perk pips you can set individually.</p>
+
+    <div class="fab-compare__columns">
+      <div class="fab-compare__column">
+        <h3 class="fab-compare__subhead">Items <span class="fab-compare__subhead-count">({{ site.data.fabricator.weapons | size }})</span><span class="fab-compare__subhead-flag" title="Item prices are flat - the Class Discount and Difficulty Modifier controls below only affect Fortifications.">Fixed price</span></h3>
+        <!-- Cheapest-first across all 3 columns, top-to-bottom within a column
+        then continuing into the next column to the right (JS below sorts and
+        redistributes these rows into the 3 tbodies on load - all 30 render
+        into column 1 here first since the sort needs a numeric price it
+        can't get from a plain Liquid `sort` on the comma-formatted string). -->
+        <div class="fab-compare__items-cols" data-items-cols>
+          {%- for col in (1..3) %}
+          <div class="settings-table__scroll">
+            <table class="settings-table fab-compare-table fab-compare-table--items" data-price-table data-items-table="{{ col }}">
+              <thead><tr><th class="fab-compare__col--item-name">Item</th><th>Type</th><th>Price</th></tr></thead>
+              <tbody data-items-tbody="{{ col }}">
+                {%- if col == 1 %}
+                {%- for w in site.data.fabricator.weapons %}
+                {%- assign base = w.price | remove: "," | remove: "'" %}
+                {%- assign w_tier = "" -%}
+                {%- if w.category == "Grenade" -%}{%- assign w_tier = "grenade" -%}
+                {%- elsif w.category == "Pistol" or w.slug == "repair-tool" -%}{%- assign w_tier = "pistol" -%}
+                {%- elsif w.forge -%}{%- assign w_tier = w.forge[0] -%}
+                {%- endif -%}
+                {%- if w.slug == "repair-tool" -%}
+                  {%- assign w_badge = "Repair / Rearm" -%}
+                {%- else -%}
+                  {%- assign w_badge = w.category -%}
+                {%- endif -%}
+                <tr data-price-row data-kind="weapon" data-base-price="{{ base }}" data-name="{{ w.name }}" data-slug="{{ w.slug }}">
+                  <td class="fab-compare__col--item-name"><a class="xref-link xref-link--tip" href="#{{ w.slug }}">{{ w.name }}<span class="xref-tip"><img class="xref-tip__icon" src="{{ '/images/weapons/' | append: w.slug | append: '.png' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';">{{ w.category }}{% if w.sub %} - {{ w.sub }}{% endif %}, {{ w.price }} Energy at the Fabricator.</span></a></td>
+                  <td><span class="type-badge{% if w_tier != "" %} type-badge--wtier-{{ w_tier }}{% endif %}">{{ w_badge }}</span></td>
+                  <td><span class="settings-table__icon-val"><span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span> <mark class="kw kw--value" data-price-display>{{ w.price }}</mark></span></td>
+                </tr>
+                {%- endfor %}
+                {%- endif %}
+              </tbody>
+            </table>
+          </div>
+          {%- endfor %}
+        </div>
+      </div>
+
+      <div class="fab-compare__controls">
+        <div class="fab-compare__group">
+          <span class="fab-compare__label">Class Discount</span>
+          <div class="fab-compare__chips" data-group="class">
+            <button type="button" class="fab-compare__chip is-active" data-value="none" data-polarity="neutral">None</button>
+            <button type="button" class="fab-compare__chip" data-value="eng" data-polarity="positive">Engineer</button>
+            {%- for lvl in (1..6) %}
+            <button type="button" class="fab-compare__chip" data-value="{{ lvl }}" data-polarity="positive" title="Mechanic Card: Efficient Fabrication, Level {{ lvl }}">Mechanic L{{ lvl }}</button>
+            {%- endfor %}
+          </div>
+        </div>
+        <div class="fab-compare__group">
+          <span class="fab-compare__label">Difficulty Modifier</span>
+          <div class="fab-compare__chips" data-group="drain">
+            <button type="button" class="fab-compare__chip is-active" data-value="none" data-polarity="neutral">None</button>
+            <button type="button" class="fab-compare__chip" data-value="boost" data-polarity="positive">Power Boost</button>
+            <button type="button" class="fab-compare__chip" data-value="drain" data-polarity="negative">Power Drain</button>
+            <button type="button" class="fab-compare__chip" data-value="ultra" data-polarity="negative">Ultra Power Drain</button>
+          </div>
+        </div>
+        {%- if hp_perk_mod %}
+        <div class="fab-compare__group">
+          <span class="fab-compare__label" title="{{ hp_perk_mod.desc | strip_html | escape }} Every Fortification also has its own Health Perk pips in the table - this just sets them all at once.">Set {{ hp_perk_mod.name }} Perk (All)</span>
+          <div class="fab-compare__chips" data-group="hp-perk-all">
+            <button type="button" class="fab-compare__chip" data-value="0" data-polarity="neutral">Off</button>
+            {%- for v in hp_perk_mod.values %}
+            <button type="button" class="fab-compare__chip" data-value="{{ forloop.index }}" data-polarity="positive" title="Rank {{ forloop.index }}: +{{ v }}%">R{{ forloop.index }}</button>
+            {%- endfor %}
+          </div>
+        </div>
+        {%- endif %}
+      </div>
+
+      <div class="fab-compare__column">
+        <h3 class="fab-compare__subhead">Fortifications <span class="fab-compare__subhead-count">({{ site.data.fabricator.fortifications | size }})</span></h3>
+        <div class="settings-table__scroll">
+          <table class="settings-table fab-compare-table fab-compare-table--forts" data-price-table>
+            <colgroup>
+              <col style="width: 16%">
+              <col style="width: 12%">
+              <col style="width: 13%">
+              <col style="width: 12%">
+              <col style="width: 12%">
+              <col style="width: 35%">
+            </colgroup>
+            <thead><tr><th class="fab-compare__col--name">Fortification</th><th>Type</th><th>Fortification Level</th><th>Buy/Upgrade Energy</th><th>HP</th><th>{{ hp_perk_mod.name }}</th></tr></thead>
+            <tbody>
+              {%- for f in site.data.fabricator.fortifications %}
+              <tr data-price-row data-kind="fort" data-prices="{{ f.levels | map: 'price' | join: '|' }}" data-hps="{{ f.levels | map: 'hp' | join: '|' }}" data-level="1" data-perk="0" data-name="{{ f.name }}" data-slug="{{ f.slug }}">
+                <td class="fab-compare__col--name"><a class="xref-link xref-link--tip" href="#{{ f.slug }}">{{ f.name }}<span class="xref-tip"><img class="xref-tip__icon" src="{{ '/images/fortifications/' | append: f.slug | append: '.png' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';">{{ f.desc | strip_html | truncatewords: 30 }}</span></a></td>
+                <td><span class="type-badge type-badge--ftype-{{ f.badge | downcase }}">{{ f.badge }}</span></td>
+                <td>
+                  <div class="fab-compare__pips" role="group" aria-label="{{ f.name }} level">
+                    {%- for l in f.levels %}
+                    <button type="button" class="class-card__level-pip class-card__level-pip--btn{% if forloop.index == 1 %} class-card__level-pip--active{% endif %}" data-level-btn="{{ forloop.index }}" title="Show LV{{ forloop.index }} price">{{ forloop.index }}</button>
+                    {%- endfor %}
+                  </div>
+                </td>
+                <td><span class="fab-compare__stat"><span class="fab-tile__icon fab-tile__icon--bolt" data-price-icon>&#9889;&#xFE0E;</span> <mark class="kw kw--value" data-price-display>{{ f.levels[0].price }}</mark></span></td>
+                <td><span class="fab-compare__stat fab-compare__stat--hp"><span class="fab-tile__icon fab-tile__icon--heart">&#10084;</span> <mark class="kw kw--value" data-hp-display>{{ f.levels[0].hp }}</mark></span></td>
+                <td>
+                  {%- if hp_perk_mod %}
+                  <div class="fab-compare__pips fab-compare__pips--wide" role="group" aria-label="{{ f.name }} Health Perk rank">
+                    <button type="button" class="class-card__level-pip class-card__level-pip--btn class-card__level-pip--active" data-perk-btn="0" title="Off">Off</button>
+                    {%- for v in hp_perk_mod.values %}
+                    <button type="button" class="class-card__level-pip class-card__level-pip--btn" data-perk-btn="{{ forloop.index }}" title="Rank {{ forloop.index }}: +{{ v }}%">{{ forloop.index }}</button>
+                    {%- endfor %}
+                  </div>
+                  {%- endif %}
+                </td>
+              </tr>
+              {%- endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+      </div>
+    </details>
+  </section>
+
+  <section class="modes-category xref-target" id="forge-comparison">
+    <details class="modes-category-collapse fab-collapsible" data-collapse-key="section-forge">
+      <summary class="modes-category__header modes-category__header--toggle">
+        <h2 class="modes-category__title">All Forge Values</h2>
+      </summary>
+      <div class="modes-category__body">
+    {%- capture optimizer_card_text %}Jack's [[card:optimizer]] card (6 levels, +50% to +150%).{% endcapture %}
+    <p class="mode-card__desc">Every weapon the Forge can dismantle, cheapest LV1 Normal Value first (ties broken
+    alphabetically). Pick a Forge level per weapon to see its Normal Value, plus the boosted totals from {% include render-desc.html text=optimizer_card_text page=jack_class %}</p>
+
+    {%- comment %} Jekyll 3.10's where_exp parser only supports a single
+    comparison, not "and"/"or" chains - w.forge.first is nil (not '20'/
+    '30'/'40') for weapons without a forge value, so a single equality
+    check against .first already excludes them without needing an extra
+    "w.forge and" guard. {% endcomment %}
+    {%- assign forge_group_20 = site.data.fabricator.weapons | where_exp: "w", "w.forge.first == '20'" | sort: "name" %}
+    {%- assign forge_group_30 = site.data.fabricator.weapons | where_exp: "w", "w.forge.first == '30'" | sort: "name" %}
+    {%- assign forge_group_40 = site.data.fabricator.weapons | where_exp: "w", "w.forge.first == '40'" | sort: "name" %}
+    {%- assign forge_weapons = forge_group_20 | concat: forge_group_30 | concat: forge_group_40 %}
+    <div class="settings-table__scroll">
+      <table class="settings-table fab-compare-table fab-compare-table--forge">
+        <colgroup>
+          <col style="width: 16%">
+          <col style="width: 10%">
+          <col style="width: 13%">
+          <col style="width: 11%">
+          <col style="width: 8.33%">
+          <col style="width: 8.33%">
+          <col style="width: 8.33%">
+          <col style="width: 8.33%">
+          <col style="width: 8.34%">
+          <col style="width: 8.34%">
+        </colgroup>
+        <thead>
+          <tr>
+            <th rowspan="2">Weapon</th>
+            <th rowspan="2">Type</th>
+            <th rowspan="2">Forge Level</th>
+            <th rowspan="2">Dismantle Value</th>
+            <th colspan="6">Jack's Card (Optimizer)</th>
+          </tr>
+          <tr>
+            {%- for _fv_lvl in (1..6) %}
+            {%- assign _fv_idx = _fv_lvl | minus: 1 %}
+            <th>Level {{ _fv_lvl }}{% if jack_optimizer_card.levels[_fv_idx].X %} (<mark class="kw kw--cheap">+{{ jack_optimizer_card.levels[_fv_idx].X }}</mark>){% endif %}</th>
+            {%- endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {%- for w in forge_weapons %}
+          <tr data-forge-row data-forge="{{ w.forge | join: ',' }}" data-level="1" data-name="{{ w.name }}" data-slug="{{ w.slug }}">
+            <td><a class="xref-link xref-link--tip" href="#{{ w.slug }}">{{ w.name }}<span class="xref-tip"><img class="xref-tip__icon" src="{{ '/images/weapons/' | append: w.slug | append: '.png' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';">{{ w.category }}{% if w.sub %} - {{ w.sub }}{% endif %}, {{ w.price }} Energy at the Fabricator.</span></a></td>
+            <td><span class="type-badge type-badge--wtier-{{ w.forge[0] }}">{{ w.category }}</span></td>
+            <td>
+              <div class="fab-compare__pips" role="group" aria-label="{{ w.name }} Forge level">
+                {%- for i in (1..4) %}
+                <button type="button" class="class-card__level-pip class-card__level-pip--btn{% if i == 1 %} class-card__level-pip--active{% endif %}" data-level-btn="{{ i }}" title="Show LV{{ i }} Forge Value">{{ i }}</button>
+                {%- endfor %}
+              </div>
+            </td>
+            <td><span class="settings-table__icon-val"><span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span> <mark class="kw kw--value" data-forge-display>{{ w.forge[0] }}</mark></span></td>
+            <td><mark class="kw kw--cheap" data-jack-col="1"></mark></td>
+            <td><mark class="kw kw--cheap" data-jack-col="2"></mark></td>
+            <td><mark class="kw kw--cheap" data-jack-col="3"></mark></td>
+            <td><mark class="kw kw--cheap" data-jack-col="4"></mark></td>
+            <td><mark class="kw kw--cheap" data-jack-col="5"></mark></td>
+            <td><mark class="kw kw--cheap" data-jack-col="6"></mark></td>
+          </tr>
+          {%- endfor %}
+        </tbody>
+      </table>
+    </div>
+      </div>
+    </details>
+  </section>
+
+  <section class="modes-category xref-target" id="perk-comparison">
+    <details class="modes-category-collapse fab-collapsible" data-collapse-key="section-perks">
+      <summary class="modes-category__header modes-category__header--toggle">
+        <h2 class="modes-category__title">All Fortification HP Values</h2>
+      </summary>
+      <div class="modes-category__body">
+    {%- if hp_perk_mod %}
+    <p class="mode-card__desc">Every fortification's {{ hp_perk_mod.name }} perk, every rank side by side - the page
+    has the width to spare, so every rank's boosted HP is shown at once instead of one at a time. Pick a level per
+    fortification (LV1-4) to see that level's own base HP carried across every rank - the Fabricator itself has no
+    levels, so its row always reads LV1.</p>
+    <div class="settings-table__scroll">
+      <table class="settings-table fab-compare-table fab-compare-table--perks">
+        {%- comment %} No Perk carries a heart icon + value pill (see the
+        table body below), unlike Rank 1-10's plain pill, so it still gets
+        more than an even 11-way split - just less than before, now that
+        Type/Fortification Level have their own room back (the previous
+        cut left "Fortification Level" wrapping its header text onto 2
+        lines). {% endcomment %}
+        <colgroup>
+          <col style="width: 12%">
+          <col style="width: 9%">
+          <col style="width: 12%">
+          <col style="width: 12.5%">
+          <col style="width: 5.55%">
+          <col style="width: 5.55%">
+          <col style="width: 5.55%">
+          <col style="width: 5.55%">
+          <col style="width: 5.55%">
+          <col style="width: 5.55%">
+          <col style="width: 5.55%">
+          <col style="width: 5.55%">
+          <col style="width: 5.55%">
+          <col style="width: 5.45%">
+        </colgroup>
+        <thead>
+          <tr>
+            <th rowspan="2">Fortification</th>
+            <th rowspan="2">Type</th>
+            <th rowspan="2">Fortification Level</th>
+            <th colspan="11">{{ hp_perk_mod.name }}</th>
+          </tr>
+          <tr>
+            <th>No Perk</th>
+            {%- for v in hp_perk_mod.values %}
+            <th>Rank {{ forloop.index }} (<mark class="kw kw--cheap">+{{ v }}%</mark>)</th>
+            {%- endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {%- assign fab = site.data.fabricator.fabricator %}
+          {%- if fab %}
+          <tr data-perk-row data-hps="{{ fab.hp }}" data-level="1" data-name="{{ fab.name }}" data-slug="{{ fab.slug }}">
+            <td><a class="xref-link xref-link--tip" href="#{{ fab.slug }}">{{ fab.name }}<span class="xref-tip"><img class="xref-tip__icon" src="{{ '/images/fortifications/' | append: fab.slug | append: '.png' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';">{{ fab.desc | strip_html | truncatewords: 30 }}</span></a></td>
+            <td><span class="type-badge">{{ fab.badge }}</span></td>
+            <td>
+              <div class="fab-compare__pips fab-compare__pips--single" role="group" aria-label="{{ fab.name }} level">
+                <span class="class-card__level-pip class-card__level-pip--active" title="The Fabricator has one fixed HP - no levels to pick.">1</span>
+              </div>
+            </td>
+            <td><span class="fab-compare__stat"><span class="fab-tile__icon fab-tile__icon--heart">&#10084;</span> <mark class="kw kw--value" data-perk-col="0"></mark></span></td>
+            {%- for v in hp_perk_mod.values %}
+            <td><mark class="kw kw--cheap" data-perk-col="{{ forloop.index }}"></mark></td>
+            {%- endfor %}
+          </tr>
+          {%- endif %}
+          {%- for f in site.data.fabricator.fortifications %}
+          <tr data-perk-row data-hps="{{ f.levels | map: 'hp' | join: '|' }}" data-level="1" data-name="{{ f.name }}" data-slug="{{ f.slug }}">
+            <td><a class="xref-link xref-link--tip" href="#{{ f.slug }}">{{ f.name }}<span class="xref-tip"><img class="xref-tip__icon" src="{{ '/images/fortifications/' | append: f.slug | append: '.png' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';">{{ f.desc | strip_html | truncatewords: 30 }}</span></a></td>
+            <td><span class="type-badge type-badge--ftype-{{ f.badge | downcase }}">{{ f.badge }}</span></td>
+            <td>
+              <div class="fab-compare__pips" role="group" aria-label="{{ f.name }} level">
+                {%- for l in f.levels %}
+                <button type="button" class="class-card__level-pip class-card__level-pip--btn{% if forloop.index == 1 %} class-card__level-pip--active{% endif %}" data-level-btn="{{ forloop.index }}" title="Show LV{{ forloop.index }} HP">{{ forloop.index }}</button>
+                {%- endfor %}
+              </div>
+            </td>
+            <td><span class="fab-compare__stat"><span class="fab-tile__icon fab-tile__icon--heart">&#10084;</span> <mark class="kw kw--value" data-perk-col="0"></mark></span></td>
+            {%- for v in hp_perk_mod.values %}
+            <td><mark class="kw kw--cheap" data-perk-col="{{ forloop.index }}"></mark></td>
+            {%- endfor %}
+          </tr>
+          {%- endfor %}
+        </tbody>
+      </table>
+    </div>
+    {%- endif %}
+      </div>
+    </details>
+  </section>
+</div>
+
+<script>
+  // ── Level pips: click LV1-4 to switch which level's panel (and header HP) is shown ─
+  document.querySelectorAll('[data-fort]').forEach(function (tile) {
+    var pips = tile.querySelectorAll('.class-card__level-pip--btn');
+    var panels = tile.querySelectorAll('[data-level-panel]');
+    var label = tile.querySelector('[data-lv-label]');
+    var hpValue = tile.querySelector('[data-hp-value]');
+
+    pips.forEach(function (pip) {
+      pip.addEventListener('click', function () {
+        var lv = pip.getAttribute('data-level');
+        var activePanel = null;
+        pips.forEach(function (p) { p.classList.toggle('class-card__level-pip--active', p === pip); });
+        panels.forEach(function (pl) {
+          var isActive = pl.getAttribute('data-level-panel') === lv;
+          pl.toggleAttribute('data-level-hidden', !isActive);
+          if (isActive) activePanel = pl;
+          // Sync the Mechanic Card / Perk disclosures on every switch to
+          // whatever the visitor last set for THIS tile (tracked in
+          // tile.__collapseState by the click handler below), rather than
+          // always snapping shut - so expanding Mechanic Card on LV1 and
+          // then checking LV2 keeps it open instead of forcing a re-click
+          // every time. Every level panel has its own copy of these
+          // <details> elements, so this has to run on whichever panel is
+          // becoming active, not just once per tile. No animation here -
+          // this is a silent state sync tied to the panel swap, not a
+          // user-initiated toggle.
+          pl.querySelectorAll('.fab-tile__mech[data-collapse-key]').forEach(function (details) {
+            var key = details.getAttribute('data-collapse-key');
+            var wantOpen = !!(tile.__collapseState && tile.__collapseState[key]);
+            details.open = wantOpen;
+            details.style.height = '';
+            details.style.overflow = '';
+            var sum = details.querySelector('summary');
+            if (sum) sum.setAttribute('data-expanded', wantOpen ? 'true' : 'false');
+          });
+        });
+        if (label) label.textContent = 'LVL' + lv;
+        if (hpValue && activePanel) hpValue.textContent = activePanel.getAttribute('data-hp') || '?';
+        syncFabUrl();
+      });
+    });
+  });
+
+  // ── Weapon Forge value pips: click LV1-4 to switch which Forge-level
+  // payout is shown for the always-visible row, and recompute the "Jack's
+  // Card: Optimizer" breakdown below it (6 card levels, +50% to +150%) off
+  // of whichever Forge level is now selected - same idea as the Mechanic
+  // Card breakdown scaling off whichever fortification level is selected.
+  (function () {
+    // Optimizer card levels 1-6 (jack.md): 50/70/90/110/130/150%.
+    var JACK_PCT = [50, 70, 90, 110, 130, 150];
+
+    function formatAmount(n) {
+      return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    function updateJackCard(tile, level) {
+      var jackEl = tile.querySelector('[data-jack-card]');
+      if (!jackEl) return;
+      var values = (jackEl.getAttribute('data-forge-values') || '').split(',').map(function (v) {
+        return parseInt(v.replace(/[,']/g, ''), 10);
+      });
+      var base = values[level - 1];
+      if (isNaN(base)) return;
+      jackEl.querySelectorAll('[data-jack-display]').forEach(function (el) {
+        var lvl = parseInt(el.getAttribute('data-jack-display'), 10);
+        var pct = JACK_PCT[lvl - 1];
+        if (!pct) return;
+        el.textContent = formatAmount(base * (1 + pct / 100));
+      });
+    }
+
+    document.querySelectorAll('[data-forge-pips]').forEach(function (group) {
+      var pips = group.querySelectorAll('.class-card__level-pip--btn');
+      var panels = group.querySelectorAll('[data-level-panel]');
+
+      updateJackCard(group, 1); // initial LV1 state on load
+
+      pips.forEach(function (pip) {
+        pip.addEventListener('click', function () {
+          var lv = pip.getAttribute('data-level');
+          pips.forEach(function (p) { p.classList.toggle('class-card__level-pip--active', p === pip); });
+          panels.forEach(function (pl) {
+            pl.toggleAttribute('data-level-hidden', pl.getAttribute('data-level-panel') !== lv);
+          });
+          updateJackCard(group, parseInt(lv, 10));
+          syncFabUrl();
+        });
+      });
+    });
+  })();
+
+  // ── Animated disclosures (Mechanic Card + Fortification Health Perk) ─────
+  // Native <details> snaps open/closed instantly with no way to transition
+  // it in CSS, so this drives the height with the Web Animations API instead.
+  // Falls back to the native instant toggle if the browser can't animate or
+  // the visitor prefers reduced motion. Also wires up the "Expand All" /
+  // "Collapse All" button above the Fortifications grid.
+  (function () {
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var allMech = [];
+
+    document.querySelectorAll('.fab-collapsible').forEach(function (details) {
+      var summary = details.querySelector('summary');
+      if (!summary) return;
+
+      var busy = false;
+      var canAnimate = !!details.animate && !reduceMotion;
+
+      // Fortifications/Weapons now start open (the "open" HTML attribute) -
+      // the chevron's rotated state is otherwise only ever set by the
+      // expand()/collapse() functions below, so without this it would point
+      // the "closed" way on load despite the section actually being open.
+      summary.setAttribute('data-expanded', details.open ? 'true' : 'false');
+
+      // If this collapsible sits inside a level panel (Mechanic Card / the
+      // Fortification Health Perk both do), remember whether the visitor
+      // opened or closed it on the owning tile, keyed by data-collapse-key.
+      // Each fortification level has its own separate copy of these
+      // <details> elements, so without this the panel-switch code below has
+      // no way to know "the visitor had Mechanic Card open" versus "closed" -
+      // it can only see the one panel currently in front of it.
+      // Section-level collapsibles (Fortifications/Weapons/All Prices/All
+      // Forge Values) key off "section-*" and have no owning tile - every
+      // other .fab-collapsible on the page (Mechanic Card, Fortification
+      // Health Perk, Jack's Card) sits inside a .fab-tile and keys off a
+      // short name ("mech"/"hp-perk"/"jack") instead.
+      var collapseKey = details.getAttribute('data-collapse-key');
+      var ownerTile = (collapseKey && collapseKey.indexOf('section-') !== 0) ? details.closest('.fab-tile') : null;
+
+      function expand() {
+        if (busy || details.open) return;
+        if (!canAnimate) {
+          details.open = true;
+          summary.setAttribute('data-expanded', 'true');
+          syncFabUrl();
+          return;
+        }
+        details.style.overflow = 'hidden';
+        details.open = true;
+        summary.setAttribute('data-expanded', 'true');
+        busy = true;
+
+        var from = summary.offsetHeight;
+        var to = details.scrollHeight;
+        var anim = details.animate(
+          { height: [from + 'px', to + 'px'] },
+          { duration: 200, easing: 'ease-out' }
+        );
+        anim.onfinish = function () { settle(true); };
+      }
+
+      function collapse() {
+        if (busy || !details.open) return;
+        if (!canAnimate) {
+          details.open = false;
+          summary.setAttribute('data-expanded', 'false');
+          syncFabUrl();
+          return;
+        }
+        details.style.overflow = 'hidden';
+        summary.setAttribute('data-expanded', 'false');
+        busy = true;
+
+        var from = details.offsetHeight;
+        var to = summary.offsetHeight;
+        var anim = details.animate(
+          { height: [from + 'px', to + 'px'] },
+          { duration: 200, easing: 'ease-out' }
+        );
+        anim.onfinish = function () { settle(false); };
+      }
+
+      function settle(isOpen) {
+        details.open = isOpen;
+        details.style.height = '';
+        details.style.overflow = '';
+        busy = false;
+        syncFabUrl();
+      }
+
+      summary.addEventListener('click', function (e) {
+        // The "Mechanic Card: Efficient Fabrication" summary has a real
+        // link nested inside it (to the card on Mechanic's page), and the
+        // Fortifications section summary now has the "Expand All" button
+        // nested inside it too - let clicks on either navigate/act normally
+        // instead of also toggling the disclosure/section underneath them.
+        if (e.target.closest('a, button')) return;
+        e.preventDefault();
+        var opening = !details.open;
+        if (details.open) { collapse(); } else { expand(); }
+        if (ownerTile) {
+          ownerTile.__collapseState = ownerTile.__collapseState || {};
+          ownerTile.__collapseState[collapseKey] = opening;
+          // expand()/collapse() already call syncFabUrl() themselves, but
+          // for a per-tile disclosure (unlike a section) that runs BEFORE
+          // this line sets __collapseState, so the very first sync after a
+          // tile disclosure toggle would read the state one click stale.
+          // __collapseState is already final at this point regardless of
+          // whether the animation has visually finished, so it's safe to
+          // sync again right here, immediately.
+          syncFabUrl();
+        }
+      });
+
+      allMech.push({ expand: expand, collapse: collapse });
+    });
+
+    var toggleAllBtn = document.querySelector('[data-toggle-all-mech]');
+    if (toggleAllBtn) {
+      toggleAllBtn.addEventListener('click', function (e) {
+        // Nested inside the Fortifications section's own <summary> now -
+        // stop this from also toggling that section open/closed.
+        e.preventDefault();
+        e.stopPropagation();
+        var expanding = toggleAllBtn.getAttribute('data-state') === 'collapsed';
+        allMech.forEach(function (m) { expanding ? m.expand() : m.collapse(); });
+        toggleAllBtn.setAttribute('data-state', expanding ? 'expanded' : 'collapsed');
+        toggleAllBtn.textContent = expanding ? 'Collapse All' : 'Expand All';
+      });
+    }
+  })();
+
+  // ── Fortification price modifier calculator ─────────────────────────────
+  // Power Drain (+50%), Engineer (-15%), and Mechanic Card (variable, up to
+  // -32%) all stack ADDITIVELY - the game sums every active percentage and
+  // applies the total once to the base price, it does NOT chain them as
+  // successive %-of-remaining multipliers. Confirmed against a real
+  // Fabricator screenshot (Mechanic, Efficient Fabrication maxed at -32%,
+  // Power Drain active): Barrier LV1 read 2,060 Energy on a 2,000 base,
+  // which only matches 2000 * (1 - 0.15 - 0.32 + 0.50) = 2060 - the
+  // multiplicative version gives 1,734, which is well off. The in-game
+  // "-47%" tag shown alongside is just -15 - 32 (the two discounts only;
+  // it doesn't fold Power Drain into the label even though the actual
+  // charged price does include it).
+  (function () {
+    var MECHANIC_PCT = [15, 20, 25, 28, 30, 32]; // index 0 = Lv1
+    var ENGINEER_PCT = 15; // Mechanic builds as an Engineer, so its card stacks on top of this
+    var DRAIN_PCT = 50;
+    // Ultra Power Drain (Master modifier): the in-game description reads
+    // "build cost increased by 1000%", but a real Fabricator screenshot
+    // (no Engineer, no cards) shows Barrier LV1 at 20,000 on a 2,000 base -
+    // exactly x10 across all six fortifications (Forge 100,000 on 10,000).
+    // So the effective additive percentage is +900%, not +1000%.
+    var ULTRA_PCT = 900;
+    // Power Boost: Difficulty Modifier (rolled from the same pool as Power
+    // Drain/Ultra Power Drain, see gamemodes.yml), not a class discount -
+    // reduces fortification build cost by a flat 30%.
+    var BOOST_PCT = 30;
+    // Fortification Health Perk (D-pad Perk, not a skill card) - same 10
+    // levels for all three Engineer classes. Applied on top of whichever
+    // level's own base HP is currently shown, not the price.
+    var HP_PERK_PCT = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+
+    function formatAmount(n) {
+      return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    document.querySelectorAll('.fab-tile__cost[data-base-price]').forEach(function (costEl) {
+      var base = parseInt(costEl.getAttribute('data-base-price').replace(/[,']/g, ''), 10);
+      if (isNaN(base)) return;
+
+      var panel = costEl.closest('[data-level-panel]');
+      if (!panel) return;
+
+      var drainDisplay = panel.querySelector('[data-drain-display]');
+      var ultraDisplay = panel.querySelector('[data-ultra-display]');
+      var engDisplay = panel.querySelector('[data-eng-display]');
+      var boostDisplay = panel.querySelector('[data-boost-display]');
+      if (drainDisplay) drainDisplay.textContent = formatAmount(base * (1 + DRAIN_PCT / 100));
+      if (ultraDisplay) ultraDisplay.textContent = formatAmount(base * (1 + ULTRA_PCT / 100));
+      if (engDisplay) engDisplay.textContent = formatAmount(base * (1 - ENGINEER_PCT / 100));
+      if (boostDisplay) boostDisplay.textContent = formatAmount(base * (1 - BOOST_PCT / 100));
+
+      // Mechanic Card is exclusive to the Mechanic class, which already carries
+      // the Engineer discount - so its price sums both discounts, not just the card's.
+      panel.querySelectorAll('[data-mech-display]').forEach(function (el) {
+        var lvl = parseInt(el.getAttribute('data-mech-display'), 10);
+        var pct = MECHANIC_PCT[lvl - 1];
+        if (!pct) return;
+        el.textContent = formatAmount(base * (1 - (ENGINEER_PCT + pct) / 100));
+      });
+
+      // Power Boost is a Difficulty Modifier, independent of who's building -
+      // it can roll on the same match as a Mechanic's own card, so this sums
+      // all three discounts (Engineer + Card + Boost) the same additive way.
+      panel.querySelectorAll('[data-mech-boost-display]').forEach(function (el) {
+        var lvl = parseInt(el.getAttribute('data-mech-boost-display'), 10);
+        var pct = MECHANIC_PCT[lvl - 1];
+        if (!pct) return;
+        el.textContent = formatAmount(base * (1 - (ENGINEER_PCT + pct + BOOST_PCT) / 100));
+      });
+
+      // Power Drain adds its own +50% into that same running total, rather
+      // than multiplying the already-discounted Mechanic price.
+      panel.querySelectorAll('[data-mech-drain-display]').forEach(function (el) {
+        var lvl = parseInt(el.getAttribute('data-mech-drain-display'), 10);
+        var pct = MECHANIC_PCT[lvl - 1];
+        if (!pct) return;
+        el.textContent = formatAmount(base * (1 + (DRAIN_PCT - ENGINEER_PCT - pct) / 100));
+      });
+
+      // Ultra Power Drain (+1,000%) stacks the same additive way with the
+      // Engineer discount and the Mechanic card.
+      panel.querySelectorAll('[data-mech-ultra-display]').forEach(function (el) {
+        var lvl = parseInt(el.getAttribute('data-mech-ultra-display'), 10);
+        var pct = MECHANIC_PCT[lvl - 1];
+        if (!pct) return;
+        el.textContent = formatAmount(base * (1 + (ULTRA_PCT - ENGINEER_PCT - pct) / 100));
+      });
+    });
+
+    // Fortification Health Perk - keyed off each panel's own data-hp (not
+    // data-base-price), since a level with an unconfirmed ("?") price still
+    // has a real HP value the perk applies to.
+    document.querySelectorAll('[data-level-panel]').forEach(function (panel) {
+      var hp = parseInt((panel.getAttribute('data-hp') || '').replace(/[,']/g, ''), 10);
+      if (isNaN(hp)) return; // "?" - unknown base HP, nothing to scale
+      panel.querySelectorAll('[data-hp-perk-display]').forEach(function (el) {
+        var lvl = parseInt(el.getAttribute('data-hp-perk-display'), 10);
+        var pct = HP_PERK_PCT[lvl - 1];
+        if (!pct) return;
+        el.textContent = formatAmount(hp * (1 + pct / 100));
+      });
+    });
+  })();
+
+  // ── Fabricator (heart-of-defense) tile's own Perk: Fortification Health -
+  // same compact "No Perk | 1-10" table every other fortification tile
+  // uses, but this tile has no LV1-4 panels of its own (just one fixed
+  // HP), so the per-level computation loop right above - which only ever
+  // looks inside [data-level-panel] - never reaches it. Small dedicated
+  // IIFE instead of bolting this one case onto that loop.
+  (function () {
+    var wrap = document.querySelector('[data-fab-hp]');
+    if (!wrap) return;
+    var hp = parseInt((wrap.getAttribute('data-fab-hp') || '').replace(/[,']/g, ''), 10);
+    if (isNaN(hp)) return; // "?" - unknown base HP, nothing to scale
+
+    var HP_PERK_PCT = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+
+    function formatAmount(n) {
+      return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    wrap.querySelectorAll('[data-hp-perk-display]').forEach(function (el) {
+      var lvl = parseInt(el.getAttribute('data-hp-perk-display'), 10);
+      var pct = HP_PERK_PCT[lvl - 1];
+      if (!pct) return;
+      el.textContent = formatAmount(hp * (1 + pct / 100));
+    });
+  })();
+
+  // ── Items table: split into 3 columns ────────────────────────────────────
+  // 30 items in one long list ran well past the Fortifications table below
+  // it. All 30 rows render into column 1 by the Liquid loop above (order
+  // doesn't matter there - it can't sort on the comma-formatted price string
+  // numerically), so on load: pull every row out, sort cheapest-first (ties
+  // alphabetical, same rule as the rest of this page), then deal them out
+  // column 1/2/3 ten at a time - top-to-bottom within a column, left-to-right
+  // into the next one, same reading order as a printed multi-column list.
+  // This has to run once, before the "All Prices" IIFE below queries
+  // [data-price-table] - that one re-sorts each table it finds in place on
+  // every Class Discount/Difficulty Modifier click, but never moves a row
+  // from one table to another, so the 3-way split needs to already exist by
+  // the time it runs.
+  (function () {
+    var wrap = document.querySelector('[data-items-cols]');
+    if (!wrap) return;
+    var tbodies = [1, 2, 3].map(function (n) {
+      return wrap.querySelector('[data-items-tbody="' + n + '"]');
+    });
+    if (tbodies.indexOf(null) !== -1) return;
+
+    var rows = Array.prototype.slice.call(wrap.querySelectorAll('[data-price-row]'));
+    rows.sort(function (a, b) {
+      var av = parseInt(a.getAttribute('data-base-price'), 10);
+      var bv = parseInt(b.getAttribute('data-base-price'), 10);
+      if (av !== bv) return av - bv;
+      return a.getAttribute('data-name').localeCompare(b.getAttribute('data-name'));
+    });
+
+    var perCol = Math.ceil(rows.length / 3);
+    rows.forEach(function (row, i) {
+      var col = Math.min(2, Math.floor(i / perCol));
+      tbodies[col].appendChild(row);
+    });
+
+    // Each column's .settings-table__scroll was clipping a row or two off
+    // the bottom behind a vertical scrollbar nobody asked for - this is a
+    // flex row (see .fab-compare__items-cols, home.scss) of 3 scroll
+    // containers (overflow-x: auto, a safety net for a too-wide table),
+    // and a scroll container's own "auto" height here was consistently
+    // coming out shorter than its actual table content by 15-20%, with no
+    // height/max-height rule anywhere responsible for it - near as this
+    // could be pinned down, a flexbox auto-height quirk specific to
+    // cross-axis sizing of overflow:auto flex items. Rather than keep
+    // fighting that blind, set the height explicitly from the real
+    // measured content (scrollHeight always reports the true content
+    // height regardless of whatever the box clipped itself to) - same
+    // "measure and set the pixel height directly" fix already used
+    // elsewhere on this site for the same class of problem (see
+    // fitPerkPlanScrolls, tools/build-creator/index.html, for
+    // .bc-perk-plan__scroll). Runs after the redistribution above so each
+    // column already has its final 10 rows before measuring - each row's
+    // height doesn't change with viewport width (name/badge/price are all
+    // nowrap), so a one-time on-load measurement stays correct even as
+    // .fab-compare__items-cols wraps to fewer columns on a narrower screen.
+    // overflow-y: hidden alongside the explicit height, NOT left as the
+    // CSS default overflow-x: auto's paired auto - scrollHeight is an
+    // integer and the real layout height can be a fraction of a pixel
+    // taller, which was enough on its own to trigger a visible scrollbar
+    // for essentially zero actual overflow. There's nothing left to
+    // scroll once the height is set from real content, so just don't let
+    // this axis ever show a scrollbar at all, sub-pixel or otherwise.
+    tbodies.forEach(function (tbody) {
+      var scrollBox = tbody.closest('.settings-table__scroll');
+      if (scrollBox) {
+        scrollBox.style.height = scrollBox.scrollHeight + 'px';
+        scrollBox.style.overflowY = 'hidden';
+      }
+    });
+  })();
+
+  // ── "All Prices" comparison tables ───────────────────────────────────────
+  // Split into two side-by-side tables (Items / Fortifications) so each one
+  // reads top-to-bottom cheapest-first on its own, rather than one long
+  // mixed list - but they still share a single set of chips above them, so
+  // both re-price/re-sort together. Weapon rows never move on their own
+  // (flat price for everyone) - only fortification rows react, same
+  // additive stacking math as the per-tile calculator above (kept as a
+  // separate copy here since it drives a different set of elements, not the
+  // fortification tiles themselves).
+  (function () {
+    var tables = Array.prototype.slice.call(document.querySelectorAll('[data-price-table]'));
+    if (!tables.length) return;
+    var section = tables[0].closest('.modes-category');
+
+    var MECHANIC_PCT = [15, 20, 25, 28, 30, 32];
+    var ENGINEER_PCT = 15;
+    var BOOST_PCT = 30;
+    var DRAIN_PCT = 50;
+    var ULTRA_PCT = 900;
+    var HP_PERK_PCT = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+
+    function formatAmount(n) {
+      return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    var state = { cls: 'none', drain: 'none' };
+
+    function currentPct() {
+      var pct = 0;
+      if (state.cls === 'eng') pct -= ENGINEER_PCT;
+      else if (state.cls !== 'none') pct -= (ENGINEER_PCT + MECHANIC_PCT[parseInt(state.cls, 10) - 1]);
+      if (state.drain === 'boost') pct -= BOOST_PCT;
+      else if (state.drain === 'drain') pct += DRAIN_PCT;
+      else if (state.drain === 'ultra') pct += ULTRA_PCT;
+      return pct;
+    }
+
+    // Health Perk rank now lives on each fortification's own row (data-perk,
+    // set by that row's own Off/1-10 pips below) instead of a single shared
+    // value - the "Set ... (All)" control above just writes this same
+    // attribute onto every row at once, it doesn't hold state of its own.
+    function rowHpPct(row) {
+      var rank = parseInt(row.getAttribute('data-perk'), 10) || 0;
+      return rank === 0 ? 0 : HP_PERK_PCT[rank - 1];
+    }
+
+    // Fortification rows now carry a level pip group of their own (LV1-4,
+    // same button as the tiles above) instead of always pricing at LV1 - the
+    // row remembers which level is picked in data-level, and data-prices
+    // holds all 4 raw price strings (comma-joined, same encoding the Forge
+    // table already uses for its own per-level list) so recalc() can look
+    // the right one up. Every level, including LV4, has its own real price
+    // now - a level only shows "?" if that specific upgrade cost hasn't
+    // been captured in-game yet, same as any other unconfirmed value.
+    // Same 3-colour language as the per-tile calculator's sub-rows further
+    // up the page (Engineer/Boost discount rows in green, Drain rows in
+    // red, the plain base-price row in gold) - here it's driven off the net
+    // Class Discount + Difficulty Modifier percentage instead of being
+    // fixed per row, since any combination of chips can push the total
+    // either way. The level pip buttons (1-4) are left alone - only the
+    // Price value itself, and the Class Discount / Difficulty Modifier
+    // chips below (see the data-polarity wiring further down), pick up
+    // this colour.
+    // Repricing a single row (picking a different level on its own pips)
+    // and repricing+re-sorting the whole table (the Class Discount /
+    // Difficulty Modifier chips, which move every fortification's price at
+    // once) are kept as two separate steps - sorting only ever runs after
+    // the latter. Otherwise, picking e.g. LV3 on one row would jump that
+    // row past every other one still sitting at LV1, and the whole table
+    // would visibly reshuffle just from checking a different level's price,
+    // not because anything about the CURRENT sort criteria actually changed.
+    function updateRow(row) {
+      var pct = currentPct();
+      var priceClass = pct < 0 ? 'kw--cheap' : pct > 0 ? 'kw--expensive' : '';
+      var display = row.querySelector('[data-price-display]');
+      var icon = row.querySelector('[data-price-icon]');
+      var hpDisplay = row.querySelector('[data-hp-display]');
+
+      if (row.getAttribute('data-kind') !== 'fort') {
+        var flat = parseInt((row.getAttribute('data-base-price') || '').replace(/[,']/g, ''), 10);
+        row.__sortValue = flat;
+        if (display) display.textContent = formatAmount(flat);
+        return;
+      }
+
+      var prices = (row.getAttribute('data-prices') || '').split('|');
+      var lvl = parseInt(row.getAttribute('data-level'), 10) || 1;
+      var base = parseInt((prices[lvl - 1] || '').replace(/[,']/g, ''), 10);
+
+      // HP is shown at every level even when that level's own price is
+      // still unconfirmed ("?") - the Fortification Health Perk rank boosts
+      // it the same way it would in-game, on top of whichever level's own
+      // base HP is showing.
+      if (hpDisplay) {
+        var hps = (row.getAttribute('data-hps') || '').split('|');
+        var hpBase = parseInt((hps[lvl - 1] || '').replace(/[,']/g, ''), 10);
+        var hpPct = rowHpPct(row);
+        hpDisplay.textContent = isNaN(hpBase) ? (hps[lvl - 1] || '?') : formatAmount(hpBase * (1 + hpPct / 100)) + (hpPct > 0 ? ' (+' + hpPct + '%)' : '');
+        // HP only ever goes up (the Health Perk never reduces it), so this
+        // is a one-way boosted/not-boosted state, not the 3-way cheap/
+        // expensive/default the Price column uses - green once any rank is
+        // active, the default gold otherwise.
+        hpDisplay.classList.toggle('kw--cheap', hpPct > 0);
+      }
+
+      if (isNaN(base)) {
+        // This level's price isn't confirmed yet - every level (including
+        // LV4) is a real, self-contained Energy cost now, this one just
+        // hasn't been captured in-game. Sorted to the end (not 0/cheapest)
+        // so an unconfirmed price never visually reads as "the cheapest
+        // option." The bolt icon is hidden with `visibility`, not
+        // `display: none` - that keeps its layout box reserved so the
+        // Price column doesn't narrow/widen every time a row swaps between
+        // a real value and "?".
+        row.__sortValue = Infinity;
+        if (icon) icon.style.visibility = 'hidden';
+        if (display) {
+          display.textContent = '?';
+          display.classList.remove('kw--cheap', 'kw--expensive', 'class-card__cost-max');
+          display.classList.add('kw--unknown');
+        }
+        return;
+      }
+
+      var effective = base * (1 + pct / 100);
+      row.__sortValue = effective;
+      if (icon) icon.style.visibility = '';
+      if (display) {
+        display.classList.remove('class-card__cost-max', 'kw--cheap', 'kw--expensive');
+        if (priceClass) display.classList.add(priceClass);
+        display.textContent = formatAmount(effective);
+      }
+    }
+
+    function recalcAndSort() {
+      tables.forEach(function (table) {
+        var tbody = table.querySelector('tbody');
+        var rows = Array.prototype.slice.call(tbody.querySelectorAll('[data-price-row]'));
+        rows.forEach(updateRow);
+        rows.sort(function (a, b) {
+          if (a.__sortValue !== b.__sortValue) return a.__sortValue - b.__sortValue;
+          return a.getAttribute('data-name').localeCompare(b.getAttribute('data-name'));
+        });
+        rows.forEach(function (row) { tbody.appendChild(row); });
+      });
+    }
+
+    var scope = section || tables[0].parentElement.parentElement;
+
+    var GROUP_STATE_KEYS = { 'class': 'cls', 'drain': 'drain' };
+    scope.querySelectorAll('[data-group]').forEach(function (group) {
+      var key = GROUP_STATE_KEYS[group.getAttribute('data-group')];
+      if (!key) return;
+      group.querySelectorAll('.fab-compare__chip').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+          group.querySelectorAll('.fab-compare__chip').forEach(function (c) { c.classList.remove('is-active'); });
+          chip.classList.add('is-active');
+          state[key] = chip.getAttribute('data-value');
+          recalcAndSort();
+          syncFabUrl();
+        });
+      });
+    });
+
+    // Each fortification row owns its own Level pips (LV1-4) and Health Perk
+    // pips (Off, 1-10) - picking either only re-prices/re-HPs that one row in
+    // place, without touching where any row sits or any other row's picks.
+    tables.forEach(function (table) {
+      table.querySelectorAll('[data-price-row]').forEach(function (row) {
+        row.querySelectorAll('[data-level-btn]').forEach(function (pip) {
+          pip.addEventListener('click', function () {
+            row.querySelectorAll('[data-level-btn]').forEach(function (p) { p.classList.remove('class-card__level-pip--active'); });
+            pip.classList.add('class-card__level-pip--active');
+            row.setAttribute('data-level', pip.getAttribute('data-level-btn'));
+            updateRow(row);
+            syncFabUrl();
+          });
+        });
+        row.querySelectorAll('[data-perk-btn]').forEach(function (pip) {
+          pip.addEventListener('click', function () {
+            row.querySelectorAll('[data-perk-btn]').forEach(function (p) { p.classList.remove('class-card__level-pip--active'); });
+            pip.classList.add('class-card__level-pip--active');
+            row.setAttribute('data-perk', pip.getAttribute('data-perk-btn'));
+            updateRow(row);
+            syncFabUrl();
+          });
+        });
+      });
+    });
+
+    // "Set ... Perk (All)" - a bulk action, not a persisted state: clicking
+    // a rank stamps that value onto every fortification row's own data-perk
+    // (and its own pips), the same as clicking that rank on each row by
+    // hand. Individual rows can still be nudged afterward independently.
+    var hpPerkAllGroup = scope.querySelector('[data-group="hp-perk-all"]');
+    if (hpPerkAllGroup) {
+      var fortRows = [];
+      tables.forEach(function (table) {
+        fortRows = fortRows.concat(Array.prototype.slice.call(table.querySelectorAll('[data-price-row][data-kind="fort"]')));
+      });
+      hpPerkAllGroup.querySelectorAll('.fab-compare__chip').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+          hpPerkAllGroup.querySelectorAll('.fab-compare__chip').forEach(function (c) { c.classList.remove('is-active'); });
+          chip.classList.add('is-active');
+          var value = chip.getAttribute('data-value');
+          fortRows.forEach(function (row) {
+            row.setAttribute('data-perk', value);
+            row.querySelectorAll('[data-perk-btn]').forEach(function (p) {
+              p.classList.toggle('class-card__level-pip--active', p.getAttribute('data-perk-btn') === value);
+            });
+            updateRow(row);
+          });
+          syncFabUrl();
+        });
+      });
+    }
+
+    recalcAndSort();
+  })();
+
+  // ── "All Forge Values" table ──────────────────────────────────────────────
+  // Same per-row level-pip pattern as the Fortifications price table above:
+  // each weapon gets its own LV1-4 pips, and clicking one only recomputes
+  // that row's own Normal Value + Jack's Card (Optimizer) columns - no
+  // global control, no re-sorting the table.
+  (function () {
+    var rows = document.querySelectorAll('#forge-comparison [data-forge-row]');
+    if (!rows.length) return;
+
+    var JACK_PCT = [50, 70, 90, 110, 130, 150];
+
+    function formatAmount(n) {
+      return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    function updateRow(row) {
+      var level = parseInt(row.getAttribute('data-level'), 10) || 1;
+      var values = (row.getAttribute('data-forge') || '').split(',').map(function (v) {
+        return parseInt(v.replace(/[,']/g, ''), 10);
+      });
+      var base = values[level - 1];
+      if (isNaN(base)) return;
+      var display = row.querySelector('[data-forge-display]');
+      if (display) display.textContent = formatAmount(base);
+      row.querySelectorAll('[data-jack-col]').forEach(function (el) {
+        var lvl = parseInt(el.getAttribute('data-jack-col'), 10);
+        var pct = JACK_PCT[lvl - 1];
+        if (!pct) return;
+        el.textContent = formatAmount(base * (1 + pct / 100));
+      });
+    }
+
+    rows.forEach(function (row) {
+      row.querySelectorAll('.class-card__level-pip--btn').forEach(function (pip) {
+        pip.addEventListener('click', function () {
+          row.setAttribute('data-level', pip.getAttribute('data-level-btn'));
+          row.querySelectorAll('.class-card__level-pip--btn').forEach(function (p) {
+            p.classList.toggle('class-card__level-pip--active', p === pip);
+          });
+          updateRow(row);
+          syncFabUrl();
+        });
+      });
+      updateRow(row);
+    });
+  })();
+
+  // ── "All Fortification HP Values" table ─────────────────────────────────
+  // Same per-row level-pip pattern as the two tables above: each
+  // fortification gets its own LV1-4 pips (picking a level swaps in that
+  // level's own base HP), but unlike the Health Perk column on the All
+  // Prices table above - which shows one rank at a time via its own Off/
+  // 1-10 pips - every rank's boosted HP is always visible here as its own
+  // column. This table exists specifically to take advantage of the extra
+  // width the page has to spare instead of needing to click through ranks
+  // one at a time.
+  (function () {
+    var rows = document.querySelectorAll('#perk-comparison [data-perk-row]');
+    if (!rows.length) return;
+
+    var HP_PERK_PCT = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+
+    function formatAmount(n) {
+      return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    function updateRow(row) {
+      var level = parseInt(row.getAttribute('data-level'), 10) || 1;
+      var hps = (row.getAttribute('data-hps') || '').split('|');
+      var raw = hps[level - 1];
+      var base = parseInt((raw || '').replace(/[,']/g, ''), 10);
+      var noPerk = row.querySelector('[data-perk-col="0"]');
+
+      if (isNaN(base)) {
+        // This level's HP isn't confirmed yet - same "?" treatment as the
+        // Buy/Upgrade price and per-tile HP displays elsewhere on this
+        // page, applied to every column in the row since every rank's
+        // boost is derived from this same unconfirmed base.
+        if (noPerk) { noPerk.textContent = raw || '?'; noPerk.classList.add('kw--unknown'); }
+        row.querySelectorAll('[data-perk-col]:not([data-perk-col="0"])').forEach(function (el) {
+          el.textContent = '?';
+          el.classList.add('kw--unknown');
+        });
+        return;
+      }
+
+      if (noPerk) { noPerk.classList.remove('kw--unknown'); noPerk.textContent = formatAmount(base); }
+      row.querySelectorAll('[data-perk-col]:not([data-perk-col="0"])').forEach(function (el) {
+        var rank = parseInt(el.getAttribute('data-perk-col'), 10);
+        var pct = HP_PERK_PCT[rank - 1];
+        if (!pct) return;
+        el.classList.remove('kw--unknown');
+        el.textContent = formatAmount(base * (1 + pct / 100));
+      });
+    }
+
+    rows.forEach(function (row) {
+      row.querySelectorAll('.class-card__level-pip--btn').forEach(function (pip) {
+        pip.addEventListener('click', function () {
+          row.setAttribute('data-level', pip.getAttribute('data-level-btn'));
+          row.querySelectorAll('.class-card__level-pip--btn').forEach(function (p) {
+            p.classList.toggle('class-card__level-pip--active', p === pip);
+          });
+          updateRow(row);
+          syncFabUrl();
+        });
+      });
+      updateRow(row);
+    });
+  })();
+
+  // ── URL state - every meaningful selection on this page (section
+  // expanded/collapsed, Class Discount/Difficulty Modifier chips, every
+  // row's Level/Health Perk pips, every tile's disclosures) is mirrored
+  // into the query string so the current setup can be shared as a link -
+  // same idea as the classes page's filter-to-URL sync, just covering a lot
+  // more controls. Only non-default values are ever written, so a page
+  // nobody has touched keeps a bare URL; syncFabUrl() is called from every
+  // click handler above, and restoreFabUrl() below runs once on load to
+  // reproduce a shared link by literally re-clicking whatever it names -
+  // that keeps this in lockstep with each feature's own update logic
+  // instead of re-implementing it a second time here.
+  function fabSectionCode(key) {
+    var map = { 'section-fortifications': 'fort', 'section-weapons': 'weap', 'section-prices': 'prices', 'section-forge': 'forge', 'section-perks': 'perks' };
+    return map[key] || null;
+  }
+
+  function fabSectionKey(code) {
+    var map = { fort: 'section-fortifications', weap: 'section-weapons', prices: 'section-prices', forge: 'section-forge', perks: 'section-perks' };
+    return map[code] || null;
+  }
+
+  // Fortifications/Weapons start expanded, All Prices/All Forge Values
+  // start collapsed - "open"/"closed" below only ever record a DEVIATION
+  // from whichever default a given section has, same "only non-default
+  // values are written" rule as every other control on this page.
+  var FAB_DEFAULT_OPEN_SECTIONS = ['fort', 'weap'];
+
+  function setListParam(params, name, entries) {
+    if (entries.length) { params.set(name, entries.join(',')); } else { params.delete(name); }
+  }
+
+  function collectRowPairs(rowSelector, attr, defaultVal) {
+    var entries = [];
+    document.querySelectorAll(rowSelector).forEach(function (row) {
+      var slug = row.getAttribute('data-slug');
+      var val = row.getAttribute(attr);
+      if (!slug || !val || val === defaultVal) return;
+      entries.push(slug + ':' + val);
+    });
+    return entries;
+  }
+
+  function collectActivePipPairs(tileSelector, defaultVal) {
+    var entries = [];
+    document.querySelectorAll(tileSelector).forEach(function (tile) {
+      var activePip = tile.querySelector('.fab-tile__pips .class-card__level-pip--active');
+      var val = activePip ? activePip.getAttribute('data-level') : null;
+      if (!val || val === defaultVal || !tile.id) return;
+      entries.push(tile.id + ':' + val);
+    });
+    return entries;
+  }
+
+  function syncFabUrl() {
+    var params = new URLSearchParams(window.location.search);
+
+    var openCodes = [];
+    var closedCodes = [];
+    document.querySelectorAll('details[data-collapse-key^="section-"]').forEach(function (d) {
+      var code = fabSectionCode(d.getAttribute('data-collapse-key'));
+      if (!code) return;
+      var defaultOpen = FAB_DEFAULT_OPEN_SECTIONS.indexOf(code) !== -1;
+      if (d.open && !defaultOpen) openCodes.push(code);
+      if (!d.open && defaultOpen) closedCodes.push(code);
+    });
+    setListParam(params, 'open', openCodes);
+    setListParam(params, 'closed', closedCodes);
+
+    var clsChip = document.querySelector('[data-group="class"] .fab-compare__chip.is-active');
+    var clsVal = clsChip ? clsChip.getAttribute('data-value') : 'none';
+    if (clsVal && clsVal !== 'none') { params.set('cls', clsVal); } else { params.delete('cls'); }
+
+    var drainChip = document.querySelector('[data-group="drain"] .fab-compare__chip.is-active');
+    var drainVal = drainChip ? drainChip.getAttribute('data-value') : 'none';
+    if (drainVal && drainVal !== 'none') { params.set('drain', drainVal); } else { params.delete('drain'); }
+
+    setListParam(params, 'pl', collectRowPairs('#price-comparison [data-price-row][data-kind="fort"]', 'data-level', '1'));
+    setListParam(params, 'pp', collectRowPairs('#price-comparison [data-price-row][data-kind="fort"]', 'data-perk', '0'));
+    setListParam(params, 'fl', collectRowPairs('#forge-comparison [data-forge-row]', 'data-level', '1'));
+    setListParam(params, 'pkl', collectRowPairs('#perk-comparison [data-perk-row]', 'data-level', '1'));
+    setListParam(params, 'tl', collectActivePipPairs('#fortifications [data-fort]', '1'));
+    setListParam(params, 'wl', collectActivePipPairs('#weapons [data-forge-pips]', '1'));
+
+    var tdEntries = [];
+    document.querySelectorAll('#fortifications [data-fort]').forEach(function (tile) {
+      var s = tile.__collapseState;
+      if (!s || !tile.id) return;
+      var keys = (s['mech'] ? 'm' : '') + (s['hp-perk'] ? 'h' : '');
+      if (keys) tdEntries.push(tile.id + ':' + keys);
+    });
+    setListParam(params, 'td', tdEntries);
+
+    var wdEntries = [];
+    document.querySelectorAll('#weapons [data-forge-pips]').forEach(function (tile) {
+      if (tile.__collapseState && tile.__collapseState['jack'] && tile.id) wdEntries.push(tile.id);
+    });
+    setListParam(params, 'wd', wdEntries);
+
+    // URLSearchParams.toString() percent-encodes ":" and "," (%3A / %2C) -
+    // both are perfectly valid, unreserved-enough characters in a query
+    // string and decode back to themselves either way, so un-escaping them
+    // here just keeps a shared link readable at a glance instead of
+    // "pl=barrier%3A2%2Csentry%3A3".
+    var qs = params.toString().replace(/%3A/g, ':').replace(/%2C/g, ',');
+    var url = window.location.pathname + (qs ? '?' + qs : '') + window.location.hash;
+    window.history.replaceState(null, '', url);
+  }
+
+  function fabClickCollapse(tile, key) {
+    // A fortification tile has one copy of each disclosure per level panel
+    // (all sharing tile.__collapseState) - clicking any one copy's summary
+    // is enough, the level-pips handler keeps every other copy in step.
+    var details = null;
+    tile.querySelectorAll('[data-collapse-key]').forEach(function (d) {
+      if (!details && d.getAttribute('data-collapse-key') === key) details = d;
+    });
+    var summary = details && details.querySelector('summary');
+    if (summary) summary.click();
+  }
+
+  // Finds an element by comparing a real DOM attribute in plain JS instead
+  // of interpolating a URL-supplied string into a CSS selector - a
+  // hand-edited or malicious link can put arbitrary characters in these
+  // values, and this sidesteps selector-escaping entirely rather than
+  // trying to sanitize for it.
+  function fabFindByAttr(list, attrName, value) {
+    var found = null;
+    list.forEach(function (el) {
+      if (!found && el.getAttribute(attrName) === value) found = el;
+    });
+    return found;
+  }
+
+  function fabApplyPairs(raw, findRow, attr) {
+    if (!raw) return;
+    raw.split(',').forEach(function (entry) {
+      var idx = entry.indexOf(':');
+      if (idx === -1) return;
+      var slug = entry.slice(0, idx), value = entry.slice(idx + 1);
+      var el = findRow(slug);
+      if (!el) return;
+      var btn = fabFindByAttr(el.querySelectorAll('[' + attr + ']'), attr, value);
+      if (btn) btn.click();
+    });
+  }
+
+  function restoreFabUrl() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+
+      // "open" = sections to open that default closed (prices/forge),
+      // "closed" = sections to close that default open (fort/weap) - each
+      // just needs one click regardless of direction, .click() toggles
+      // whatever the section's current (default-rendered) state is.
+      (params.get('open') || '').split(',').filter(Boolean).concat(
+        (params.get('closed') || '').split(',').filter(Boolean)
+      ).forEach(function (code) {
+        var key = fabSectionKey(code);
+        if (!key) return;
+        var details = fabFindByAttr(document.querySelectorAll('details[data-collapse-key]'), 'data-collapse-key', key);
+        var summary = details && details.querySelector('summary');
+        if (summary) summary.click();
+      });
+
+      var cls = params.get('cls');
+      if (cls) {
+        var clsChip = fabFindByAttr(document.querySelectorAll('[data-group="class"] [data-value]'), 'data-value', cls);
+        if (clsChip) clsChip.click();
+      }
+      var drain = params.get('drain');
+      if (drain) {
+        var drainChip = fabFindByAttr(document.querySelectorAll('[data-group="drain"] [data-value]'), 'data-value', drain);
+        if (drainChip) drainChip.click();
+      }
+
+      var priceFortRows = document.querySelectorAll('#price-comparison [data-price-row][data-kind="fort"]');
+      var forgeRows = document.querySelectorAll('#forge-comparison [data-forge-row]');
+      var perkRows = document.querySelectorAll('#perk-comparison [data-perk-row]');
+      fabApplyPairs(params.get('pl'), function (slug) { return fabFindByAttr(priceFortRows, 'data-slug', slug); }, 'data-level-btn');
+      fabApplyPairs(params.get('pp'), function (slug) { return fabFindByAttr(priceFortRows, 'data-slug', slug); }, 'data-perk-btn');
+      fabApplyPairs(params.get('fl'), function (slug) { return fabFindByAttr(forgeRows, 'data-slug', slug); }, 'data-level-btn');
+      fabApplyPairs(params.get('pkl'), function (slug) { return fabFindByAttr(perkRows, 'data-slug', slug); }, 'data-level-btn');
+
+      // td/wd (which disclosures were left open) MUST run before tl/wl
+      // (which level pip is active) - fabClickCollapse() always clicks the
+      // LV1 copy of a per-level disclosure (the first one in DOM order,
+      // see its own comment), which only visibly opens the right content
+      // if LV1 is still the active/visible panel at that moment - true
+      // right now (the default before tl runs), but no longer true once
+      // tl has already switched the tile to LV3. Clicking LV1's copy still
+      // records the open/closed choice in tile.__collapseState either way
+      // (see the click handler above), so running td/wd first means tl's
+      // own pip-switch handler (which re-applies __collapseState to
+      // whichever panel it activates - see its "Sync the Mechanic Card /
+      // Perk disclosures on every switch" comment) picks it up and opens
+      // the disclosure on the level the link actually points at, instead
+      // of silently opening the now-hidden LV1 copy while LV3 stays shut.
+      (params.get('td') || '').split(',').filter(Boolean).forEach(function (entry) {
+        var idx = entry.indexOf(':');
+        if (idx === -1) return;
+        var slug = entry.slice(0, idx), keys = entry.slice(idx + 1);
+        var tile = document.getElementById(slug);
+        if (!tile) return;
+        if (keys.indexOf('m') !== -1) fabClickCollapse(tile, 'mech');
+        if (keys.indexOf('h') !== -1) fabClickCollapse(tile, 'hp-perk');
+      });
+
+      (params.get('wd') || '').split(',').filter(Boolean).forEach(function (slug) {
+        var tile = document.getElementById(slug);
+        if (tile) fabClickCollapse(tile, 'jack');
+      });
+
+      fabApplyPairs(params.get('tl'), function (slug) { return document.getElementById(slug); }, 'data-level');
+      fabApplyPairs(params.get('wl'), function (slug) { return document.getElementById(slug); }, 'data-level');
+    } catch (err) {
+      // A hand-edited or stale link shouldn't be able to break the page -
+      // whatever restored before the bad entry stays applied, the rest of
+      // the page loads normally either way.
+      if (window.console) console.warn('Fabricator URL restore: ' + err.message);
+    }
+  }
+
+  restoreFabUrl();
+</script>

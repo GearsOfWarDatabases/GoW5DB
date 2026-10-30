@@ -1,0 +1,126 @@
+# ── Build Creator builds ─────────────────────────────────────────────────
+# A curated list of shareable Build Creator loadouts, browsable/filterable
+# on the Build Viewer tool (/tools/build-viewer/). Builds only ever live as
+# shareable "build codes" (see Build Creator's own "Build code" box) - there
+# is no server, no submissions form, no database. Adding one here is a
+# manual, deliberate step: copy a Copy'd build code out of Build Creator,
+# then add an entry below by hand (same workflow as _data/map_dots.yml).
+#
+# Each entry:
+#   title       - required. Whatever you want to call the build. Build
+#                 Creator itself has its own Title field (see the Build
+#                 panel there) that gets baked into the Build code's own
+#                 "title=" param - copy the same text here rather than
+#                 inventing a second name for the same build.
+#   author      - required. Who made it. Same idea as title - Build
+#                 Creator's own Author field feeds the code's "author="
+#                 param; copy that value here.
+#   author_link - optional. A profile link for the author above - only
+#                 rendered as a clickable link on Build Viewer if it's
+#                 actually one of three sites (checked with a `contains`
+#                 test at render time, see tools/build-viewer/index.html -
+#                 anything else, or a typo'd/broken version of one of
+#                 these, silently falls back to plain unlinked text
+#                 instead of a bad link):
+#                   - a YouTube channel: https://www.youtube.com/@handle
+#                   - a Steam profile:   https://steamcommunity.com/id/name
+#                   - an Xbox profile:   https://www.xbox.com/play/user/gamertag
+#                 Build Creator's own Author field has a "Link?" checkbox
+#                 that reveals a field for this, feeding the code's
+#                 "authorLink=" param (only once it's a real match for one
+#                 of the three sites - Build Creator itself won't let an
+#                 invalid link leave the page in the first place); copy
+#                 that value here too. Only one link, same as Build
+#                 Creator only ever holds one.
+#   description - required. A short one-line description shown on the
+#                 card (why this build, what it's for, etc). Build
+#                 Creator's own Description field feeds the code's
+#                 "desc=" param; copy that value here too.
+#   class       - required. The class slug (see _classes/*.md's own `slug`
+#                 front matter, e.g. "veteran"). Category and the class's
+#                 display name are both looked up from this at render time
+#                 (site.classes) - not duplicated here, so a class getting
+#                 renamed/recategorized never leaves a stale copy behind.
+#   gamemode    - required. Free text - whatever gamemode/mode(s) this
+#                 build is actually built for. Match whatever was marked
+#                 in Build Creator's own "Works in" mode badges (the
+#                 code's own "modes=" param):
+#                   - Specific modes marked (not all of that wave-count
+#                     category's modes) -> list just those, comma-
+#                     separated, e.g. "Predator Hunt, Boss Rush".
+#                   - Every mode in that category marked, or none marked
+#                     at all -> just the category, e.g. "10 Waves".
+#                 Not validated against _data/gamemodes.yml - just a
+#                 filter/label on Build Viewer.
+#   has_perks   - required. true if this build's Build code includes a
+#                 perk-order-by-wave plan (Build Creator's "plan=" URL
+#                 param - present once at least one rank is marked in the
+#                 Perks planner), false if it's cards only.
+#   maps        - optional. List of map slugs (see _data/maps.yml/each
+#                 map's own slugified name) - which map(s) this build is
+#                 meant for, if any. Build Creator's own Map picker (multi-
+#                 select) feeds the code's "maps=" param; copy that same
+#                 comma-separated set here, one per list item. Omit (or
+#                 leave an empty list) for "All Maps" (no maps picked).
+#   code        - required. The exact contents of Build Creator's own
+#                 "Build code" box (Copy button) for this build -
+#                 everything after the "?" in a shared link, e.g.
+#                 "class=veteran&cards=...&title=...&author=...". Build
+#                 Viewer links straight to /tools/build-creator/?<code> to
+#                 open it - title/author/desc in the code itself is what
+#                 pre-fills those fields once opened there, independent of
+#                 the title/author/description set above (which is only
+#                 what Build Viewer itself shows on the card).
+#
+# Example (commented out - delete the leading "# " on each line to use as
+# a template):
+#
+# - title: Anti-Boomer Sniper
+#   author: Some Contributor
+#   author_link: "https://www.youtube.com/@SomeContributor"
+#   description: Long-range crowd control for open Horde maps.
+#   class: markza
+#   gamemode: Horde
+#   has_perks: true
+#   maps: [canals, in-the-shadows]
+#   code: "class=markza&cards=pinpoint-accuracy,silent-but-deadly&lvls=pinpoint-accuracy:3&plan=50:10,20;;5,15;|&title=Anti-Boomer+Sniper&author=Some+Contributor&desc=Long-range+crowd+control+for+open+Horde+maps.&authorLink=https%3A%2F%2Fwww.youtube.com%2F%40SomeContributor"
+
+- title: Solo / Duo - Infiltrator
+  author: Ryan
+  description: Easy build for solo or duo with another DPS.
+  class: infiltrator
+  gamemode: Horde
+  has_perks: false
+  code: "class=infiltrator&cards=enhanced-stim%2Chealing-jolt%2Cblood-resonance%2Claceration%2Creaper&lvls=enhanced-stim%3A6%2Chealing-jolt%3A6%2Cblood-resonance%3A6%2Claceration%3A6%2Creaper%3A6&author=Ryan&title=Solo+%2F+Duo+-+Infiltrator&desc=Easy+build+for+solo+or+duo+with+another+DPS."
+
+- title: Solo / Duo - Anchor
+  author: Ryan
+  description: General Anchor Build that goes well with Boltok and Longshot
+  class: anchor
+  gamemode: Horde
+  has_perks: false
+  code: "class=anchor&cards=barrier-feedback%2Cbullet-chain%2Cbarrier-battery%2Cbloody-shot%2Charness-energy&lvls=barrier-feedback%3A6%2Cbullet-chain%3A6%2Cbarrier-battery%3A6%2Cbloody-shot%3A6%2Charness-energy%3A6&title=Solo+%2F+Duo+-+Anchor&author=Ryan&desc=General+Anchor+Build+that+goes+well+with+Boltok+and+Longshot"
+
+- title: Bow + Bleeding + Stun with Mulcher - Pilot
+  author: Ryan
+  description: All around build for the Pilot with bleeding when using his ultimate, his torque bow, ability to stun with explosives (including the torque bow), with maulcher as a general good dps weapon and almost instant freeze when using cryo cannon
+  class: gunner
+  gamemode: Horde
+  has_perks: false
+  code: "class=gunner&cards=reflect-shredder%2Cserrated-edge%2Cmulcher-mastery%2Cflash-freeze%2Cconcussive-explosives&lvls=reflect-shredder%3A6%2Cserrated-edge%3A6%2Cmulcher-mastery%3A6%2Cflash-freeze%3A6%2Cconcussive-explosives%3A6&title=Bow+%2B+Bleeding+%2B+Stun+with+Mulcher+-+Pilot&author=Ryan&desc=All+around+build+for+the+Pilot+with+bleeding+when+using+his+ultimate%2C+his+torque+bow%2C+ability+to+stun+with+explosives+%28including+the+torque+bow%29%2C+with+maulcher+as+a+general+good+dps+weapon+and+almost+instant+freeze+when+using+cryo+cannon"
+
+- title: Combat Medic at it's finest with no Repair - Combat Medic
+  author: Ryan
+  description: Overhaul balance build for combat medic when you're not depended on team reparing, general good and even more good for no barriers runs.
+  class: combat-medic
+  gamemode: Horde
+  has_perks: false
+  code: "class=combat-medic&cards=overdoing-it%2Cget-up%2Ccustom-lancer%2Chelpful-headshots%2Cintervention&lvls=overdoing-it%3A6%2Cget-up%3A6%2Ccustom-lancer%3A6%2Chelpful-headshots%3A6%2Cintervention%3A6&title=Combat+Medic+at+it%27s+finest+with+no+Repair+-+Combat+Medic&author=Ryan&desc=Overhaul+balance+build+for+combat+medic+when+you%27re+not+depended+on+team+reparing%2C+general+good+and+even+more+good+for+no+barriers+runs."
+
+- title: Combat Medic Jack - Jack
+  author: Ryan
+  description: Reach to be able to heal or repair and overhaul sustain when hijacking and ability to revive when exploding or dying in hijack.
+  class: jack
+  gamemode: Horde
+  has_perks: false
+  code: "class=jack&cards=backstab%2Chealing-reach%2Cexplosive-hijack%2Csacrifice%2Czapper-upgrade&lvls=healing-reach%3A6%2Cbackstab%3A6%2Cexplosive-hijack%3A6%2Csacrifice%3A6%2Czapper-upgrade%3A6&title=Combat+Medic+Jack+-+Jack&author=Ryan&desc=Reach+to+be+able+to+heal+or+repair+and+overhaul+sustain+when+hijacking+and+ability+to+revive+when+exploding+or+dying+in+hijack."

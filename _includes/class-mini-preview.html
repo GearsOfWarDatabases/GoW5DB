@@ -1,0 +1,125 @@
+{%- comment %} Renders a compact "what is this class" summary: icon,
+category, description, Passive, Active/Ultimate (combined when they're
+literally the same ability, same rule _layouts/class.html uses), and
+starting weapons. Rendered ONCE per class (not once per row that links to
+it) - classes/index.html builds one hidden copy of this per class, and
+level-unlock-badge.html's JS clones whichever one's needed into the shared
+.level-badge__tip-class-preview slot on hover/focus. Doing it this way
+instead of stuffing the whole thing into a data-attribute on every single
+row keeps the page from duplicating the same class's abilities dozens of
+times over across 20 levels' worth of tooltips.
+Usage: {% include class-mini-preview.html class=c %} {%- endcomment %}
+{%- assign cp = include.class -%}
+{%- assign cp_catstyle = "" -%}
+{%- if cp.category == "Assault" -%}{%- assign cp_catstyle = "--cat-color:#c8102e;" -%}
+{%- elsif cp.category == "Tank" -%}{%- assign cp_catstyle = "--cat-color:#4a9eff;" -%}
+{%- elsif cp.category == "Support" -%}{%- assign cp_catstyle = "--cat-color:#2fb865;" -%}
+{%- elsif cp.category == "Promotional" -%}{%- assign cp_catstyle = "--cat-color:#a78bfa;" -%}
+{%- endif -%}
+{%- assign cp_icon = "/images/classes/icons/" | append: cp.slug | append: ".png" | relative_url -%}
+{%- assign cp_same_ability = false -%}
+{%- if cp.active.name == cp.ultimate.name and cp.active.description == cp.ultimate.description -%}
+  {%- assign cp_same_ability = true -%}
+{%- endif -%}
+{%- comment %} Same icon paths _layouts/class.html uses on the full class
+page - one PNG per ability slot per class, plus a lettered placeholder if
+the file's missing. {% endcomment %}
+{%- assign cp_passive_icon = "/images/abilities/" | append: cp.slug | append: "-passive.png" | relative_url -%}
+{%- assign cp_active_icon = "/images/abilities/" | append: cp.slug | append: "-active.png" | relative_url -%}
+{%- assign cp_ultimate_icon = "/images/abilities/" | append: cp.slug | append: "-ultimate.png" | relative_url -%}
+<div class="class-mini-preview" style="{{ cp_catstyle }}">
+  <div class="class-mini-preview__head">
+    <img class="class-mini-preview__icon" src="{{ cp_icon }}" alt="" loading="lazy" onerror="this.style.display='none';">
+    <div class="class-mini-preview__head-text">
+      <span class="class-mini-preview__cat">{{ cp.category }}</span>
+      <h4 class="class-mini-preview__name">{{ cp.title }}</h4>
+    </div>
+  </div>
+  <p class="class-mini-preview__desc">{{ cp.description }}</p>
+
+  {%- comment %} Side-by-side columns instead of one long stack - now that
+  the panel's wide enough to fit two, this cuts the overall height roughly
+  in half so most classes fit without needing to scroll at all. {% endcomment %}
+  <div class="class-mini-preview__abilities">
+  <div class="class-mini-preview__ability">
+    <div class="class-mini-preview__ability-head">
+      <img class="class-mini-preview__ability-icon" src="{{ cp_passive_icon }}" alt="" loading="lazy" onerror="this.style.display='none';">
+      <div>
+        <span class="class-mini-preview__ability-type">Passive</span>
+        <strong class="class-mini-preview__ability-name">{{ cp.passive.name }}</strong>
+      </div>
+    </div>
+    <p class="class-mini-preview__ability-desc">{% include render-desc.html text=cp.passive.description page=cp %}</p>
+  </div>
+
+  {%- if cp_same_ability -%}
+  <div class="class-mini-preview__ability">
+    <div class="class-mini-preview__ability-head">
+      <img class="class-mini-preview__ability-icon" src="{{ cp_active_icon }}" alt="" loading="lazy" onerror="this.style.display='none';">
+      <div>
+        <span class="class-mini-preview__ability-type">Active / Ultimate</span>
+        <strong class="class-mini-preview__ability-name">{{ cp.active.name }}</strong>
+      </div>
+    </div>
+    <p class="class-mini-preview__ability-desc">{% include render-desc.html text=cp.active.description page=cp %}</p>
+    {%- if cp.active.duration or cp.active.cooldown %}
+    <p class="class-mini-preview__ability-stats">
+      {%- if cp.active.duration %}Duration: {% include format-seconds.html value=cp.active.duration %}{%- endif -%}
+      {%- if cp.active.duration and cp.active.cooldown %} &middot; {%- endif -%}
+      {%- if cp.active.cooldown %}Cooldown: {% include format-seconds.html value=cp.active.cooldown %}{%- endif -%}
+    </p>
+    {%- endif -%}
+  </div>
+  {%- else -%}
+  <div class="class-mini-preview__ability">
+    <div class="class-mini-preview__ability-head">
+      <img class="class-mini-preview__ability-icon" src="{{ cp_active_icon }}" alt="" loading="lazy" onerror="this.style.display='none';">
+      <div>
+        <span class="class-mini-preview__ability-type">Active</span>
+        <strong class="class-mini-preview__ability-name">{{ cp.active.name }}</strong>
+      </div>
+    </div>
+    <p class="class-mini-preview__ability-desc">{% include render-desc.html text=cp.active.description page=cp %}</p>
+    {%- if cp.active.duration or cp.active.cooldown %}
+    <p class="class-mini-preview__ability-stats">
+      {%- if cp.active.duration %}Duration: {% include format-seconds.html value=cp.active.duration %}{%- endif -%}
+      {%- if cp.active.duration and cp.active.cooldown %} &middot; {%- endif -%}
+      {%- if cp.active.cooldown %}Cooldown: {% include format-seconds.html value=cp.active.cooldown %}{%- endif -%}
+    </p>
+    {%- endif -%}
+  </div>
+  <div class="class-mini-preview__ability">
+    <div class="class-mini-preview__ability-head">
+      <img class="class-mini-preview__ability-icon" src="{{ cp_ultimate_icon }}" alt="" loading="lazy" onerror="this.style.display='none';">
+      <div>
+        <span class="class-mini-preview__ability-type">Ultimate</span>
+        <strong class="class-mini-preview__ability-name">{{ cp.ultimate.name }}</strong>
+      </div>
+    </div>
+    <p class="class-mini-preview__ability-desc">{% include render-desc.html text=cp.ultimate.description page=cp %}</p>
+    {%- if cp.ultimate.duration or cp.ultimate.cooldown %}
+    <p class="class-mini-preview__ability-stats">
+      {%- if cp.ultimate.duration %}Duration: {% include format-seconds.html value=cp.ultimate.duration %}{%- endif -%}
+      {%- if cp.ultimate.duration and cp.ultimate.cooldown %} &middot; {%- endif -%}
+      {%- if cp.ultimate.cooldown %}Cooldown: {% include format-seconds.html value=cp.ultimate.cooldown %}{%- endif -%}
+    </p>
+    {%- endif -%}
+  </div>
+  {%- endif -%}
+  </div>
+
+  {%- if cp.weapons -%}
+  <div class="class-mini-preview__weapons">
+    <span class="class-mini-preview__weapons-label">Weapons</span>
+    <ul class="class-mini-preview__weapons-list">
+      {%- for w in cp.weapons -%}
+        {%- assign cp_wicon = "/images/weapons/" | append: w.slug | append: ".png" | relative_url -%}
+        <li class="class-mini-preview__weapon" title="{{ w.name }}">
+          <img src="{{ cp_wicon }}" alt="" loading="lazy" onerror="this.style.display='none';">
+          <span>{{ w.name }}</span>
+        </li>
+      {%- endfor -%}
+    </ul>
+  </div>
+  {%- endif -%}
+</div>

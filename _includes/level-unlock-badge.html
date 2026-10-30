@@ -1,0 +1,150 @@
+{%- comment %} Renders the hover/click tooltip for a level-track node,
+listing every class + card that unlocks right at that level (could be one
+class or all of them - no special-casing "universal" levels anymore, this
+just shows whatever's really there). Cards every single class unlocks at
+once (e.g. "Score Boost" at Level 1) collapse into a single "All Classes"
+row - hovering/focusing that row reveals the full 19-class list, ordered
+the same way the main Classes page groups them (category, then alphabetical
+within it), rather than always spelling out the same card 19 times.
+Class name links to that class's page, tinted by its category color; card
+name links straight to that card's entry on the page, tinted by rarity -
+both reuse the sitewide xref-target scroll/flash/auto-open behavior for
+free (see #page-xref-target in _includes/footer.html). Each card link also
+carries a data-card-img URL and a data-card-desc snippet (that card's
+Level 1 description, {X}/{Y} already filled in) - classes/index.html's JS
+swaps both into the one shared .level-badge__tip-preview slot on hover/
+focus (a single slot per tooltip, not one per row, so the preview can't get
+clipped by .level-badge__tip-list's own scrollbar - see the CSS comment in
+_sass/home.scss for why that matters).
+Usage: {% include level-unlock-badge.html level=lvl %} {%- endcomment %}
+{%- assign ub_level = include.level -%}
+{%- assign ub_categories = "Assault,Tank,Support,Promotional" | split: "," -%}
+{%- comment %} Category, then alphabetical within it - same order the main
+Classes page groups its sections in, so a row's position here matches where
+that class actually sits on the page it links to (not a flat A-Z list that
+mixes categories together). {% endcomment %}
+{%- assign ub_alpha_classes = site.classes | sort: "title" -%}
+{%- assign ub_classes = "" | split: "" -%}
+{%- for ub_cat in ub_categories -%}
+  {%- assign ub_cat_group = ub_alpha_classes | where: "category", ub_cat -%}
+  {%- assign ub_classes = ub_classes | concat: ub_cat_group -%}
+{%- endfor -%}
+{%- assign ub_total = ub_classes.size -%}
+{%- comment %} Same distinct-unlock count as the small badge on the level
+node itself (level-unlock-count.html) - shown again here, top right of the
+title, so it reads the same whether you're looking at the closed track or
+the open tooltip. {% endcomment %}
+{%- capture ub_total_count %}{% include level-unlock-count.html level=ub_level %}{% endcapture -%}
+{%- assign ub_total_count = ub_total_count | strip -%}
+<span class="level-badge__tip">
+  <span class="level-badge__tip-title">Level {{ ub_level }} Unlocks:<span class="level-badge__tip-title-count" title="{{ ub_total_count }} total unlocked across all classes at Level {{ ub_level }}">{{ ub_total_count }}</span></span>
+  <span class="level-badge__tip-preview" aria-hidden="true">
+    <img alt="" loading="lazy" onerror="this.closest('.level-badge__tip-preview').classList.remove('is-visible');">
+    <span class="level-badge__tip-preview-desc"></span>
+  </span>
+  {%- comment %} Class-name hover preview - classes/index.html's JS clones
+  the matching #class-preview-{slug} node (rendered once per class, see
+  #class-mini-previews there) into this slot on hover/focus of any
+  .level-badge__tip-class[data-class-slug] link below. {% endcomment %}
+  <span class="level-badge__tip-class-preview" aria-hidden="true"></span>
+  <span class="level-badge__tip-header" aria-hidden="true">
+    <span>Class</span>
+    <span class="level-badge__tip-sep"></span>
+    <span>Unlock</span>
+  </span>
+  <ul class="level-badge__tip-list">
+    {%- assign ub_slugs_seen = "," -%}
+    {%- for c in ub_classes -%}
+      {%- for card in c.cards -%}
+        {%- if card.unlock_level == ub_level -%}
+          {%- assign ub_needle = "," | append: card.slug | append: "," -%}
+          {%- assign ub_already_seen = false -%}
+          {%- if ub_slugs_seen contains ub_needle %}{%- assign ub_already_seen = true -%}{%- endif -%}
+          {%- unless ub_already_seen -%}
+            {%- assign ub_slugs_seen = ub_slugs_seen | append: card.slug | append: "," -%}
+            {%- comment %} How many classes unlock this exact card slug at
+            this level? Only equality (==), never "contains", so a slug
+            like "score-boost" can't false-match inside "epic-score-boost". {% endcomment %}
+            {%- assign ub_count = 0 -%}
+            {%- for c2 in ub_classes -%}
+              {%- assign ub_c2_has = false -%}
+              {%- for card2 in c2.cards -%}
+                {%- if card2.unlock_level == ub_level and card2.slug == card.slug -%}{%- assign ub_c2_has = true -%}{%- endif -%}
+              {%- endfor -%}
+              {%- if ub_c2_has -%}{%- assign ub_count = ub_count | plus: 1 -%}{%- endif -%}
+            {%- endfor -%}
+            {%- assign ub_imgurl = "/images/cards/" | append: c.slug | append: "-" | append: card.slug | append: ".png" | relative_url -%}
+            {%- comment %} Level 1 description - same {X}/{Y} substitution
+            _layouts/class.html uses for a card's first level panel, minus
+            the interactive multi-level pip UI this quick preview doesn't
+            need. Any stray "{...}" left over (skin cards like "Unlocks the
+            {Heroic Venom} skin...", which have no numeric levels to fill
+            in) just gets its braces stripped rather than shown literally. {% endcomment %}
+            {%- assign ub_lvl1 = card.levels | first -%}
+            {%- assign ub_desc = card.description -%}
+            {%- if ub_lvl1 -%}
+              {%- capture ub_xmark %}<mark class="kw kw--value{% if ub_lvl1.X == '?' %} kw--unknown{% endif %}{% if ub_lvl1.X contains '~' %} kw--estimated{% endif %}">{{ ub_lvl1.X }}</mark>{% endcapture -%}
+              {%- assign ub_desc = ub_desc | replace: '{X}', ub_xmark -%}
+              {%- if ub_lvl1.Y -%}
+                {%- capture ub_ymark %}<mark class="kw kw--value{% if ub_lvl1.Y == '?' %} kw--unknown{% endif %}{% if ub_lvl1.Y contains '~' %} kw--estimated{% endif %}">{{ ub_lvl1.Y }}</mark>{% endcapture -%}
+                {%- assign ub_desc = ub_desc | replace: '{Y}', ub_ymark -%}
+              {%- endif -%}
+            {%- endif -%}
+            {%- assign ub_desc = ub_desc | replace: '{', '' | replace: '}', '' -%}
+            {%- if ub_count == ub_total -%}
+            <li class="level-badge__tip-row--all">
+              <span class="level-badge__tip-class level-badge__tip-class--all" tabindex="0">All Classes</span>
+              <span class="level-badge__tip-sep"></span>
+              <a class="level-badge__tip-card level-badge__tip-card--{{ card.rarity | downcase }}" href="{{ c.url | relative_url }}#{{ card.slug }}" data-card-img="{{ ub_imgurl }}" data-card-desc="{{ ub_desc | escape }}" data-card-rarity="{{ card.rarity | downcase }}">{{ card.name }}</a>
+              <ul class="level-badge__tip-all-list">
+                {%- for ub_cat in ub_categories -%}
+                  {%- assign ub_cat_classes = ub_classes | where: "category", ub_cat -%}
+                  {%- for cc in ub_cat_classes -%}
+                    {%- assign ub_cc_catstyle = "" -%}
+                    {%- if cc.category == "Assault" -%}{%- assign ub_cc_catstyle = "--cat-color:#c8102e;" -%}
+                    {%- elsif cc.category == "Tank" -%}{%- assign ub_cc_catstyle = "--cat-color:#4a9eff;" -%}
+                    {%- elsif cc.category == "Support" -%}{%- assign ub_cc_catstyle = "--cat-color:#2fb865;" -%}
+                    {%- elsif cc.category == "Promotional" -%}{%- assign ub_cc_catstyle = "--cat-color:#a78bfa;" -%}
+                    {%- endif -%}
+                    <li><a class="level-badge__tip-class" style="{{ ub_cc_catstyle }}" href="{{ cc.url | relative_url }}#{{ card.slug }}" data-class-slug="{{ cc.slug }}">{{ cc.title }}</a></li>
+                  {%- endfor -%}
+                {%- endfor -%}
+              </ul>
+            </li>
+            {%- else -%}
+              {%- for c3 in ub_classes -%}
+                {%- for card3 in c3.cards -%}
+                  {%- if card3.unlock_level == ub_level and card3.slug == card.slug -%}
+                    {%- assign ub_catstyle = "" -%}
+                    {%- if c3.category == "Assault" -%}{%- assign ub_catstyle = "--cat-color:#c8102e;" -%}
+                    {%- elsif c3.category == "Tank" -%}{%- assign ub_catstyle = "--cat-color:#4a9eff;" -%}
+                    {%- elsif c3.category == "Support" -%}{%- assign ub_catstyle = "--cat-color:#2fb865;" -%}
+                    {%- elsif c3.category == "Promotional" -%}{%- assign ub_catstyle = "--cat-color:#a78bfa;" -%}
+                    {%- endif -%}
+                    {%- assign ub_imgurl3 = "/images/cards/" | append: c3.slug | append: "-" | append: card3.slug | append: ".png" | relative_url -%}
+                    {%- assign ub_lvl1_3 = card3.levels | first -%}
+                    {%- assign ub_desc3 = card3.description -%}
+                    {%- if ub_lvl1_3 -%}
+                      {%- capture ub_xmark3 %}<mark class="kw kw--value{% if ub_lvl1_3.X == '?' %} kw--unknown{% endif %}{% if ub_lvl1_3.X contains '~' %} kw--estimated{% endif %}">{{ ub_lvl1_3.X }}</mark>{% endcapture -%}
+                      {%- assign ub_desc3 = ub_desc3 | replace: '{X}', ub_xmark3 -%}
+                      {%- if ub_lvl1_3.Y -%}
+                        {%- capture ub_ymark3 %}<mark class="kw kw--value{% if ub_lvl1_3.Y == '?' %} kw--unknown{% endif %}{% if ub_lvl1_3.Y contains '~' %} kw--estimated{% endif %}">{{ ub_lvl1_3.Y }}</mark>{% endcapture -%}
+                        {%- assign ub_desc3 = ub_desc3 | replace: '{Y}', ub_ymark3 -%}
+                      {%- endif -%}
+                    {%- endif -%}
+                    {%- assign ub_desc3 = ub_desc3 | replace: '{', '' | replace: '}', '' -%}
+                    <li>
+                      <a class="level-badge__tip-class" style="{{ ub_catstyle }}" href="{{ c3.url | relative_url }}" data-class-slug="{{ c3.slug }}">{{ c3.title }}</a>
+                      <span class="level-badge__tip-sep"></span>
+                      <a class="level-badge__tip-card level-badge__tip-card--{{ card3.rarity | downcase }}" href="{{ c3.url | relative_url }}#{{ card3.slug }}" data-card-img="{{ ub_imgurl3 }}" data-card-desc="{{ ub_desc3 | escape }}" data-card-rarity="{{ card3.rarity | downcase }}">{{ card3.name }}</a>
+                    </li>
+                  {%- endif -%}
+                {%- endfor -%}
+              {%- endfor -%}
+            {%- endif -%}
+          {%- endunless -%}
+        {%- endif -%}
+      {%- endfor -%}
+    {%- endfor -%}
+  </ul>
+</span>

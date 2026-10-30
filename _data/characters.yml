@@ -1,0 +1,75 @@
+# ── Characters ────────────────────────────────────────────────────────────
+# Every character/skin captured from the in-game CHARACTERS select screen
+# (ref/Characters/*.jpg). Two images per entry in images/characters/:
+#   <slug>.jpg           - body crop, no UI/text (fractional box 0.31,0.0,0.64,0.90)
+#   <slug>-portrait.jpg  - head/shoulders crop (fractional box 0.33,0.02,0.63,0.36)
+# faction is "cog" (COG, humans, guests, COG-aligned robots) or "swarm"
+# (Locust/Swarm and their predecessors) - a simple binary split, not exact
+# in-universe faction lines (e.g. UIR is filed under cog for simplicity).
+
+list:
+  - { name: "Alicia – Armored Alicia", slug: "alicia-armored-alicia", faction: "cog" }
+  - { name: "Anthony – Armored Anthony", slug: "anthony-armored-anthony", faction: "cog" }
+  - { name: "Anya – Civilian Anya", slug: "anya-civilian-anya", faction: "cog" }
+  - { name: "Barrick – Armored Barrick", slug: "barrick-armored-barrick", faction: "cog" }
+  - { name: "Benjamin – Armored Benjamin", slug: "benjamin-armored-benjamin", faction: "cog" }
+  - { name: "Bernie", slug: "bernie", faction: "cog" }
+  - { name: "COG Commando – Private Sanguino", slug: "cog-commando-private-sanguino", faction: "cog" }
+  - { name: "COG Gear", slug: "cog-gear", faction: "cog" }
+  - { name: "Clayton – Armored Clayton", slug: "clayton-armored-clayton", faction: "cog" }
+  - { name: "Cole – Armored Cole", slug: "cole-armored-cole", faction: "cog" }
+  - { name: "DeeBee", slug: "deebee", faction: "cog" }
+  - { name: "Del – Armored Del", slug: "del-armored-del", faction: "cog" }
+  - { name: "Dizzy", slug: "dizzy", faction: "cog" }
+  - { name: "Emile-A239", slug: "emile-a239", faction: "cog" }
+  - { name: "Fahz", slug: "fahz", faction: "cog" }
+  - { name: "Gary – Outsider Gary", slug: "gary-outsider-gary", faction: "cog" }
+  - { name: "General RAAM", slug: "general-raam", faction: "swarm" }
+  - { name: "Grace", slug: "grace", faction: "cog" }
+  - { name: "Hana Cole", slug: "hana-cole", faction: "cog" }
+  - { name: "Hoffman – Armored Hoffman", slug: "hoffman-armored-hoffman", faction: "cog" }
+  - { name: "JD – Armored JD", slug: "jd-armored-jd", faction: "cog" }
+  - { name: "JD", slug: "jd", faction: "cog" }
+  - { name: "Jack", slug: "jack", faction: "cog" }
+  - { name: "Jermad – Krav Jermad", slug: "jermad-krav-jermad", faction: "swarm" }
+  - { name: "Kait – Armored Kait", slug: "kait-armored-kait", faction: "cog" }
+  - { name: "Kantus", slug: "kantus", faction: "swarm" }
+  - { name: "Kat-B320", slug: "kat-b320", faction: "cog" }
+  - { name: "Lahni", slug: "lahni", faction: "cog" }
+  - { name: "Lambent Drone", slug: "lambent-drone", faction: "swarm" }
+  - { name: "Lambent Grenadier", slug: "lambent-grenadier", faction: "swarm" }
+  - { name: "Lizzie", slug: "lizzie", faction: "cog" }
+  - { name: "Locust Drone", slug: "locust-drone", faction: "swarm" }
+  - { name: "Locust Grenadier", slug: "locust-grenadier", faction: "swarm" }
+  - { name: "Mac", slug: "mac", faction: "cog" }
+  - { name: "Marcus", slug: "marcus", faction: "cog" }
+  - { name: "Matriarch", slug: "matriarch", faction: "swarm" }
+  - { name: "Mikayla – Stranded Mikayla", slug: "mikayla-stranded-mikayla", faction: "cog" }
+  - { name: "Minh – E-Day Minh", slug: "minh-e-day-minh", faction: "cog" }
+  - { name: "Minh", slug: "minh", faction: "cog" }
+  - { name: "Oscar – Last Stand Oscar", slug: "oscar-last-stand-oscar", faction: "cog" }
+  - { name: "Paduk – Nomad Paduk", slug: "paduk-nomad-paduk", faction: "cog" }
+  - { name: "Prescott", slug: "prescott", faction: "cog" }
+  - { name: "Queen Myrrah – Collector's Queen Myrrah", slug: "queen-myrrah-collector-s-queen-myrrah", faction: "swarm" }
+  - { name: "Queen Reyna", slug: "queen-reyna", faction: "swarm" }
+  - { name: "Ravager", slug: "ravager", faction: "swarm" }
+  - { name: "Sam – Armored Sam", slug: "sam-armored-sam", faction: "cog" }
+  - { name: "Sarah Connor", slug: "sarah-connor", faction: "cog" }
+  - { name: "Scion", slug: "scion", faction: "swarm" }
+  - { name: "Sire", slug: "sire", faction: "swarm" }
+  - { name: "Skorge", slug: "skorge", faction: "swarm" }
+  - { name: "Speaker", slug: "speaker", faction: "swarm" }
+  - { name: "Sraak – Uzil Sraak", slug: "sraak-uzil-sraak", faction: "swarm" }
+  - { name: "Swarm Drone – Swarm Elite Drone", slug: "swarm-drone-swarm-elite-drone", faction: "swarm" }
+  - { name: "Swarm Grenadier – Swarm Elite Grenadier", slug: "swarm-grenadier-swarm-elite-grenadier", faction: "swarm" }
+  - { name: "Swarm Hunter – Swarm Elite Hunter", slug: "swarm-hunter-swarm-elite-hunter", faction: "swarm" }
+  - { name: "Swarm Sniper", slug: "swarm-sniper", faction: "swarm" }
+  - { name: "Tai", slug: "tai", faction: "cog" }
+  - { name: "Terminator T-800", slug: "terminator-t-800", faction: "cog" }
+  - { name: "The New Day Big E", slug: "the-new-day-big-e", faction: "cog" }
+  - { name: "The New Day Kofi Kingston", slug: "the-new-day-kofi-kingston", faction: "cog" }
+  - { name: "The New Day Xavier Woods", slug: "the-new-day-xavier-woods", faction: "cog" }
+  - { name: "Theron Guard", slug: "theron-guard", faction: "swarm" }
+  - { name: "UIR Soldier (Male)", slug: "uir-soldier-male", faction: "cog" }
+  - { name: "Vrol – Viktor Vrol", slug: "vrol-viktor-vrol", faction: "swarm" }
+  - { name: "Warden", slug: "warden", faction: "swarm" }

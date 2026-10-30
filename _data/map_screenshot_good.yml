@@ -1,0 +1,44 @@
+# ── Map Screenshot Style Audit ────────────────────────────────────────────
+# Big map images (images/maps/<slug>.jpg) can be captured from two different
+# in-game screens:
+#   - the LOADING SCREEN -> clean, single, sharp image (correct)
+#   - the MAIN MENU      -> translucent double-exposure "ghosted" look
+#                            (wrong - needs to be recaptured)
+# This can't be detected at build time (it's a visual judgment call), so this
+# file is a manually-maintained allowlist of slugs confirmed to have the
+# correct loading-screen capture. Everything else with an existing big image
+# is assumed to still need a proper recapture. When you replace a map's
+# screenshot with a loading-screen version, add its slug here and the
+# [DEBUG] - Map Screenshot Audit table on the Maps page will update.
+#
+# Confirmed correct (visual review of all 67 existing big
+# images): only Icebound and River. All other Horde maps and literally every
+# Escape/Hivebuster map (except The Mines, which has no image at all yet)
+# are main-menu-style captures still needing a redo.
+- icebound
+- river
+# Added: recovered proper loading-screen captures from ref/ (the
+# raw Steam screenshot archive), each verified individually before adding.
+- nexus
+- checkout
+- dam
+- regency
+- atrium
+- ephyra
+- clocktower
+- blood-drive
+- reclaimed
+- canals
+- ritual
+# Added: Allfathers Arena and District (Horde Frenzy/Horde loading
+# screens with the text/tip overlay cropped out) and Abyss (Horde Frenzy
+# loading screen - only candidate available has the player and a Kestrel
+# boss in frame rather than a clean environment shot, since no textless
+# environment capture was on hand yet).
+- allfathers-arena
+- district
+- abyss
+# Added: Asylum, found loose in ref/ (unsorted
+# Steam screenshots) rather than already filed
+# into ref/Maps/. Horde loading-screen capture, text cropped out.
+- asylum

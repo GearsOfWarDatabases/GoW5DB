@@ -1,0 +1,29 @@
+# ── Card upgrade costs ───────────────────────────────────────────────────
+# duplicates: needed to upgrade TO level 2, 3, 4, 5, 6 (same for every rarity)
+# coins_per_duplicate: coin price to buy each missing duplicate, by rarity.
+#   Total upgrade price in-game = missing duplicates x this rate.
+#
+# Checked ref/Classes - */B - Card Upgrades/ screenshots: every
+# green-titled card that gave a clean cost reading (Brawler, Steady Hand, etc.)
+# priced at 60/duplicate - the same as confirmed Common - so no distinct
+# "Uncommon" cost tier has been observed yet; left as '?' rather than assumed
+# to be identical to Common. Heroic (signature ultimate cards, e.g. Blademaster
+# "Ambush", Nomad "Armored Shot") both showed 8,000/duplicate, but only in
+# their locked "unlock by leveling up" preview state, so marked as an estimate
+# ('~') rather than fully confirmed.
+
+duplicates:
+  Common:    [1, 3, 5, 10, 20]
+  Uncommon:  [1, 3, 5, 10, 20]
+  Rare:      [1, 3, 5, 10, 20]
+  Epic:      [1, 3, 5, 10, 20]
+  Legendary: [1, 3, 5, 10, 20]
+  Heroic:    [1, 3, 5, 10, 20]
+
+coins_per_duplicate:
+  Common: 60
+  Uncommon: "?"
+  Rare: 300
+  Epic: "1,000"
+  Legendary: "4,000"
+  Heroic: "~8,000"

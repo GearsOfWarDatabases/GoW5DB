@@ -1,0 +1,41 @@
+# Matches the Assault class category's --cat-color / --cat-color-dark in
+# styles/main.scss (:root .class-page--assault / .classes-section--assault).
+name: Assault
+accent: "#c62b0f"
+accent_dark: "#6d1303"
+
+# Same categories/rarity/traits values as every other shipped theme - see
+# default.yml's comment on this same block for why, and README.md for the
+# schema. Change any of these here and Assault alone would show it.
+categories:
+  assault:     { color: "#c62b0f", dark: "#6d1303" }
+  tank:        { color: "#4995ff", dark: "#275ca5" }
+  support:     { color: "#2fb740", dark: "#135e1d" }
+  promotional: { color: "#d856d5", dark: "#7f2c7d" }
+
+rarity:
+  common: "#9e9e9e"
+  uncommon: "#4adb88"
+  rare: "#4a9eff"
+  epic: "#b44aff"
+  legendary: "#d4a017"
+
+# See default.yml's comment on this block for what it drives.
+semantic:
+  positive: "#7ee787"
+  negative: "#f54747"
+  neutral: "#d4a017"
+
+traits:
+  default:                     { color: "#d4a017", base: "#c5a035" }
+  repairing:                   { color: "#d9944f" }
+  ammo-regeneration:           { color: "#8ecbff", base: "#4a9eff" }
+  explosive-ammo-regeneration: { color: "#ffb066", base: "#ff8c28" }
+  bleeding:                    { color: "#ff8f8f", base: "#dc3232" }
+  invisibility:                { color: "#d9a8ff", base: "#b44aff" }
+  marking:                     { color: "#f2c94c" }
+  freeze:                      { color: "#5fd4e0" }
+  shield:                      { color: "#a9bdd6" }
+  summon:                      { color: "#9f8cf0" }
+  melee:                       { color: "#c98a4b" }
+  stim:                        { color: "#4fdba0" }

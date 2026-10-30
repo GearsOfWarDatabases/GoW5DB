@@ -1,0 +1,129 @@
+# ── Horde Enemies ────────────────────────────────────────────────────────
+# Sourced from ref/forge_and_enemies.txt. Horde scales enemy Energy up on
+# harder difficulties - rather than one flat number, each enemy carries two:
+#   energy_other  - the reward on every difficulty EXCEPT Master (confirmed
+#                    against Beginner; the other non-Master tiers are assumed
+#                    to share this same value until shown otherwise).
+#   energy_master - the separate, higher... actually LOWER reward Master
+#                    difficulty specifically gives (counterintuitive, but
+#                    confirmed real - see below). Plain number = confirmed
+#                    for real. "~123" (leading tilde, same convention as
+#                    Fabricator's own buyback prices) = estimated, not a
+#                    confirmed number for that specific enemy. "?" = totally
+#                    unconfirmed/unknown.
+#
+# Master's own Energy formula: confirmed for Lambent Drone (185 -> 93),
+# Cyclops (280 -> 140), Locust Drone (280 -> 140), and Sire (700 -> 350) -
+# every one of those is exactly (or, for the one odd value, obviously
+# rounds to) half of that same enemy's Other-tier Energy. Every other
+# enemy below without its own separately-confirmed number uses that same
+# Other / 2 (rounded) formula, marked estimated (~) rather than confirmed,
+# since it's inferred from a 4-enemy pattern rather than actually observed
+# for each one individually.
+#
+# `color` is the weapon-glow grouping the reference notes split enemies
+# into ("Red" vs "Yellow") - Yellow is exclusively the Lambent-reskinned
+# variants, Red is everything else that carries a weapon.
+#
+# Enemies that come in multiple named variants (different weapon loadouts,
+# or a Lambent reskin) are grouped under one entry with a `variants` list,
+# instead of being repeated as separate unrelated rows - e.g. Scion covers
+# Ice/Mulcher/Buzzkill Scion, Drone covers Locust/Elite/Lambent Drone, etc.
+
+tier_note: >-
+  Energy is split by difficulty tier: <strong>Other</strong> covers every
+  difficulty except Master (confirmed against Beginner), and
+  <strong>Master</strong> is Master difficulty's own separate reward - half
+  of Other's, confirmed for a handful of enemies so far and estimated
+  (marked with a dotted underline) as that same half-of-Other for the rest.
+
+list:
+  - name: Juvie
+    energy_other: 140
+    energy_master: "~70"
+    color: Red
+
+  - name: Locust Sniper
+    energy_other: 280
+    energy_master: "~140"
+    weapon: "[[longshot]]"
+    color: Red
+
+  - name: Reject
+    energy_other: 280
+    energy_master: "~140"
+    color: Red
+
+  - name: Locust Hybrid
+    energy_other: 185
+    energy_master: "~93"
+    weapon: "[[retro-lancer]]"
+    color: Red
+
+  - name: Drone
+    variants:
+      - { name: "Locust",  energy_other: 280, energy_master: 140,   weapon: "[[hammerburst]]", color: Red }
+      - { name: "Elite",   energy_other: 795, energy_master: "~398", weapon: "[[claw-lmg]]",    color: Red }
+      - { name: "Lambent", energy_other: 185, energy_master: 93,    weapon: "[[hammerburst]]", color: Yellow }
+
+  - name: Cyclops
+    energy_other: 280
+    energy_master: 140
+    weapon: "[[lancer]]"
+    color: Red
+
+  - name: Palace Guard
+    energy_other: 560
+    energy_master: "~280"
+    weapon: "[[torque-bow]] / [[lancer]]"
+    color: Red
+
+  - name: Sire
+    energy_other: 700
+    energy_master: 350
+    color: Red
+
+  - name: Theron Guard
+    variants:
+      - { name: "Standard", energy_other: 560, energy_master: "~280", weapon: "[[torque-bow]]", color: Red }
+      - { name: "Lambent",  energy_other: 560, energy_master: "~280", weapon: "[[torque-bow]]", color: Yellow }
+
+  - name: Grenadier
+    variants:
+      - { name: "Standard", energy_other: 560, energy_master: "~280", weapon: "[[gnasher]] + Grenade", color: Red }
+      - { name: "Elite",    energy_other: 700, energy_master: "~350", weapon: "[[gnasher]] + Grenade", color: Red }
+      - { name: "Flame",    energy_other: 700, energy_master: "~350", weapon: "[[scorcher]]",          color: Red }
+      - { name: "Lambent",  energy_other: 560, energy_master: "~280", weapon: "[[gnasher]]",           color: Yellow }
+
+  - name: Bastion
+    energy_other: 700
+    energy_master: "~350"
+    color: Red
+
+  - name: Pouncher
+    energy_other: 700
+    energy_master: "~350"
+    color: Red
+
+  - name: Warden
+    energy_other: 1865
+    energy_master: "~933"
+    weapon: "[[breaker-mace]]"
+    color: Red
+
+  - name: Scion
+    variants:
+      - { name: "Ice",      energy_other: 700, energy_master: "~350", weapon: "Cryo Cannon", color: Red }
+      - { name: "Mulcher",  energy_other: 935, energy_master: "~468", weapon: "Mulcher",     color: Red }
+      - { name: "Buzzkill", energy_other: 700, energy_master: "~350", weapon: "Buzzsaw",     color: Red }
+
+  - name: Matriarch
+    energy_other: 5600
+    energy_master: "~2800"
+    color: Red
+
+  - name: Bolter
+    energy_other: 280
+    energy_master: "~140"
+    weapon: "[[boltok]]"
+    color: Red

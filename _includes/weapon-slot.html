@@ -1,0 +1,18 @@
+<div class="dpad__slot dpad__slot--{{ include.dir }}">
+  <span class="dpad__rank-label">{{ include.label }}</span>
+  {% if include.weapon %}
+  {%- assign w_entry = site.data.weapons.menu | where: "slug", include.weapon.slug | first -%}
+  {%- assign fab_entry = site.data.fabricator.weapons | where: "slug", include.weapon.slug | first -%}
+  {% assign w_img = '/images/weapons/' | append: include.weapon.slug | append: '.png' %}
+  <img class="dpad__icon" src="{{ w_img | relative_url }}" alt="{{ include.weapon.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+  <div class="dpad__icon-placeholder" style="display:none;">&#9876;</div>
+  <p class="dpad__name">{% if w_entry %}<a class="xref-link" href="{{ '/weapons/' | relative_url }}#{{ include.weapon.slug }}">{{ include.weapon.name }}</a>{% elsif fab_entry %}<a class="xref-link" href="{{ '/fabricator/' | relative_url }}#{{ include.weapon.slug }}">{{ include.weapon.name }}</a>{% else %}{{ include.weapon.name }}{% endif %}</p>
+  {% else %}
+  {%- comment %} Genuinely doesn't exist for this class (e.g. Mechanic has
+  no grenade slot) - not the same thing as "unknown"/unconfirmed data, so
+  this deliberately does NOT use the site's kw--unknown red treatment,
+  just a plain muted label. {% endcomment %}
+  <div class="dpad__icon-placeholder"></div>
+  <p class="dpad__name dpad__name--na">N/A</p>
+  {% endif %}
+</div>

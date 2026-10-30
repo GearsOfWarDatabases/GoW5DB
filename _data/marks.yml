@@ -1,0 +1,67 @@
+# ── Marks ────────────────────────────────────────────────────────────────
+# Cosmetic banner Marks, collected from the in-game MARKS menu (own Q/E tab
+# next to CLASSES/WEAPONS - not the STORE, despite marks also turning up as
+# included rewards inside a few real-money Bundles, e.g. "EPIC MARK x1" in
+# the Operation 8 Bundle). This is a PARTIAL catalog: only two screenshots
+# of the grid have been captured so far (12 marks total, in-game rows below
+# these were cut off in both captures), sorted automatically by the `marks`
+# section in ref/sort-screenshots.py. Icons are cropped directly from those
+# screenshots (images/marks/<slug>.png) - see ref/Marks/ for the originals.
+#
+# `border` is the color of each card's own border in the MARKS menu, which
+# visibly groups into 4 colors. Two are cross-checked against real on-screen
+# text (the Operation 8 Bundle screenshot lists included rewards color-coded
+# by rarity: "RARE SKIN" in cyan, "EPIC MARK"/"EPIC BANNER"/etc in magenta -
+# matching two of these border colors exactly), so those two are labeled
+# with a real rarity name. The other two (gold, plain blue) have no matching
+# on-screen rarity text anywhere captured yet, so `rarity` is left "?" for
+# them rather than guessed - `border` still records what's visibly true.
+list:
+  - name: "Hammer & Sickle Mark"
+    slug: "hammer-sickle"
+    border: "cyan"
+    rarity: "Rare"
+  - name: "Competitive: Hero Mark"
+    slug: "competitive-hero"
+    border: "gold"
+    rarity: "?"
+  - name: "Competitive: Legend Mark"
+    slug: "competitive-legend"
+    border: "gold"
+    rarity: "?"
+  - name: "83% Mark"
+    slug: "83-percent"
+    border: "magenta"
+    rarity: "Epic"
+  - name: "Alien Mark"
+    slug: "alien"
+    border: "magenta"
+    rarity: "Epic"
+  - name: "Backpack Mark"
+    slug: "backpack"
+    border: "magenta"
+    rarity: "Epic"
+  - name: "Flowers Mark"
+    slug: "flowers"
+    border: "magenta"
+    rarity: "Epic"
+  - name: "Guitar Mark"
+    slug: "guitar"
+    border: "magenta"
+    rarity: "Epic"
+  - name: "X Mark"
+    slug: "x"
+    border: "blue"
+    rarity: "?"
+  - name: "Xbox Mark"
+    slug: "xbox"
+    border: "blue"
+    rarity: "?"
+  - name: "Year of the Rat Mark"
+    slug: "year-of-the-rat"
+    border: "blue"
+    rarity: "?"
+  - name: "Zealot Helmet Mark"
+    slug: "zealot-helmet"
+    border: "blue"
+    rarity: "?"

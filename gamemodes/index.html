@@ -1,0 +1,319 @@
+---
+title: Gamemodes
+---
+{%- assign jack_class = site.classes | where: "slug", "jack" | first %}
+{%- assign forge_fort = site.data.fabricator.fortifications | where: "slug", "forge" | first %}
+<div class="section-page section-page--wide">
+  <h1 class="section-page__title">Gamemodes</h1>
+
+  <div class="modes-columns">
+  {%- for cat in site.data.gamemodes %}
+  <section class="modes-category">
+    <!-- Collapsible whole column - reuses the exact same
+         .modes-category-collapse/.modes-category__header--toggle/
+         .modes-category__body pattern the Fabricator page already
+         established for its own 4 big sections (Fortifications, Weapons,
+         All Prices, All Forge Values), see fabricator/index.html - just
+         without that page's .fab-collapsible class, since that JS also
+         drives per-tile height-animation and open/closed state syncing this
+         simple whole-column case has no need for. The chevron's rotate
+         still works everywhere via the small delegated 'toggle' listener in
+         footer.html that keeps data-expanded in sync with the native open
+         state, since that listener isn't tied to .fab-collapsible either. -->
+    <details class="modes-category-collapse" open data-persist-key="cat-{{ cat.name | slugify }}">
+      <summary class="modes-category__header modes-category__header--toggle">
+        <h2 class="modes-category__title">{{ cat.name }}</h2>
+      </summary>
+      <div class="modes-category__body">
+        {%- for mode in cat.modes %}
+        <div class="mode-card">
+          <!-- Each mode (Campaign, Horde, Versus, Custom, Arcade Blitz, etc.)
+               is now its own collapsible, closed by default - same
+               .modes-category-collapse/data-expanded chevron-sync JS the
+               PVE/PVP columns above already use (footer.html), just with a
+               .mode-card-scoped summary style instead of that big
+               section-level one, so the chevron/toggle behavior is shared
+               but the visual size matches a card title, not a page section
+               title. data-persist-key is read by #page-gamemodes-persist
+               (footer.html), which restores every open/closed choice and
+               the Difficulty Modifiers column toggle below from this
+               page's own URL/localStorage - see that script for how. -->
+          <details class="modes-category-collapse" data-persist-key="mode-{{ mode.name | slugify }}">
+            <summary class="modes-category__header--toggle mode-card__name">{{ mode.name }}</summary>
+            <div class="mode-card__body">
+              {%- if mode.desc %}<p class="mode-card__desc">{% include render-desc.html text=mode.desc page=page %}</p>{% endif %}
+
+              {%- if mode.variants %}
+              <div class="mode-card__variants">
+                {%- for v in mode.variants %}
+                <div class="mode-variant">
+                  <h4 class="mode-variant__name">{{ v.name }}</h4>
+                  {%- if v.desc %}<p class="mode-variant__desc">{% include render-desc.html text=v.desc page=page %}</p>{% endif %}
+                </div>
+                {%- endfor %}
+              </div>
+              {%- endif %}
+            </div>
+          </details>
+        </div>
+        {%- endfor %}
+      </div>
+    </details>
+  </section>
+  {%- endfor %}
+  </div>
+
+  <!-- Everything below is the "detail" half of every mode above - notes,
+       settings tables, the Modifiers/Energy Taps breakdowns, per-variant
+       match settings - anything beyond a plain name + short description.
+       One entry per mode that actually HAS any of that (has_detail below),
+       full width instead of squeezed into a PVE/PVP column, closed by
+       default behind a single "Show details" toggle (see the
+       AskUserQuestion answers this was built from: PVE/PVP columns stay for
+       the simple name+desc list above, and every mode gets exactly ONE
+       details toggle rather than several small nested ones like the old
+       Modifiers/Energy Taps <details> used to be). The PVE/PVP badge sits
+       under the mode's own name here since, unlike the columns above, nothing
+       about this flat list otherwise shows which category a mode belongs to. -->
+  <section class="modes-detail-list">
+    <div class="modes-category__header">
+      <h2 class="modes-category__title">Mode Details</h2>
+    </div>
+    {%- for cat in site.data.gamemodes %}
+    {%- for mode in cat.modes %}
+    {%- assign has_variant_detail = false %}
+    {%- for v in mode.variants %}
+      {%- if v.notes or v.settings %}{%- assign has_variant_detail = true %}{%- endif %}
+    {%- endfor %}
+    {%- if mode.difficulties or mode.modifiers or mode.energy_taps or has_variant_detail %}
+    <div class="mode-card mode-detail">
+      <div class="mode-detail__head">
+        <h3 class="mode-card__name">{{ mode.name }}</h3>
+        <span class="type-badge type-badge--cat-{{ cat.name | slugify }}">{{ cat.name }}</span>
+      </div>
+      <details class="mode-variant__settings" data-persist-key="detail-{{ mode.name | slugify }}">
+        <summary>Show details</summary>
+
+        {%- if mode.difficulties %}
+        <div class="mode-difficulties">
+          <h4 class="mode-variant__name">Difficulties</h4>
+          {%- if mode.difficulties_note %}<p class="mode-variant__desc">{{ mode.difficulties_note }}</p>{% endif %}
+          <div class="settings-table__scroll">
+            <table class="settings-table">
+              <thead>
+                <tr><th>Difficulty</th>{% if mode.difficulties.first.modifiers != nil %}<th>Modifiers</th>{% endif %}</tr>
+              </thead>
+              <tbody>
+                {%- for d in mode.difficulties %}
+                <tr>
+                  <td>{{ d.name }}{% if d.note %} <span class="type-badge" title="{{ d.note | strip_html | escape }}">note</span>{% endif %}</td>
+                  {%- if d.modifiers != nil %}<td class="settings-table__default">{{ d.modifiers }}</td>{% endif %}
+                </tr>
+                {%- endfor %}
+              </tbody>
+            </table>
+          </div>
+          {%- for d in mode.difficulties %}
+          {%- if d.note %}<p class="mode-variant__desc"><strong>{{ d.name }}:</strong> {{ d.note }}</p>{% endif %}
+          {%- endfor %}
+          {%- if mode.master_modifier_note or mode.master_modifier_order %}
+          <div class="mode-modifier-fixed">
+            <span class="mode-modifier-fixed__label">Note</span>
+            {%- if mode.master_modifier_note %}<p class="mode-variant__desc">{{ mode.master_modifier_note }}</p>{% endif %}
+            {%- if mode.master_modifier_order %}
+            <div class="settings-table__scroll">
+              <table class="mode-modifier-order">
+                <tbody>
+                  <tr>
+                    {%- for mname in mode.master_modifier_order %}
+                    <th>{{ mname }}</th>
+                    {%- endfor %}
+                  </tr>
+                  <tr>
+                    {%- for mname in mode.master_modifier_order %}
+                    {%- assign mmod = mode.modifiers | where: "name", mname | first %}
+                    <td>{{ mmod.desc }}</td>
+                    {%- endfor %}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            {%- endif %}
+          </div>
+          {%- endif %}
+          {%- if mode.difficulties_notes %}
+          {%- for n in mode.difficulties_notes %}
+          <p class="mode-variant__desc">{{ n }}</p>
+          {%- endfor %}
+          {%- endif %}
+        </div>
+        {%- endif %}
+
+        {%- if mode.modifiers %}
+        {%- assign mod_half = mode.modifiers.size | plus: 1 | divided_by: 2 %}
+        {%- assign mod_first_half = mode.modifiers | slice: 0, mod_half %}
+        {%- assign mod_second_half = mode.modifiers | slice: mod_half, mode.modifiers.size %}
+        <div class="mode-modifiers-full">
+          <div class="mode-modifiers-full__head">
+            <h4 class="mode-variant__name">Difficulty Modifiers</h4>
+            <button type="button" class="fab-toggle-all mode-modifiers-full__col-toggle" data-modifiers-col-toggle data-persist-key="modcols-{{ mode.name | slugify }}" data-state="two-col">1-Column View</button>
+          </div>
+          <p class="mode-variant__desc">Each match rolls a set number of these (see the Modifiers column above) - the same modifier can be rolled more than once, so duplicates of one modifier can both be active at the same time. The exception is <strong>Master</strong> on a standard (non-Bounty) map, which always rolls the same fixed 7: Survivor, More Health, More Lethal, Regen Penalty, Aggressive Enemies, Regeneration, Power Drain, in that order.</p>
+
+          <!-- Two real, independent .settings-table's side by side for the
+               2-column view, rather than one table reflowed via CSS grid -
+               that grid version looked broken (name/effect columns not
+               lining up with the normal table's familiar borders/spacing)
+               because it was fighting the table's own layout instead of
+               just being the table twice. This duplicates each modifier's
+               markup between the two views, but keeps both views pixel-
+               identical to every other .settings-table on the site. Only
+               the 1-column table carries the #mod-{slug} row IDs Fabricator
+               deep-links to (footer.html's #page-xref-target) - the
+               2-column copy is a plain visual alternate, not a second link
+               target, so it doesn't duplicate those IDs in the DOM. -->
+          <div data-modifiers-onecol hidden>
+            <div class="settings-table__scroll">
+              <table class="settings-table">
+                <thead>
+                  <tr><th>Modifier</th><th>Effect</th></tr>
+                </thead>
+                <tbody>
+                  {%- for m in mode.modifiers %}
+                  <tr class="xref-target" id="mod-{{ m.name | slugify }}"><td>{{ m.name }}</td><td>{{ m.desc }}</td></tr>
+                  {%- endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="mode-modifiers-full__twocol" data-modifiers-twocol>
+            <div class="settings-table__scroll">
+              <table class="settings-table">
+                <thead>
+                  <tr><th>Modifier</th><th>Effect</th></tr>
+                </thead>
+                <tbody>
+                  {%- for m in mod_first_half %}
+                  <tr><td>{{ m.name }}</td><td>{{ m.desc }}</td></tr>
+                  {%- endfor %}
+                </tbody>
+              </table>
+            </div>
+            <div class="settings-table__scroll">
+              <table class="settings-table">
+                <thead>
+                  <tr><th>Modifier</th><th>Effect</th></tr>
+                </thead>
+                <tbody>
+                  {%- for m in mod_second_half %}
+                  <tr><td>{{ m.name }}</td><td>{{ m.desc }}</td></tr>
+                  {%- endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        {%- endif %}
+
+        {%- if mode.energy_taps %}
+        <div class="mode-energy-taps">
+          <h4 class="mode-variant__name">Energy Taps</h4>
+          {%- if mode.energy_taps.desc %}<p class="mode-variant__desc">{{ mode.energy_taps.desc }}</p>{% endif %}
+          <div class="settings-table__scroll">
+            <table class="settings-table mode-energy-taps__table">
+              <thead>
+                <tr>
+                  <th rowspan="2">Waves Survived</th>
+                  <th colspan="4">Team HP</th>
+                  <th colspan="4">Energy at Wave End (Horde)</th>
+                  <th colspan="4">Energy at Wave End (Horde Frenzy)</th>
+                </tr>
+                <tr>
+                  <th>1 Tap</th>
+                  <th>2 Taps</th>
+                  <th>3 Taps</th>
+                  <th>4 Taps</th>
+                  <th>1 Tap</th>
+                  <th>2 Taps</th>
+                  <th>3 Taps</th>
+                  <th>4 Taps</th>
+                  <th>1 Tap</th>
+                  <th>2 Taps</th>
+                  <th>3 Taps</th>
+                  <th>4 Taps</th>
+                </tr>
+              </thead>
+              <tbody>
+                {%- for w in mode.energy_taps.waves %}
+                <tr class="xref-target" id="energy-tap-wave-{{ w.wave }}"{% if w.note %} title="{{ w.note | strip_html | escape }}"{% endif %}>
+                  <td>{{ w.wave }}</td>
+                  <td><span class="settings-table__icon-val"><span class="fab-tile__icon fab-tile__icon--heart">&#10084;</span> <mark class="kw kw--value">{{ w.heal_pct | times: 1 }}%</mark></span></td>
+                  <td><span class="settings-table__icon-val"><span class="fab-tile__icon fab-tile__icon--heart">&#10084;</span> <mark class="kw kw--value">{{ w.heal_pct | times: 2 }}%</mark></span></td>
+                  <td><span class="settings-table__icon-val"><span class="fab-tile__icon fab-tile__icon--heart">&#10084;</span> <mark class="kw kw--value">{{ w.heal_pct | times: 3 }}%</mark></span></td>
+                  <td><span class="settings-table__icon-val"><span class="fab-tile__icon fab-tile__icon--heart">&#10084;</span> <mark class="kw kw--value">{{ w.heal_pct | times: 4 }}%</mark></span></td>
+                  {%- for e in w.energy_horde %}
+                  <td><span class="settings-table__icon-val"><span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span> <mark class="kw kw--value{% if e == '?' %} kw--unknown{% endif %}">{{ e }}</mark></span></td>
+                  {%- endfor %}
+                  {%- for e in w.energy_frenzy %}
+                  <td><span class="settings-table__icon-val"><span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span> <mark class="kw kw--value{% if e == '?' %} kw--unknown{% endif %}">{{ e }}</mark></span></td>
+                  {%- endfor %}
+                </tr>
+                {%- endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {%- endif %}
+
+        {%- if has_variant_detail %}
+        {%- for v in mode.variants %}
+        {%- if v.notes or v.settings %}
+        <div class="mode-variant-detail">
+          <h4 class="mode-variant__name">{{ v.name }}</h4>
+          {%- if v.notes %}
+          {%- for n in v.notes %}
+          <p class="mode-variant__desc">{{ n }}</p>
+          {%- endfor %}
+          {%- endif %}
+          {%- if v.name == "Horde" %}
+          {%- capture jack_card_mention %}{% include render-desc.html text="[[jack]]'s [[card:optimizer]] card" page=jack_class %}{% endcapture %}
+          <p class="mode-variant__desc">The <a class="xref-link xref-link--tip" href="{{ '/fabricator/' | relative_url }}#forge-comparison">Forge<span class="xref-tip"><img class="xref-tip__icon" src="{{ '/images/fortifications/forge.png' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';">{{ forge_fort.desc | strip_html | truncatewords: 30 }}</span></a> and {{ jack_card_mention }} see common use across a full 50-wave match, since there's time to build up and dismantle a steady supply of picked-up weapons.</p>
+          {%- elsif v.name == "Horde Frenzy" %}
+          <p class="mode-variant__desc">The <a class="xref-link xref-link--tip" href="{{ '/fabricator/' | relative_url }}#forge-comparison">Forge<span class="xref-tip"><img class="xref-tip__icon" src="{{ '/images/fortifications/forge.png' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';">{{ forge_fort.desc | strip_html | truncatewords: 30 }}</span></a> isn't common or very useful here - a 12-wave match is too short to make dismantling weapons worthwhile.</p>
+          {%- endif %}
+          {%- if v.settings %}
+          <div class="settings-table__scroll">
+            <table class="settings-table">
+              <thead>
+                <tr><th>Setting</th><th>Options</th><th>Default</th></tr>
+              </thead>
+              <tbody>
+                {%- for s in v.settings %}
+                <tr{% if s.tooltip %} title="{{ s.tooltip | strip_html | escape }}"{% endif %}>
+                  <td>{{ s.name }}</td>
+                  <td>{{ s.options }}</td>
+                  <td class="settings-table__default">{{ s.default }}</td>
+                </tr>
+                {%- endfor %}
+              </tbody>
+            </table>
+          </div>
+          {%- endif %}
+        </div>
+        {%- endif %}
+        {%- endfor %}
+        {%- endif %}
+      </details>
+    </div>
+    {%- endif %}
+    {%- endfor %}
+    {%- endfor %}
+  </section>
+</div>
+
+<!-- Opening the collapsed "Difficulty Modifiers" <details> and scrolling to
+     a specific modifier row (e.g. from the Fabricator's Power Drain links)
+     is now handled globally for every page - see #page-xref-target in
+     footer.html. A second, page-local copy of that logic used to live here,
+     which raced against the global one and could land on the wrong row. -->
+

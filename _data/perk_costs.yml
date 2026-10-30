@@ -1,0 +1,12 @@
+# Energy cost to buy each perk rank in Horde.
+# Universal: same for every perk, every class, any difficulty.
+# Index 1 = cost to go rank 0 -> 1, index 10 = rank 9 -> 10.
+costs: ["1,000", "1,450", "1,850", "2,200", "2,500", "2,750", "2,950", "3,100", "3,200", "3,250"]
+
+# Running total of `costs` above (cumulative Energy spent to REACH each rank
+# from rank 0), plus the grand total to fully max any perk (rank 10) - same
+# for every perk since `costs` itself is universal. Used by the perk d-pad
+# card's cost line to show "spent so far / total to max" instead of just the
+# current rank's own incremental step cost.
+cumulative: ["1,000", "2,450", "4,300", "6,500", "9,000", "11,750", "14,700", "17,800", "21,000", "24,250"]
+total: "24,250"

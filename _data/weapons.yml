@@ -1,0 +1,24 @@
+# ── Weapons ────────────────────────────────────────────────────────────────
+# The in-game WEAPONS menu, in exact menu order.
+# For Fabricator prices see _data/fabricator.yml (Fabricator page).
+
+menu:
+  - { name: "Lancer MK 3 Assault Rifle",       badge: "Assault Rifle", slug: "lancer" }
+  - { name: "Gnasher Shotgun",                 badge: "Shotgun",       slug: "gnasher" }
+  - { name: "Snub Pistol",                     badge: "Pistol",        slug: "snub-pistol" }
+  - { name: "Boltok Revolver",                 badge: "Pistol",        slug: "boltok" }
+  - { name: "Boomshot Grenade Launcher",       badge: "Explosive",     slug: "boomshot" }
+  - { name: "Dropshot Munitions Launcher",     badge: "Explosive",     slug: "dropshot" }
+  - { name: "Enforcer Submachine Gun",         badge: "SMG",           slug: "enforcer" }
+  - { name: "EMBAR Railgun",                   badge: "Railgun",       slug: "embar" }
+  - { name: "Hammerburst Assault Rifle",       badge: "Assault Rifle", slug: "hammerburst" }
+  - { name: "Lancer GL Assault Rifle",         badge: "Assault Rifle", slug: "lancer-gl" }
+  - { name: "Longshot Sniper Rifle",           badge: "Sniper",        slug: "longshot" }
+  - { name: "Markza MK 1 Marksman Rifle",      badge: "Marksman",      slug: "markza" }
+  - { name: "Overkill Shotgun",                badge: "Shotgun",       slug: "overkill" }
+  - { name: "Retro Lancer MK 1 Assault Rifle", badge: "Assault Rifle", slug: "retro-lancer" }
+  - { name: "Scorcher Flamethrower",           badge: "Flamethrower",  slug: "scorcher" }
+  - { name: "Breaker Mace",                    badge: "Melee",         slug: "breaker-mace" }
+  - { name: "Talon",                           badge: "Pistol",        slug: "talon" }
+  - { name: "\"Claw\" Light Machine Gun",      badge: "LMG",           slug: "claw-lmg" }
+  - { name: "Torque Bow",                      badge: "Explosive",     slug: "torque-bow" }

@@ -1,0 +1,598 @@
+---
+title: Class Randomizer
+---
+<div class="section-page section-page--wide">
+  <div class="section-page__header">
+    <h1 class="section-page__title">Class Randomizer</h1>
+  </div>
+
+  <p class="section-page__intro">Roll random classes and skill card loadouts for your squad.
+  Every class and every card is available by default - click a card chip to exclude it, or use a
+  class's or category's None button to drop that class out of rolls entirely. Perks are fixed per
+  class (you only choose their rank in-game), so they're shown as reference on each result rather
+  than rolled. The same seed + settings always give the same result.</p>
+
+  <div class="wr-layout wr-layout--pools-wide">
+    <!-- ── Settings ─────────────────────────────────────────── -->
+    <section class="wr-panel">
+      <h2 class="wr-panel__title">Settings</h2>
+
+      <div class="wr-row">
+        <span class="wr-label">Classes to roll</span>
+        <div class="wr-pips" role="group" aria-label="Number of classes">
+          <button type="button" class="class-card__level-pip class-card__level-pip--btn class-card__level-pip--active" data-rolls="1">1</button>
+          <button type="button" class="class-card__level-pip class-card__level-pip--btn" data-rolls="2">2</button>
+          <button type="button" class="class-card__level-pip class-card__level-pip--btn" data-rolls="3">3</button>
+          <button type="button" class="class-card__level-pip class-card__level-pip--btn" data-rolls="4">4</button>
+          <button type="button" class="class-card__level-pip class-card__level-pip--btn" data-rolls="5">5</button>
+        </div>
+      </div>
+
+      <div class="wr-row">
+        <span class="wr-label">Cards per class</span>
+        <div class="wr-pips" role="group" aria-label="Cards per class">
+          <button type="button" class="class-card__level-pip class-card__level-pip--btn" data-cards="1">1</button>
+          <button type="button" class="class-card__level-pip class-card__level-pip--btn" data-cards="2">2</button>
+          <button type="button" class="class-card__level-pip class-card__level-pip--btn" data-cards="3">3</button>
+          <button type="button" class="class-card__level-pip class-card__level-pip--btn" data-cards="4">4</button>
+          <button type="button" class="class-card__level-pip class-card__level-pip--btn class-card__level-pip--active" data-cards="5">5</button>
+        </div>
+      </div>
+
+      <div class="wr-row wr-row--checks">
+        <label class="wr-check"><input type="checkbox" id="cr-dupes"> Allow the same class in different rolls</label>
+      </div>
+      <p class="wr-hint">Cards are always unique within a single class's own roll - Horde doesn't
+      let you equip the same card twice. Skin-unlock cards (Heroic weapon skins) are never rolled,
+      only real skill cards.</p>
+
+      <div class="wr-row">
+        <label class="wr-label" for="cr-seed">Seed (optional - blank rolls a random one)</label>
+        <input type="text" id="cr-seed" class="wr-input" placeholder="e.g. brumak-42" maxlength="40">
+      </div>
+
+      <div class="wr-row">
+        <label class="wr-label" for="cr-name">Preset name</label>
+        <input type="text" id="cr-name" class="wr-input" placeholder="e.g. Support only" maxlength="40">
+        <label class="wr-label" for="cr-desc">Description</label>
+        <input type="text" id="cr-desc" class="wr-input" placeholder="What is this setup for?" maxlength="120">
+      </div>
+
+      <div class="wr-actions">
+        <button type="button" class="wr-btn wr-btn--primary" id="cr-generate">Generate</button>
+        <button type="button" class="wr-btn" id="cr-save">Save preset</button>
+        <button type="button" class="wr-btn" id="cr-copy-settings">Copy settings code</button>
+      </div>
+
+      <div class="wr-row">
+        <label class="wr-label" for="cr-code">Load a code (settings or result)</label>
+        <div class="wr-inline">
+          <input type="text" id="cr-code" class="wr-input" placeholder="Paste a code...">
+          <button type="button" class="wr-btn" id="cr-load">Load</button>
+        </div>
+      </div>
+
+      <div class="wr-presets" id="cr-presets-wrap" hidden>
+        <h3 class="wr-panel__sub">Saved presets</h3>
+        <ul class="wr-preset-list" id="cr-presets"></ul>
+      </div>
+    </section>
+
+    <!-- ── Pools ────────────────────────────────────────────── -->
+    <section class="wr-panel">
+      <h2 class="wr-panel__title">Pools</h2>
+      <p class="wr-hint">Click a card to exclude it (crossed out = never rolled), or hover one to
+      preview its art and effect. A class's or category's None button clears every card in it,
+      dropping that class out of rolls entirely.</p>
+
+      <h3 class="wr-panel__sub">Cards, by class</h3>
+      {%- assign cr_categories = "Assault,Tank,Support,Promotional" | split: "," -%}
+      {%- assign cr_cat_colors = "#c62b0f,#4995ff,#2fb740,#d856d5" | split: "," -%}
+      <div class="wr-cardgrid">
+        {%- for cat in cr_categories %}
+        {%- assign cat_classes = site.classes | where: "category", cat | sort: "title" %}
+        {%- assign cat_color = cr_cat_colors[forloop.index0] %}
+        <div class="wr-cardgrid__col" style="--cat-color: {{ cat_color }};">
+          <div class="wr-cardgrid__head">
+            <h4 class="wr-cardgrid__title">{{ cat }}</h4>
+            <span class="wr-pool__bulk">
+              <button type="button" class="wr-mini" data-cat-bulk="all" data-cat="{{ cat | downcase }}">All</button>
+              <button type="button" class="wr-mini" data-cat-bulk="none" data-cat="{{ cat | downcase }}">None</button>
+            </span>
+          </div>
+          {%- for c in cat_classes %}
+          <details class="wr-pool" data-pool="cards-{{ c.slug }}">
+            <summary class="wr-pool__head">
+              <h4 class="wr-panel__sub wr-cat-label">
+                {%- comment -%} Same trigger + tooltip markup render-desc.html builds for a
+                [[classname]] reference (see the "Jack" mention on the Gamemodes page) - styled
+                identically (xref-link--cat's gold/category-colored underline, the same
+                class-mini-preview panel), just a <span> instead of an <a> so clicking the name
+                still expands this row's cards instead of navigating away. Hover-only, deliberately
+                no tabindex/:focus here - this sits inside a <summary> that's ALSO a click target
+                (toggles the row open), so a click both opens the row and would focus this span,
+                leaving its tooltip stuck open (via :focus) even after the mouse moves elsewhere -
+                exactly the overlapping/bled-through double-tooltip bug that showed up once two
+                rows' previews were stuck open near each other. {%- endcomment -%}
+                <span class="xref-link xref-link--cat xref-link--tip" style="--cat-color: {{ cat_color }};">{{ c.title }}<span class="xref-tip xref-tip--class"><span class="class-mini-preview" style="--cat-color: {{ cat_color }};"><span class="class-mini-preview__head"><img class="class-mini-preview__icon" src="{{ '/images/classes/icons/' | append: c.slug | append: '.png' | relative_url }}" alt="" loading="lazy" onerror="this.style.display='none';"><span class="class-mini-preview__head-text"><span class="class-mini-preview__cat">{{ cat }}</span><span class="class-mini-preview__name">{{ c.title }}</span></span></span><span class="class-mini-preview__desc">{{ c.description | strip_html }}</span></span></span></span>
+                <span class="wr-pool__count">({{ c.cards | where_exp: "cd", "cd.type != 'skin'" | size }})</span>
+              </h4>
+              <span class="wr-pool__bulk">
+                <button type="button" class="wr-mini" data-bulk="all">All</button>
+                <button type="button" class="wr-mini" data-bulk="none">None</button>
+              </span>
+            </summary>
+            <div class="wr-chips wr-chips--grid"></div>
+          </details>
+          {%- endfor %}
+        </div>
+        {%- endfor %}
+      </div>
+    </section>
+  </div>
+
+  <!-- ── Results ──────────────────────────────────────────── -->
+  <section class="wr-panel wr-results" id="cr-results-panel" hidden>
+    <h2 class="wr-panel__title">Result</h2>
+    <p class="wr-hint" id="cr-result-meta"></p>
+    <div class="wr-result-grid" id="cr-results"></div>
+    <div class="wr-row">
+      <label class="wr-label" for="cr-result-code">Result code (reproduces this exact roll)</label>
+      <div class="wr-inline">
+        <input type="text" id="cr-result-code" class="wr-input" readonly>
+        <button type="button" class="wr-btn" id="cr-copy-result">Copy</button>
+        <button type="button" class="wr-btn" id="cr-export">Export HTML</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── Data from the site ─────────────────────────────────── */
+  // One entry per class: n=name, s=slug, cat=category letter (a/t/s/r),
+  // ic=icon path, cards=[{n,s,r (rarity),lv (unlock level)}] (skin-unlock
+  // cards excluded - those aren't equippable skill cards), perks={up,right,
+  // down,left}=[name] shown as reference only, never rolled (see the intro
+  // text above - perks are fixed per class, only their rank is chosen
+  // in-game, and that's not something this tool has real data to suggest).
+  var CLASSES = [
+    {%- assign cr_categories = "Assault,Tank,Support,Promotional" | split: "," -%}
+    {%- assign cr_letters = "a,t,s,r" | split: "," -%}
+    {%- for cat in cr_categories %}
+    {%- assign cat_letter = cr_letters[forloop.index0] %}
+    {%- assign cat_classes = site.classes | where: "category", cat | sort: "title" %}
+    {%- for c in cat_classes %}
+    {
+      n: "{{ c.title | replace: '"', '\"' }}",
+      s: "{{ c.slug }}",
+      cat: "{{ cat_letter }}",
+      ic: "{{ '/images/classes/icons/' | append: c.slug | append: '.png' | relative_url }}",
+      perks: [{% if c.perks.up %}"{{ c.perks.up.name | replace: '"', '\"' }}"{% endif %}{% if c.perks.right %}, "{{ c.perks.right.name | replace: '"', '\"' }}"{% endif %}{% if c.perks.down %}, "{{ c.perks.down.name | replace: '"', '\"' }}"{% endif %}{% if c.perks.left %}, "{{ c.perks.left.name | replace: '"', '\"' }}"{% endif %}],
+      cards: [
+        {%- assign real_cards = c.cards | where_exp: "cd", "cd.type != 'skin'" -%}
+        {%- for cd in real_cards %}
+        {%- assign cd_lvl1 = cd.levels | first -%}
+        {%- assign cd_desc = cd.description -%}
+        {%- if cd_lvl1 -%}
+          {%- capture cd_xmark %}<mark class="kw kw--value{% if cd_lvl1.X == '?' %} kw--unknown{% endif %}">{{ cd_lvl1.X }}</mark>{% endcapture -%}
+          {%- assign cd_desc = cd_desc | replace: '{X}', cd_xmark -%}
+          {%- if cd_lvl1.Y -%}
+            {%- capture cd_ymark %}<mark class="kw kw--value{% if cd_lvl1.Y == '?' %} kw--unknown{% endif %}">{{ cd_lvl1.Y }}</mark>{% endcapture -%}
+            {%- assign cd_desc = cd_desc | replace: '{Y}', cd_ymark -%}
+          {%- endif -%}
+        {%- endif -%}
+        {%- assign cd_desc = cd_desc | replace: '{', '' | replace: '}', '' -%}
+        {%- assign cd_img = '/images/cards/' | append: c.slug | append: '-' | append: cd.slug | append: '.png' | relative_url -%}
+        { n: "{{ cd.name | replace: '"', '\"' }}", s: "{{ cd.slug }}", r: "{{ cd.rarity | default: 'Common' }}", lv: {{ cd.unlock_level | default: 1 }}, img: {{ cd_img | jsonify }}, d: {{ cd_desc | jsonify }} }{% unless forloop.last %},{% endunless %}
+        {%- endfor %}
+      ]
+    }{% unless forloop.last %},{% endunless %}
+    {%- endfor %}
+    {%- endfor %}
+  ];
+  // cat letter -> array index lookup, used to build the 4 class pools + the
+  // per-class card pools below, keyed the same way the DOM pools are
+  // (data-pool="cls-assault" etc, data-pool="cards-<slug>").
+  var CLASS_POOLS = { a: [], t: [], s: [], r: [] };
+  var CARD_POOLS = {}; // slug -> class's own cards array (index = local i)
+  CLASSES.forEach(function (c, i) {
+    CLASS_POOLS[c.cat].push(i);
+    CARD_POOLS[c.s] = c.cards;
+  });
+  var CAT_NAMES = { a: "Assault", t: "Tank", s: "Support", r: "Promotional" };
+  var CODE_PREFIX = 'G5CR1.';
+  var LS_KEY = 'g5cr_presets';
+
+  /* ── Seeded PRNG (xmur3 + mulberry32) ───────────────────── */
+  function xmur3(str) {
+    var h = 1779033703 ^ str.length;
+    for (var i = 0; i < str.length; i++) {
+      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+      h = (h << 13) | (h >>> 19);
+    }
+    return function () {
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      return (h ^= h >>> 16) >>> 0;
+    };
+  }
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function rngFrom(seed) { var h = xmur3(seed); return mulberry32(h()); }
+  function randomSeed() {
+    var words = ['gnasher','lancer','brumak','kestrel','swarm','cog','emergence','hammer','imulsion','carmine'];
+    return words[Math.floor(Math.random() * words.length)] + '-' + Math.floor(Math.random() * 10000);
+  }
+
+  /* ── State ──────────────────────────────────────────────── */
+  // There's no separate "exclude this whole class" list - a class drops out
+  // of rolls the moment all of its own cards are excluded (see
+  // allowedClasses() below), whether that happened one card at a time or via
+  // a class's/category's "None" button.
+  var state = {
+    rolls: 1, cardsPerClass: 5, dupes: false,
+    seed: '', name: '', desc: '',
+    blCards: {} // slug -> [local card indices blacklisted], only populated on demand
+  };
+  var lastResult = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function cardBlFor(slug) {
+    if (!state.blCards[slug]) state.blCards[slug] = [];
+    return state.blCards[slug];
+  }
+
+  /* ── Codes (base64url JSON) ─────────────────────────────── */
+  function encodeCode(obj) {
+    var json = JSON.stringify(obj);
+    return CODE_PREFIX + btoa(unescape(encodeURIComponent(json)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function decodeCode(code) {
+    code = (code || '').trim();
+    if (code.indexOf(CODE_PREFIX) !== 0) return null;
+    var b64 = code.slice(CODE_PREFIX.length).replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    try { return JSON.parse(decodeURIComponent(escape(atob(b64)))); }
+    catch (e) { return null; }
+  }
+  function settingsObj(seedOverride) {
+    var bc = {};
+    Object.keys(state.blCards).forEach(function (slug) {
+      if (state.blCards[slug].length) bc[slug] = state.blCards[slug].slice();
+    });
+    return {
+      v: 1, name: state.name, desc: state.desc,
+      seed: seedOverride !== undefined ? seedOverride : state.seed,
+      rolls: state.rolls, cardsPerClass: state.cardsPerClass, dupes: state.dupes,
+      blCards: bc
+    };
+  }
+  function applySettings(s) {
+    state.rolls = Math.min(5, Math.max(1, s.rolls | 0 || 1));
+    state.cardsPerClass = Math.min(5, Math.max(1, s.cardsPerClass | 0 || 5));
+    state.dupes = !!s.dupes;
+    state.seed = typeof s.seed === 'string' ? s.seed : '';
+    state.name = typeof s.name === 'string' ? s.name : '';
+    state.desc = typeof s.desc === 'string' ? s.desc : '';
+    state.blCards = {};
+    if (s.blCards) Object.keys(s.blCards).forEach(function (slug) {
+      if (!CARD_POOLS[slug]) return;
+      var arr = (s.blCards[slug] || []).filter(function (i) {
+        return typeof i === 'number' && i >= 0 && i < CARD_POOLS[slug].length;
+      });
+      if (arr.length) state.blCards[slug] = arr;
+    });
+    syncUI();
+  }
+
+  /* ── Generation ─────────────────────────────────────────── */
+  function allowedCards(slug) {
+    var pool = CARD_POOLS[slug] || [];
+    var bl = state.blCards[slug] || [];
+    return pool.map(function (cd, i) { return i; }).filter(function (i) { return bl.indexOf(i) === -1; });
+  }
+  // A class is in the roll pool as long as it still has at least one
+  // allowed card - there's no separate class-level exclude, emptying a
+  // class's card pool (one card at a time, its own None, or its
+  // category's None) is what takes it out of rolls entirely.
+  function allowedClasses() {
+    var out = [];
+    CLASSES.forEach(function (c, i) {
+      if (allowedCards(c.s).length > 0) out.push(i);
+    });
+    return out;
+  }
+  function generate(seed) {
+    var rng = rngFrom(seed);
+    var poolClasses = allowedClasses();
+    if (poolClasses.length < 1) return { error: 'No classes left in the pool - every class has all of its cards excluded.' };
+    if (!state.dupes && poolClasses.length < state.rolls) {
+      return { error: 'Need at least ' + state.rolls + ' classes in the pool (or turn on duplicates).' };
+    }
+
+    var usedClasses = [];
+    var short = false;
+    var results = [];
+    for (var r = 0; r < state.rolls; r++) {
+      var cand = poolClasses.filter(function (ci) { return state.dupes || usedClasses.indexOf(ci) === -1; });
+      if (!cand.length) cand = poolClasses.slice();
+      var ci = cand[Math.floor(rng() * cand.length)];
+      usedClasses.push(ci);
+      var cls = CLASSES[ci];
+
+      var cardPool = allowedCards(cls.s);
+      var want = Math.min(state.cardsPerClass, cardPool.length);
+      if (want < state.cardsPerClass) short = true;
+      var usedCards = [];
+      for (var k = 0; k < want; k++) {
+        var cc = cardPool.filter(function (i) { return usedCards.indexOf(i) === -1; });
+        var pick = cc[Math.floor(rng() * cc.length)];
+        usedCards.push(pick);
+      }
+      results.push({
+        cls: cls,
+        cards: usedCards.map(function (i) { return cls.cards[i]; })
+      });
+    }
+    return { seed: seed, results: results, short: short };
+  }
+
+  /* ── Rendering ──────────────────────────────────────────── */
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function renderResult(res) {
+    lastResult = res;
+    $('cr-results-panel').hidden = false;
+    var meta = 'Seed: ' + esc(res.seed);
+    if (state.name) meta = esc(state.name) + (state.desc ? ' - ' + esc(state.desc) : '') + ' | ' + meta;
+    if (res.short) meta += ' | Fewer cards were available than requested for at least one class - it rolled every card it had left instead.';
+    $('cr-result-meta').innerHTML = meta;
+    $('cr-results').innerHTML = res.results.map(function (item, i) {
+      var cls = item.cls;
+      var cards = item.cards.map(function (cd) {
+        return '<div class="wr-slot"><span class="wr-slot__label">Lv' + cd.lv + '</span>'
+          + '<span class="wr-slot__name">' + esc(cd.n) + '</span>'
+          + '<span class="class-card__rarity class-card__rarity--' + esc(cd.r.toLowerCase()) + '">' + esc(cd.r) + '</span></div>';
+      }).join('');
+      var perksLine = cls.perks.length
+        ? '<p class="wr-hint" style="margin:0.6rem 0 0;">Perks (reference - rank is your choice): ' + cls.perks.map(esc).join(', ') + '</p>'
+        : '';
+      return '<div class="wr-loadout">'
+        + '<h3 class="wr-loadout__title" style="display:flex;align-items:center;gap:0.5rem;">'
+        + '<img src="' + esc(cls.ic) + '" alt="" style="width:28px;height:28px;object-fit:contain;" loading="lazy" onerror="this.style.display=\'none\';">'
+        + 'Roll ' + (i + 1) + ': ' + esc(cls.n) + '</h3>'
+        + '<p class="wr-hint" style="margin:0 0 0.5rem;">' + esc(CAT_NAMES[cls.cat]) + '</p>'
+        + cards
+        + perksLine
+        + '</div>';
+    }).join('');
+    $('cr-result-code').value = encodeCode(settingsObj(res.seed));
+    $('cr-results-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function buildChips() {
+    document.querySelectorAll('[data-pool^="cards-"]').forEach(function (poolEl) {
+      var slug = poolEl.getAttribute('data-pool').replace('cards-', '');
+      var wrap = poolEl.querySelector('.wr-chips');
+      // Same hover-preview markup/classes the rest of the site uses for
+      // [[card:slug]] references (.xref-card-preview: art + resolved
+      // description) - reused here so a chip's preview looks identical
+      // whether it's hovered on a class page or in this tool.
+      // Rarity used to be folded into the description text ("- Rare,
+      // unlocks Lv5") - now it's its own colored badge (same
+      // .class-card__rarity--{rarity}/meta layout the Build Creator's Cards
+      // panel tiles use) sitting above the name, and the popup's own border
+      // picks up that rarity color too (.xref-card-preview--{rarity},
+      // home.scss) instead of always being plain gray.
+      wrap.innerHTML = (CARD_POOLS[slug] || []).map(function (cd, i) {
+        var rarityClass = esc(cd.r.toLowerCase());
+        return '<button type="button" class="wr-chip" data-slug="' + esc(slug) + '" data-i="' + i + '">'
+          + esc(cd.n)
+          + '<span class="xref-card-preview xref-card-preview--' + rarityClass + '">'
+          + '<img src="' + esc(cd.img) + '" alt="" loading="lazy" onerror="this.style.display=\'none\';">'
+          + '<span class="xref-card-preview__desc">'
+          + '<span class="class-card__meta">'
+          + '<span class="class-card__rarity class-card__rarity--' + rarityClass + '">' + esc(cd.r) + '</span>'
+          + '<span class="class-card__unlock">Unlocks at Level ' + cd.lv + '</span>'
+          + '</span>'
+          + '<strong>' + esc(cd.n) + '</strong><br>' + cd.d
+          + '</span>'
+          + '</span>'
+          + '</button>';
+      }).join('');
+    });
+  }
+  function syncUI() {
+    document.querySelectorAll('[data-rolls]').forEach(function (b) {
+      b.classList.toggle('class-card__level-pip--active', +b.getAttribute('data-rolls') === state.rolls);
+    });
+    document.querySelectorAll('[data-cards]').forEach(function (b) {
+      b.classList.toggle('class-card__level-pip--active', +b.getAttribute('data-cards') === state.cardsPerClass);
+    });
+    $('cr-dupes').checked = state.dupes;
+    $('cr-seed').value = state.seed;
+    $('cr-name').value = state.name;
+    $('cr-desc').value = state.desc;
+    document.querySelectorAll('[data-pool^="cards-"] .wr-chip').forEach(function (chip) {
+      var slug = chip.getAttribute('data-slug');
+      var bl = state.blCards[slug] || [];
+      chip.classList.toggle('wr-chip--off', bl.indexOf(+chip.getAttribute('data-i')) !== -1);
+    });
+  }
+  function readInputs() {
+    state.dupes = $('cr-dupes').checked;
+    state.seed = $('cr-seed').value.trim();
+    state.name = $('cr-name').value.trim();
+    state.desc = $('cr-desc').value.trim();
+  }
+
+  /* ── Presets (localStorage) ─────────────────────────────── */
+  function loadPresets() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function savePresets(list) { localStorage.setItem(LS_KEY, JSON.stringify(list)); }
+  function renderPresets() {
+    var list = loadPresets();
+    $('cr-presets-wrap').hidden = !list.length;
+    $('cr-presets').innerHTML = list.map(function (p, i) {
+      return '<li class="wr-preset">'
+        + '<span class="wr-preset__info"><strong>' + esc(p.name || 'Unnamed') + '</strong>'
+        + (p.desc ? '<span class="wr-preset__desc">' + esc(p.desc) + '</span>' : '') + '</span>'
+        + '<span class="wr-preset__btns">'
+        + '<button type="button" class="wr-mini" data-preset-load="' + i + '">Load</button>'
+        + '<button type="button" class="wr-mini wr-mini--danger" data-preset-del="' + i + '">Delete</button>'
+        + '</span></li>';
+    }).join('');
+  }
+
+  /* ── Export ─────────────────────────────────────────────── */
+  function exportHTML() {
+    if (!lastResult) return;
+    var code = $('cr-result-code').value;
+    var rows = lastResult.results.map(function (item, i) {
+      var cardNames = item.cards.map(function (cd) { return esc(cd.n) + ' (' + esc(cd.r) + ')'; }).join(', ');
+      return '<tr><td>' + (i + 1) + '</td><td>' + esc(item.cls.n) + '</td><td>' + esc(CAT_NAMES[item.cls.cat]) + '</td><td>' + cardNames + '</td></tr>';
+    }).join('');
+    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>'
+      + esc(state.name || 'Class Randomizer result') + '</title><style>'
+      + 'body{font-family:Segoe UI,Arial,sans-serif;background:#16161c;color:#f0f0f0;padding:2rem;max-width:900px;margin:auto}'
+      + 'h1{color:#8c6d12}table{border-collapse:collapse;width:100%;margin:1rem 0}'
+      + 'td,th{border:1px solid #3a3a4a;padding:0.5rem 0.75rem;text-align:left}'
+      + 'th{background:#282834}code{background:#282834;padding:0.2rem 0.4rem;border-radius:4px;word-break:break-all}'
+      + '.muted{color:#9999aa}</style></head><body>'
+      + '<h1>' + esc(state.name || 'Class Randomizer') + '</h1>'
+      + (state.desc ? '<p>' + esc(state.desc) + '</p>' : '')
+      + '<p class="muted">Seed: ' + esc(lastResult.seed) + ' - generated by Gears 5 Database Class Randomizer</p>'
+      + '<table><thead><tr><th>#</th><th>Class</th><th>Category</th><th>Cards</th></tr></thead><tbody>' + rows + '</tbody></table>'
+      + '<p class="muted">Result code:</p><p><code>' + esc(code) + '</code></p>'
+      + '</body></html>';
+    var blob = new Blob([html], { type: 'text/html' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (state.name ? state.name.replace(/[^a-z0-9-_ ]/gi, '').trim().replace(/\s+/g, '-').toLowerCase() : 'class-randomizer') + '-result.html';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
+  /* ── Wiring ─────────────────────────────────────────────── */
+  buildChips();
+  syncUI();
+  renderPresets();
+
+  document.querySelectorAll('[data-rolls]').forEach(function (b) {
+    b.addEventListener('click', function () { state.rolls = +b.getAttribute('data-rolls'); syncUI(); });
+  });
+  document.querySelectorAll('[data-cards]').forEach(function (b) {
+    b.addEventListener('click', function () { state.cardsPerClass = +b.getAttribute('data-cards'); syncUI(); });
+  });
+
+  // Category-level All/None (in each "Cards, by class" column header) bulk-
+  // toggles every class in that category's own card pool at once - "None"
+  // clears every card for every class in the category, which is also what
+  // takes all of them out of the roll (see allowedClasses()).
+  document.querySelectorAll('[data-cat-bulk]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var letter = { assault: 'a', tank: 't', support: 's', promotional: 'r' }[btn.getAttribute('data-cat')];
+      var toNone = btn.getAttribute('data-cat-bulk') === 'none';
+      CLASS_POOLS[letter].forEach(function (ci) {
+        var slug = CLASSES[ci].s;
+        state.blCards[slug] = toNone ? (CARD_POOLS[slug] || []).map(function (cd, i) { return i; }) : [];
+      });
+      syncUI();
+    });
+  });
+
+  document.querySelectorAll('[data-pool^="cards-"]').forEach(function (poolEl) {
+    var slug = poolEl.getAttribute('data-pool').replace('cards-', '');
+    poolEl.addEventListener('click', function (e) {
+      var chip = e.target.closest('.wr-chip');
+      var bulk = e.target.closest('[data-bulk]');
+      if (chip) {
+        var i = +chip.getAttribute('data-i');
+        var bl = cardBlFor(slug);
+        var at = bl.indexOf(i);
+        if (at === -1) bl.push(i); else bl.splice(at, 1);
+        syncUI();
+      } else if (bulk) {
+        e.preventDefault();
+        state.blCards[slug] = bulk.getAttribute('data-bulk') === 'none'
+          ? (CARD_POOLS[slug] || []).map(function (cd, i2) { return i2; }) : [];
+        syncUI();
+      }
+    });
+  });
+
+  $('cr-generate').addEventListener('click', function () {
+    readInputs();
+    var seed = state.seed || randomSeed();
+    var res = generate(seed);
+    if (res.error) { alert(res.error); return; }
+    renderResult(res);
+  });
+
+  $('cr-copy-settings').addEventListener('click', function () {
+    readInputs();
+    navigator.clipboard.writeText(encodeCode(settingsObj())).then(function () {
+      $('cr-copy-settings').textContent = 'Copied!';
+      setTimeout(function () { $('cr-copy-settings').textContent = 'Copy settings code'; }, 1200);
+    });
+  });
+
+  $('cr-copy-result').addEventListener('click', function () {
+    navigator.clipboard.writeText($('cr-result-code').value).then(function () {
+      $('cr-copy-result').textContent = 'Copied!';
+      setTimeout(function () { $('cr-copy-result').textContent = 'Copy'; }, 1200);
+    });
+  });
+
+  $('cr-load').addEventListener('click', function () {
+    var s = decodeCode($('cr-code').value);
+    if (!s) { alert('That code is not valid.'); return; }
+    applySettings(s);
+    if (s.seed) { var res = generate(s.seed); if (!res.error) renderResult(res); }
+  });
+
+  $('cr-save').addEventListener('click', function () {
+    readInputs();
+    if (!state.name) { alert('Give the preset a name first.'); $('cr-name').focus(); return; }
+    var list = loadPresets();
+    var obj = settingsObj();
+    var at = list.findIndex(function (p) { return p.name === obj.name; });
+    if (at !== -1) list[at] = obj; else list.push(obj);
+    savePresets(list);
+    renderPresets();
+    $('cr-save').textContent = 'Saved!';
+    setTimeout(function () { $('cr-save').textContent = 'Save preset'; }, 1200);
+  });
+
+  $('cr-presets').addEventListener('click', function (e) {
+    var load = e.target.closest('[data-preset-load]');
+    var del = e.target.closest('[data-preset-del]');
+    var list = loadPresets();
+    if (load) applySettings(list[+load.getAttribute('data-preset-load')]);
+    if (del) {
+      list.splice(+del.getAttribute('data-preset-del'), 1);
+      savePresets(list);
+      renderPresets();
+    }
+  });
+
+  $('cr-export').addEventListener('click', exportHTML);
+})();
+</script>

@@ -1,0 +1,366 @@
+# ── Gamemodes ──────────────────────────────────────────────────────────────
+# Categories -> modes -> (optional) variants -> (optional) settings.
+# Settings show as a table: name / options / default, tooltip appears on hover.
+
+- name: PVE
+  modes:
+    - name: Campaign
+      desc: >-
+        Story co-op for up to 3 players. One player must always play the
+        protagonist of the current chapter. In 3-player co-op the third player
+        plays as [[jack]] (the Jack-of-All-Trades robot) - a very different
+        experience that feels closer to half a player.
+      difficulties_note: Applies to both the base Campaign and Hivebusters.
+      difficulties:
+        - { name: Beginner }
+        - { name: Intermediate }
+        - { name: Experienced }
+        - { name: Insane }
+        - name: Inconceivable
+          note: >-
+            No down state - when you are &quot;killed&quot; you die instantly instead of
+            going down. While harder, it is also more fair: damage dealt to you
+            is also applied to them, so enemies are not bullet sponges -
+            headshotting a Drone with a sniper is easier than on
+            <strong>Insane</strong>.
+
+    - name: Campaign DLC - Hivebusters
+      desc: >-
+        Story expansion, co-op for up to 3 players. Unlike the main campaign
+        there is no protagonist requirement - anyone can play any character.
+
+    - name: Horde
+      desc: >-
+        Survive waves of the Swarm using your class, abilities and the
+        Fabricator.
+      difficulties:
+        - { name: Beginner,      modifiers: 0 }
+        - { name: Intermediate,  modifiers: 1 }
+        - { name: Experienced,   modifiers: 2 }
+        - { name: Advanced,      modifiers: 3 }
+        - { name: Elite,         modifiers: 4 }
+        - { name: Insane,        modifiers: 5 }
+        - { name: Inconceivable, modifiers: 6 }
+        - { name: Master,        modifiers: 7 }
+      # The fixed 7-modifier Master order used to be spelled out as a plain
+      # comma-separated sentence in difficulties_notes below - moved to its
+      # own name/desc table instead (gamemodes/index.html renders it right
+      # before difficulties_notes, looking each name up against this same
+      # mode's own `modifiers` list below so the description text only ever
+      # lives in one place). master_modifier_note is just the short intro
+      # sentence that used to open that old paragraph.
+      master_modifier_note: >-
+        On a standard (non-Bounty) map, <strong>Master</strong> always
+        rolls the same fixed 7 modifiers, always in this order. Bounty maps
+        (the ones offering <strong>Bonus Skill Cards</strong>) instead roll
+        a random set from the full modifier pool below.
+      master_modifier_order:
+        - Survivor
+        - More Health
+        - More Lethal
+        - Regen Penalty
+        - Aggressive Enemies
+        - Regeneration
+        - Power Drain
+      difficulties_notes:
+        - >-
+          <strong>PVE Camera Shake</strong> (Options &rarr; Accessibility)
+          toggles all camera shake in <strong>Horde</strong> and
+          <strong>Escape</strong>, and only works on <strong>Beginner</strong>,
+          <strong>Intermediate</strong>, <strong>Experienced</strong> and
+          <strong>Advanced</strong> - it's always <strong>ON</strong> on
+          <strong>Master</strong> (separate from
+          <strong>Campaign Camera Shake</strong>, which only affects
+          Campaign).
+        - >-
+          Daily reward for completing:<br>
+          <strong>Beginner</strong> gives <mark class="kw kw--value">200</mark> &#129689;<br>
+          <strong>Advanced</strong> gives <mark class="kw kw--value">5,000</mark> XP<br>
+          <strong>Inconceivable</strong> gives <mark class="kw kw--value">10,000</mark> XP<br>
+          <strong>Master</strong> doesn't have its own tier - a successful
+          full run (reaching wave 50, not a mid-match Starting Wave) counts
+          as <strong>Inconceivable</strong> and gives the same
+          <mark class="kw kw--value">10,000</mark> XP<br><br>
+          Daily resets at
+          <strong class="gm-reset-time" data-reset-utc="19:00">19:00 UTC</strong>.
+        - >-
+          Bonus Skill Cards for successfully completing a match on
+          <strong>Master</strong>, started from the beginning (not a mid-match
+          Starting Wave):<br>
+          <strong>Horde Frenzy</strong> gives <mark class="kw kw--value">3/6</mark>
+          per successful completion<br>
+          <strong>Horde</strong> gives all <mark class="kw kw--value">6/6</mark>
+          after just 1 successful completion
+      modifiers:
+        - { name: Aggressive Enemies,    desc: Enemies are more aggressive. }
+        - { name: Bobble Head Enemies,   desc: Enemies have bobble heads. }
+        - { name: Confetti Headshot,     desc: Headshots explode with confetti. }
+        - { name: Double Headshot Damage, desc: Players deal 100% extra critical damage. }
+        - { name: Even Stronger Enemies, desc: Enemies deal 3x more damage. }
+        - { name: Even Tougher Enemies,  desc: Enemies have 3x more health. }
+        - { name: Frag Rejects,          desc: Rejects detonate a frag grenade upon death. }
+        - { name: Freezing Grenadiers,   desc: Grenadiers fire freezing bullets. }
+        - { name: Freezing Rifles,       desc: Rifle Drones fire freezing bullets. }
+        - { name: Freezing Sniper Bullets, desc: Enemy Snipers fire freezing bullets. }
+        - { name: Ghost Drones,          desc: Drones will cloak when they are within 10m of you. }
+        - { name: Ghost Flushers,        desc: "Juvies, Leeches, Trackers, Sires and Rejects will cloak when they are within 10m of you." }
+        - { name: Ghost Heavies,         desc: Scions and DR units will cloak when they are within 10m of you. }
+        - { name: Instant Reload,        desc: Automatically reload with active rounds. }
+        - { name: More Health,           desc: Enemies have increased health. }
+        - { name: More Lethal,           desc: Damage to players is increased. }
+        - { name: More Melee Damage,     desc: Enemy melee attacks do double damage. }
+        - { name: Only Regen In Cover,   desc: Only regenerate health in cover. }
+        - { name: Power Boost,           desc: Fortification build cost reduced by 30%. }
+        - { name: Power Drain,           desc: Fortification build cost increased by 50%. }
+        - { name: Reduced Bleeding Damage, desc: "Players deal 90% less bleeding damage." }
+        - { name: Reduced Explosive Damage, desc: "Players deal 90% less explosive damage." }
+        - { name: Regen Penalty,         desc: Player health regenerates 50% slower. }
+        - { name: Regeneration,          desc: Enemies regenerate their health over time. }
+        - { name: Shielded Heavies,      desc: Scions and DR-1s have protective shields. }
+        - { name: Shock Grenadiers,      desc: Attacks from Grenadiers cause a Shock Chain. }
+        - { name: Shock Rifle Drones,    desc: Attacks from Rifle Drones cause a Shock Chain. }
+        - { name: Super Charged,         desc: Ultimates recharge faster. }
+        - { name: Super Energy,          desc: "Energy pickups heal and give 3x the normal amount." }
+        - { name: Ultra Power Drain,     desc: "Fortification build cost increased by 1,000%." }
+        - { name: Ultra Slow Recharge,   desc: "Ultimate recharge time increased by 1,000%." }
+        - { name: Vampire,               desc: Players heal when dealing damage. }
+        - { name: Vampiric Drones,       desc: Drones gain health on damage done to players. }
+        - { name: Vampiric Enemies,      desc: Enemies gain health on damage done to players. }
+        - { name: Zero Gravity Gore,     desc: Dead bodies have no gravity. }
+        - { name: Survivor,              desc: No restarts! Game over if all players go down. }
+      # Energy Taps: objects that spawn in-game and generate Energy for the
+      # team the longer they survive. Interacting with one ("tapping" it)
+      # instantly heals the team by a % of max HP, and it separately pays out
+      # a flat Energy amount at the end of the wave if it survived that
+      # wave without being destroyed - both the heal % and the Energy payout
+      # scale up with each consecutive wave survived, capping at wave 4.
+      # Horde and Horde Frenzy pay out different Energy amounts for the same
+      # wave; "?" marks values not yet documented.
+      energy_taps:
+        desc: >-
+          Spawn during a match and generate Energy for the team the longer
+          they survive without being destroyed. Interacting with one (a
+          "tap") instantly heals the team; a separate Energy payout is given
+          at the end of the wave if it made it that far.
+        # heal_pct is the % of team max HP ONE tapped Energy Tap heals for,
+        # at that wave's own survival streak - gamemodes/index.html computes
+        # the 2/3/4-simultaneous-tap columns as heal_pct * N rather than
+        # storing 4 numbers per wave, since it's just that same per-tap %
+        # added once per Tap actually tapped at the same moment. Confirmed
+        # by the person maintaining this site: 4 Taps all reaching their own
+        # wave-4 (25%) streak and being tapped together heal the full 100%.
+        #
+        # energy_horde/energy_frenzy are the OPPOSITE shape - a 4-item list
+        # per wave (1/2/3/4 simultaneous Taps), not a single per-tap number
+        # gamemodes/index.html multiplies at render time - because unlike
+        # heal_pct's plain percentages, these run into the thousands and
+        # need comma formatting (matching every other Energy value on the
+        # site, e.g. Fabricator's buyback prices), which this codebase always
+        # does by hand-authoring the already-formatted string rather than
+        # computing it in Liquid (no thousands-separator filter is in use
+        # anywhere else here). Each list is still just that same wave's own
+        # per-tap value * 1/2/3/4, kept as an explicit list purely so the
+        # comma placement can be written directly rather than derived.
+        waves:
+          - { wave: 1, heal_pct: 10, energy_horde: ["300", "600", "900", "1,200"],     energy_frenzy: ["1,500", "3,000", "4,500", "6,000"], note: "Start or during the 1st wave of being alive." }
+          - { wave: 2, heal_pct: 15, energy_horde: ["600", "1,200", "1,800", "2,400"], energy_frenzy: ["1,800", "3,600", "5,400", "7,200"], note: "Start of the 2nd wave, without dying." }
+          - { wave: 3, heal_pct: 20, energy_horde: ["900", "1,800", "2,700", "3,600"], energy_frenzy: ["2,100", "4,200", "6,300", "8,400"], note: "Start of the 3rd wave, without dying." }
+          - { wave: 4, heal_pct: 25, energy_horde: ["1,500", "3,000", "4,500", "6,000"], energy_frenzy: ["2,400", "4,800", "7,200", "9,600"], note: "Start of the 4th wave, without dying - the heal is capped here, it doesn't climb further on later waves." }
+      variants:
+        - name: Horde
+          desc: 50 waves, with class abilities and the Fabricator.
+          notes:
+            - >-
+              - Waves come slower - a full match averages
+              <strong>2.5 hours</strong> (varies with modifiers) - and
+              enemies start weaker and fewer, ramping up in difficulty
+              gradually each wave.
+            - >-
+              - Each player starts with <mark class="kw kw--value">1,000</mark>
+              Energy - once the Fabricator is placed, or once a hidden
+              pre-wave timer runs out.
+            - >-
+              - It's common to deposit most or all Energy into the Fabricator
+              (or hand it directly to an Engineer) through waves 1-10 - then
+              start spending it on perks from wave 11 onward.
+            - >-
+              - Starts with 1 Energy Tap active once the Fabricator is placed -
+              another unlocks at the end of waves 10, 20 and 30, for a
+              maximum of 4.
+            - >-
+              - Boss waves are 10, 20, 30, 40 and 50 - "semi-boss" waves are
+              15, 25, 35 and 45 - both tend to mix in stronger enemy units
+              alongside the regular wave.
+          settings:
+            - { name: Fill with bots,  options: ON / OFF,  default: "ON",   tooltip: Fill all open slots with AI Players }
+            - { name: Starting Wave,   options: 1-50,      default: "1",    tooltip: Choose a starting wave }
+            - { name: Use Fabricator,  options: ON / OFF,  default: "ON",   tooltip: "Use Fabricator?" }
+            - { name: Use Cards,       options: ON / OFF,  default: "ON",   tooltip: "Use (Class) Cards?" }
+            - { name: Event Hats,      options: "None / Big Head: Marcus / Big Head: RAAM / Pumpkin / Santa / Bunny / Heart", default: "None", tooltip: Apply a hat to all characters in-game }
+
+        - name: Horde Frenzy
+          desc: 12 waves, with class abilities and the Fabricator.
+          notes:
+            - >-
+              - Waves come faster - a full match averages
+              <strong>30 minutes</strong> (varies with modifiers) - and
+              enemies ramp up in difficulty and numbers much faster per
+              wave.
+            - >-
+              - Each player starts with <mark class="kw kw--value">10,000</mark>
+              Energy - once the Fabricator is placed, or once a hidden
+              pre-wave timer runs out.
+            - >-
+              - It's common to deposit all Energy into the Fabricator (or
+              hand it directly to an Engineer) during wave 1 - then start
+              spending it on perks from wave 2 onward.
+            - >-
+              - Starts with 2 Energy Taps active once the Fabricator is
+              placed - another unlocks at the end of waves 4 and 8, for a
+              maximum of 4.
+          settings:
+            - { name: Fill with bots,  options: ON / OFF,  default: "ON",   tooltip: Fill all open slots with AI Players }
+            - { name: Starting Wave,   options: 1-50,      default: "1",    tooltip: Choose a starting wave }
+            - { name: Use Fabricator,  options: ON / OFF,  default: "ON",   tooltip: "Use Fabricator?" }
+            - { name: Use Cards,       options: ON / OFF,  default: "ON",   tooltip: "Use (Class) Cards?" }
+            - { name: Event Hats,      options: "None / Big Head: Marcus / Big Head: RAAM / Pumpkin / Santa / Bunny / Heart", default: "None", tooltip: Apply a hat to all characters in-game }
+
+        - name: Classic Horde
+          desc: 50 waves, without class abilities or the Fabricator.
+          settings:
+            - { name: Fill with bots,       options: ON / OFF,       default: "ON",  tooltip: Fill all open slots with AI Players }
+            - { name: Starting Wave,        options: 1-50,           default: "1",   tooltip: Choose a starting wave }
+            - { name: Use Fabricator,       options: ON / OFF,       default: "OFF", tooltip: "Use Fabricator?" }
+            - { name: Use Default Loadout,  options: "ON",           default: "ON",  tooltip: "Use Default Loadouts?" }
+            - { name: Use Cards,            options: ON / OFF,       default: "OFF", tooltip: "Use (Class) Cards?" }
+            - { name: Gameplay Tuning,      options: Classic Horde,  default: Classic Horde, tooltip: Choose which gameplay tuning to use for the match }
+            - { name: Use Weapon Pickups,   options: "ON",           default: "ON",  tooltip: "Use Weapon Pickups?" }
+
+        - name: Classic Horde Frenzy
+          desc: 12 waves, without class abilities or the Fabricator.
+          settings:
+            - { name: Fill with bots,       options: ON / OFF,       default: "ON",  tooltip: Fill all open slots with AI Players }
+            - { name: Starting Wave,        options: 1-50,           default: "1",   tooltip: Choose a starting wave }
+            - { name: Use Fabricator,       options: ON / OFF,       default: "OFF", tooltip: "Use Fabricator?" }
+            - { name: Use Default Loadout,  options: "ON",           default: "ON",  tooltip: "Use Default Loadouts?" }
+            - { name: Use Cards,            options: ON / OFF,       default: "OFF", tooltip: "Use (Class) Cards?" }
+            - { name: Gameplay Tuning,      options: Classic Horde,  default: Classic Horde, tooltip: Choose which gameplay tuning to use for the match }
+            - { name: Use Weapon Pickups,   options: "ON",           default: "ON",  tooltip: "Use Weapon Pickups?" }
+
+        - name: Mad Man's Monsters
+          desc: Survive 20 waves against the Mad Man's Monsters.
+
+        - name: Jingle Juvies
+          desc: Survive 20 waves of joyous Jingle Juvies.
+
+        - name: Predator Hunt
+          desc: Survive 10 waves and battle the Wakaatu with no Fabricator.
+
+        - name: Boss Rush
+          desc: Survive 10 waves against bosses only.
+
+        - name: Escape From Kadar
+          desc: Survive 10 waves against Niles' creations.
+
+        - name: Nexus Siege
+          desc: Survive 10 waves of Locust with no Fabricator.
+
+        - name: Horde Mania
+          desc: Survive 25 waves with a short build period.
+
+        - name: Horde Roulette
+          desc: Survive 10 waves of random enemy combinations.
+
+- name: PVP
+  modes:
+    - name: Versus - Custom
+      desc: >-
+        Custom lobbies with every Versus mode, plus weapon substitutions and
+        map options.
+      variants:
+        - name: Arcade Blitz
+          desc: Capture and hold rings to win. Rings count down faster when points are being scored.
+        - name: Arcade Deathmatch
+          desc: Eliminate members of the opposing team to win the round. Weapons are unlocked by redeeming points obtained for each elimination.
+        - name: Arms Race
+          desc: Kill the enemy with every gun. Every three kills changes your team's weapon. The team to get three kills with the last weapon will win.
+        - name: Capture The Flag
+          desc: Score Touchdowns or hold the flag when time expires to gain points. First team to reach the point goal wins.
+        - name: Control
+          desc: Capture and hold the objective ring to score enough points to win.
+        - name: Control (Esports)
+          desc: Capture and hold the objective ring to score enough points to win. Uses Esports settings for ring order, weapon spawns, and weapon ammo.
+        - name: Dodgeball
+          desc: Eliminate the opposing team to win. Every kill brings back a dead teammate.
+        - name: Escalation
+          desc: Capture the rings to win. New weapons are placed by each team every round.
+        - name: Execution 2.0
+          desc: Eliminate all members of the opposing team using executions. You get one life per round.
+        - name: Free For All - 14 Player
+          desc: Kill or be killed by every player you encounter. First player to reach the target number of kills wins.
+        - name: Free For All - 8 Player
+          desc: Kill or be killed by every player you encounter. First player to reach the target number of kills wins.
+        - name: Gridiron
+          desc: Score Touchdowns or Eliminate the enemy team to gain points. First team to reach the point goal wins. Single elimination rounds.
+        - name: Guardian
+          desc: Execute the enemy team leader to prevent respawns, then eliminate the opposing team to win.
+        - name: King Of The Hill
+          desc: Capture and hold the objective ring to score enough points to win. Teammates will respawn at the same time every 15 seconds.
+        - name: Team Deathmatch
+          desc: Eliminate all members of the opposing team. Each team has limited respawns where dead players will spawn together every 15 seconds.
+        - name: Warzone
+          desc: Eliminate all members of the opposing team. You get one life per round. You cannot self-revive from DBNO.
+        - name: One Shot, One Kill
+          desc: A Gears classic. [[longshot]]s only, extra starting ammo, no melee.
+        - name: FFA One Shot, One Kill
+          desc: A Gears classic. [[longshot]]s only, extra starting ammo, no melee.
+        - name: Torque Bow Tag
+          desc: "[[torque-bow]]s only. Melee is disabled. Eliminate the opposing team to win."
+        - name: 2v2 Gnashers
+          desc: Eliminate all members of the opposing team. You spawn with only a [[gnasher]].
+        - name: Brawl
+          desc: Respawn with your squad after death. Weapon respawn timers start when a weapon is picked up. Eliminate the enemy team to win.
+        - name: "Control: SSG"
+          desc: "Capture and hold the objective ring to score enough points to win. Players are limited to [[gnasher]], [[snub-pistol]], and Utility grenades."
+        - name: "Control: Fully Loaded"
+          desc: Capture and hold the objective ring to score enough points to win.
+        - name: "Free For All - 8 Player: Fully Loaded"
+          desc: Kill or be killed by every player you encounter. First player to reach the target number of kills wins.
+        - name: "Team Deathmatch: Fully Loaded"
+          desc: Eliminate all members of the opposing team. Each team has limited respawns where dead players will spawn together every 15 seconds.
+
+    - name: Versus Search - Quickplay
+      desc: Casual matchmaking playlists.
+      variants:
+        - name: Classic Elimination
+          desc: "Play 1 of 4 Elimination modes: Gridiron (capture the Flag or Eliminate the enemy team), Execution (Eliminate the other team), Dodgeball (Eliminate the other team & kills bring back teammates), or Team Deathmatch."
+        - name: Classic Objective
+          desc: "Play 1 of 4 Objective modes: Control, Capture the Flag, King of the Hill, or Guardian."
+        - name: Free For All 14
+          desc: Kill everyone. The first player to reach the score limit wins the match.
+        - name: One Shot, One Kill
+          desc: A Gears classic. [[longshot]]s only, extra starting ammo, no melee.
+        - name: Co-op vs. AI (Beginner)
+          desc: Join a Co-op Versus match against Beginner AI with up to 4 players online. Vote for the next map and mode at the end of every round.
+        - name: Co-op vs. AI (Hardcore)
+          desc: Join a Co-op Versus match against Hardcore AI with up to 4 players online. Vote for the next map and mode at the end of every round.
+
+    - name: Versus Search - Competitive
+      desc: Ranked playlists with seasonal score, rank and rewards.
+      variants:
+        - name: Capture The Flag
+          desc: Score Touchdowns to gain points. First team to reach the point goal wins. Respawns and Touchbacks enabled.
+        - name: Execution 2.0
+          desc: Eliminate all members of the opposing team using executions. You get one life per round.
+        - name: Guardian
+          desc: Execute the enemy team leader to prevent respawns, then eliminate the opposing team.
+        - name: Control
+          desc: Capture and hold the objective ring to score enough points to win.
+        - name: Free For All - 8 Players
+          desc: Kill everyone. The first player to reach the score limit wins the match.
+        - name: Team Deathmatch
+          desc: Eliminate all members of the opposing team.
+        - name: 2v2 Gnashers
+          desc: 4 players, 2 teams, 1 life, spawning only with [[gnasher]]s on small maps.
+        - name: Escalation
+          desc: Capture the rings to win. New weapons are placed by each team every round.

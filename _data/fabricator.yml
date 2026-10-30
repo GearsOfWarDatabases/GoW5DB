@@ -1,0 +1,241 @@
+# ── Fabricator ──────────────────────────────────────────────────────────────
+# Items in exact Fabricator order (grid, left to right, top to bottom).
+# Prices in Energy. Fortifications get 15% off for Engineer classes
+# (Mechanic, Robotics Expert, Architect) - shown in-game as (-15%).
+# Fortification levels 1-4: LV1's price/engineer is the FRESH BUILD cost,
+# sourced from the Fabricator's own build menu (confirmed via
+# "Barrier LV1 (Menu 1700).jpg" etc, which lists all six fortifications'
+# LV1 prices in one screen). LV2/LV3/LV4's price/engineer is the cost to
+# upgrade INTO that level from the one before it, sourced from the field
+# "<Name> LVn UPGRADE: <price>" prompt shown while standing at an
+# ALREADY-BUILT fortification - confirmed directly by the site owner with a
+# 4-screenshot sequence for Barrier: the Menu (LV1 build), then field
+# prompts reading "BARRIER LV1 UPGRADE: 1,700" (= cost of 1->2),
+# "BARRIER LV2 UPGRADE: 2,550" (= cost of 2->3), "BARRIER LV3 UPGRADE: 3,400"
+# (= cost of 3->4). In other words the field prompt's "LVn" names the level
+# you're STANDING AT, not the level the price buys - the price takes you to
+# LVn+1. This shifted every fortification's price/engineer down one level
+# from an earlier layout (LV2's old price became LV1's own upgrade cost -
+# coincidentally often identical since the first upgrade tends to cost the
+# same as the initial build - LV3's old price became LV2's, LV4 which used
+# to be an unconfirmed "MAX"/"?" now gets what used to be stored as LV3's
+# price). '?' = not yet captured in-game. HP and buyback are NOT affected by
+# this shift - they were always tied directly to the level they're shown
+# under, independent of price.
+# HP = max fortification health at that level, verified with no "Fortification
+# Health" perk active (perk-inflated readings were divided back down, e.g. a
+# Forge seen at 2,600/30%-perk HP -> 2,600 / 1.3 = 2,000 true base HP).
+#
+# modifiers: optional price modifiers for Fortifications only (Weapon prices
+# never change). "cheaper" modifiers reduce cost, "expensive" ones raise it.
+# The Fabricator page lets visitors toggle these to see the resulting price;
+# the numbers below are also hardcoded in fabricator/index.html's calculator
+# script, so update both places if a value ever changes. "cheaper" and
+# "expensive" stack ADDITIVELY (all percentages summed once against the base
+# price), not multiplicatively/chained - confirmed against a real Fabricator
+# screenshot: Mechanic with Efficient Fabrication maxed (-32%) + Engineer
+# (-15%) + Power Drain (+50%) active showed a price that only matches
+# base * (1 - 0.15 - 0.32 + 0.50), not the chained version.
+#
+# hp_perk: the "Fortification Health" D-pad Perk (not a skill card - this is
+# the small 4-option Perk wheel every class has, separate from the big cards
+# above). Confirmed identical across all three Engineer classes
+# (_classes/mechanic.md, robotics-expert.md, architect.md all list the same
+# 10 values), so it's kept here once instead of duplicated per class. Applies
+# on top of a fortification's base `hp` at whichever level is selected.
+
+# category / sub: broad slot class + specific weapon type, shown on the tile
+# as "Category - Sub" (e.g. "Heavy - Machine Gun"). Icons load from
+# images/weapons/<slug>.png with a letter placeholder until added.
+weapons:
+  - { name: "Flashbang",          price: "500",   category: "Grenade",  sub: "Stun",               slug: "flashbang" }
+  - { name: "Shock Grenade",      price: "500",   category: "Grenade",  sub: "Area Denial",        slug: "shock-grenade" }
+  - { name: "Frag Grenade",       price: "500",   category: "Grenade",  sub: "Explosive",          slug: "frag-grenade" }
+  - { name: "Incendiary Grenade", price: "500",   category: "Grenade",  sub: "Area Denial",        slug: "incendiary-grenade" }
+  - { name: "Retro Lancer",       price: "2,000", category: "Rifle",    sub: "Automatic",          execution: "Charge",   slug: "retro-lancer", forge: ["20", "40", "80", "120"] }
+  - { name: "Gnasher",            price: "2,000", category: "Shotgun",  sub: "Pump-Action",        slug: "gnasher", forge: ["20", "40", "80", "120"] }
+  - { name: "Lancer",             price: "2,000", category: "Rifle",    sub: "Automatic",          execution: "Chainsaw", slug: "lancer", forge: ["20", "40", "80", "120"] }
+  - { name: "Markza MK 1",        price: "2,000", category: "Precision", sub: "Marksman",          slug: "markza", forge: ["20", "40", "80", "120"] }
+  - { name: "Enforcer",           price: "2,000", category: "SMG",      sub: "Auto",               slug: "enforcer", forge: ["20", "40", "80", "120"] }
+  - { name: "Longshot",           price: "2,000", category: "Precision", sub: "Bolt-Action",       slug: "longshot", forge: ["20", "40", "80", "120"] }
+  - { name: "Lancer GL",          price: "4,000", category: "Rifle",    sub: "Grenade Launcher",   slug: "lancer-gl", forge: ["20", "40", "80", "120"] }
+  - { name: "Overkill",           price: "2,000", category: "Shotgun",  sub: "Semi-Auto",          slug: "overkill", forge: ["20", "40", "80", "120"] }
+  - { name: "EMBAR",              price: "2,000", category: "Precision", sub: "Railgun",           slug: "embar", forge: ["20", "40", "80", "120"] }
+  - { name: "Boomshot",           price: "4,000", category: "Explosive", sub: "Grenade Launcher",  slug: "boomshot", forge: ["40", "80", "160", "240"] }
+  - { name: "Claw",               price: "2,500", category: "Rifle",    sub: "Machine Gun",        slug: "claw-lmg", forge: ["20", "40", "80", "120"] }
+  - { name: "Hammerburst",        price: "2,000", category: "Rifle",    sub: "Burst Fire",         slug: "hammerburst", forge: ["20", "40", "80", "120"] }
+  - { name: "Dropshot",           price: "4,000", category: "Explosive", sub: "Munitions Launcher", slug: "dropshot", forge: ["40", "80", "160", "240"] }
+  - { name: "Torque Bow",         price: "4,000", category: "Precision", sub: "Explosive Bow",     slug: "torque-bow", forge: ["40", "80", "160", "240"] }
+  - { name: "Mulcher",            price: "3,000", category: "Heavy",    sub: "Chain Gun",          slug: "mulcher", forge: ["30", "60", "120", "180"] }
+  - { name: "Tri-Shot",           price: "4,000", category: "Heavy",    sub: "Machine Gun",        slug: "tri-shot", forge: ["30", "60", "120", "180"] }
+  - { name: "RL-4 Salvo",         price: "6,000", category: "Heavy",    sub: "Rocket Launcher",    slug: "rl-4-salvo", forge: ["40", "80", "160", "240"] }
+  - { name: "Buzzkill",           price: "3,000", category: "Heavy",    sub: "Sawblade Launcher",  slug: "buzzkill", forge: ["30", "60", "120", "180"] }
+  - { name: "Breaker Mace",       price: "4,000", category: "Melee",    sub: "Mace",               slug: "breaker-mace", forge: ["30", "60", "120", "180"] }
+  - { name: "Cryo Cannon",        price: "3,500", category: "Heavy",    sub: "Cryo",               slug: "cryo-cannon", forge: ["30", "60", "120", "180"] }
+  - { name: "Snub",               price: "2,000", category: "Pistol",   sub: "Semi-Auto",          slug: "snub-pistol" }
+  - { name: "Boltok",             price: "2,000", category: "Pistol",   sub: "Revolver",           slug: "boltok" }
+  - { name: "Talon",              price: "2,000", category: "Pistol",   sub: "Auto",               slug: "talon" }
+  - { name: "Scorcher",           price: "2,500", category: "Flamethrower",  slug: "scorcher", forge: ["20", "40", "80", "120"] }
+  - { name: "Repair Tool",        price: "5,000", category: "Utility",  sub: "Tool",               slug: "repair-tool" }
+  - { name: "Smoke Grenade",      price: "250",   category: "Grenade",  sub: "Area Denial",        slug: "smoke-grenade" }
+
+# The Fabricator itself - not buildable, but it has HP and a buy-back cost
+# when destroyed. Verified from screenshots: HUD nameplate
+# "FABRICATOR (12223/15000)" -> 15,000 max HP; rebuild prompt
+# "Fabricator (Build 4,000)" -> 4,000 Energy to buy back.
+fabricator:
+  name: "Fabricator"
+  slug: "fabricator"
+  badge: "Fabricator"
+  desc: "The heart of the defense - every fortification below is built from it. If it gets destroyed, it can be bought back."
+  hp: "15,000"
+  buyback: "4,000"
+
+fortifications:
+  # buyback = Energy to rebuild a DESTROYED fortification at that level.
+  # In-world, a buyback prompt is visually distinct from a fresh build/
+  # upgrade: it's a single "E" interact prompt with a "+" in a circle next
+  # to it, reading "BUILD <Name> LVn: <price>" - that circled "+" icon is
+  # what marks it as a buyback specifically (an object that was destroyed
+  # and is being restored), as opposed to the full multi-key Fabricator
+  # build/upgrade menu (Z/Q/E/download/R icons, reads "<Name> LVn UPGRADE:
+  # <price>") used for constructing/upgrading something that's still
+  # standing. Buyback price is NOT simply a discounted version of the
+  # fresh-build price - it scales off whatever was already invested before
+  # destruction, so don't try to reconcile it against the base build price.
+  # Known values from screenshots (captured as an Engineer, -15%, so base =
+  # shown / 0.85): "Barrier LV4 (Upgrade 1,870, Rebuild).jpg" -> 2,200 base;
+  # "Decoy LV4 (Upgrade 2,040, Anomalous).jpg" -> 2,400 base.
+  # "Weapon Locker LV4 (Buy Back 5,400, Power Drain -10%)" -> 5,400 / 1.35
+  # (Power Drain +50% & Engineer -15%, additive) = 4,000 base - the same
+  # match's "Barrier LV4 (Buy Back 2,970...)" cross-checks: 2,970 / 1.35 =
+  # exactly the known 2,200. "MG Sentry LV3 (Buy Back 3,400)" is from an
+  # old capture with unknown modifiers: if Engineer-only it's 4,000 base
+  # (3,400 / 0.85), so it's stored as ~4,000 (estimated). "MG Sentry LV4
+  # (Build 5,000)" - a clean in-world buyback prompt, no visible modifier -
+  # stored as 5,000. "Barrier LV1 (Build 400)" and "Barrier LV3 (Build
+  # 1,400)" are also clean in-world buyback prompts - stored as 400 and
+  # 1,400 respectively. (The Barrier LV3 screenshot was on file for a
+  # while under the filename "Barrier LV3 (Build 4000).jpg" - that 4,000
+  # was a bad label, not what the screenshot actually shows; renamed to
+  # match the real on-screen price once someone caught the mismatch.)
+  # All other levels: '?' until captured in-game.
+  - name: "Barrier"
+    slug: "barrier"
+    badge: "Fence"
+    desc: "Ground barrier that slows enemies and deals a small amount of damage."
+    levels:
+      - { price: "2,000", engineer: "1,700", hp: "3,000",  buyback: "400" }
+      - { price: "2,000", engineer: "1,700", hp: "5,000",  buyback: "?" }
+      - { price: "3,000", engineer: "2,550", hp: "9,000",  buyback: "1,400" }
+      - { price: "4,000", engineer: "3,400", hp: "15,000", buyback: "2,200" }
+  - name: "Decoy"
+    slug: "decoy"
+    badge: "Decoy"
+    desc: "Deployable dummy that draws enemy fire away from the squad."
+    levels:
+      - { price: "3,000", engineer: "2,550", hp: "3,000",  buyback: "?" }
+      - { price: "3,000", engineer: "2,550", hp: "5,000",  buyback: "?" }
+      - { price: "3,000", engineer: "2,550", hp: "?",      buyback: "?" }
+      - { price: "3,000", engineer: "2,550", hp: "12,000", buyback: "2,400" }
+  - name: "MG Sentry"
+    slug: "mg-sentry"
+    badge: "Turret"
+    desc: "Automated turret that lays down sustained machine-gun fire on nearby enemies."
+    levels:
+      - { price: "5,000", engineer: "4,250", hp: "3,000", buyback: "?" }
+      - { price: "5,000", engineer: "4,250", hp: "3,000", buyback: "?" }
+      - { price: "7,000", engineer: "5,950", hp: "4,500", buyback: "~4,000" }
+      - { price: "8,000", engineer: "6,800", hp: "4,500", buyback: "5,000" }
+  - name: "Shock Sentry"
+    slug: "shock-sentry"
+    badge: "Turret"
+    desc: "Automated turret that fires electrified rounds, slowing and damaging enemies."
+    levels:
+      - { price: "4,000", engineer: "3,400", hp: "2,000", buyback: "?" }
+      - { price: "4,000", engineer: "3,400", hp: "3,000", buyback: "?" }
+      - { price: "6,000", engineer: "5,100", hp: "4,500", buyback: "?" }
+      - { price: "7,000", engineer: "5,950", hp: "4,500", buyback: "?" }
+  - name: "Weapon Locker"
+    slug: "weapon-locker"
+    badge: "Storage"
+    desc: "Stores extra weapons for the squad to grab in the field. Every level costs the same flat fee."
+    levels:
+      - { price: "5,000", engineer: "4,250", hp: "2,500",  buyback: "?" }
+      - { price: "5,000", engineer: "4,250", hp: "4,000",  buyback: "?" }
+      - { price: "5,000", engineer: "4,250", hp: "6,000",  buyback: "?" }
+      - { price: "5,000", engineer: "4,250", hp: "10,000", buyback: "4,000" }
+  - name: "Forge"
+    slug: "forge"
+    badge: "Utility"
+    desc: "Melts down unwanted weapons into extra Energy. Every level costs the same flat fee."
+    levels:
+      - { price: "10,000", engineer: "8,500", hp: "2,000",  buyback: "?" }
+      - { price: "10,000", engineer: "8,500", hp: "3,000",  buyback: "?" }
+      - { price: "10,000", engineer: "8,500", hp: "5,250",  buyback: "?" }
+      - { price: "10,000", engineer: "8,500", hp: "10,000", buyback: "?" }
+    # Dismantle payout - Energy paid out when you feed a picked-up weapon into
+    # the Forge (the "DISMANTLE WEAPON" hold-E prompt on the deployed Forge
+    # prop, separate from building/upgrading it). The base (no-card) values
+    # per Forge level live on each weapon entry above/in `weapons:` as
+    # `forge` - only weapons the Forge actually accepts have that field;
+    # grenades, pistols, the Repair Tool, and the Smoke Grenade have none
+    # (confirmed not dismantle-eligible - they're absent from the full
+    # weapon-tier list this data came from, not just missing capture).
+    #
+    # Every dismantle-eligible weapon falls into one of 3 tiers by its LV1
+    # (base) value - 20, 30, or 40 - and EVERY tier scales through LV1-4 by
+    # the exact same multiplier ladder: 1x / 2x / 4x / 6x base (i.e. Forge
+    # LV2 pays double LV1, LV3 pays 4x, LV4 pays 6x).
+    #
+    # Jack's Optimizer card (jack.md) is its own independent 6-level scale
+    # (same shape as a Mechanic's Efficient Fabrication card) - +50/70/90/
+    # 110/130/150% on top of whichever Forge level's base value is showing,
+    # NOT a single flat bonus. Its max level (150%, i.e. a flat 2.5x) is
+    # confirmed against a real Torque Bow LV4-with-maxed-card value of 600,
+    # which is exactly 240 (its LV4 base) x 2.5. This percentage table is
+    # applied in JS (see fabricator/index.html) rather than stored per-weapon,
+    # since it's a fixed multiplier that applies identically to every weapon.
+    #
+    # This superseded 3 earlier provisional values (Overkill=20, a guessed
+    # "Talon"=40, Lancer GL=80) inferred from a single Horde run's screenshots
+    # by matching the CARRYING total's delta against the Forge's "+N" popup.
+    # Overkill=20 and Lancer GL=80 both still check out fine against this
+    # complete table (LV1 and LV3 of the 20-base tier respectively) - but
+    # "Talon" doesn't appear anywhere in the real tier list, so that ID was
+    # wrong (Talon, like every other pistol, isn't dismantle-eligible at
+    # all); it was only ever a best-guess match off a blurry HUD icon.
+    dismantle_multiplier:
+      base: ["1", "2", "4", "6"]
+      jack_card_pct: ["50", "70", "90", "110", "130", "150"]
+
+modifiers:
+  cheaper:
+    - name: "Engineer Class"
+      desc: "Mechanic, Robotics Expert, and Architect build fortifications at a flat discount."
+      value: "15"
+    - name: "Mechanic Card: Efficient Fabrication"
+      desc: "Skill card exclusive to the Mechanic class. Reduces a fortification's INITIAL build cost further, scaling with card level - it does not apply to upgrading an already-built fortification to a higher level (upgrades only get the flat 15% Engineer discount). Confirmed via a Barrier LV1 build at 1,060 (2,000 base, Engineer + card maxed at -32% = -47%), versus its LV1->2/2->3/3->4 upgrade prices (1,700/2,550/3,400) matching the Engineer-only discount exactly, with no further reduction from the card."
+      levels: ["15", "20", "25", "28", "30", "32"]
+  # Power Boost is a Difficulty Modifier (site.data.gamemodes, same rolled
+  # pool Power Drain/Ultra Power Drain come from) rather than a class
+  # discount - it can be rolled independently of who's building, so it's
+  # kept as its own entry instead of folded into `cheaper` above.
+  power_boost:
+    name: "Power Boost"
+    desc: "Difficulty modifier. Fortification build cost reduced by 30%."
+    value: "30"
+  expensive:
+    - name: "Power Drain"
+      desc: "Difficulty modifier. Raises every fortification's cost."
+      value: "50"
+    # In-game description says "increased by 1000%", but verified menu prices
+    # (Barrier 20,000 on a 2,000 base, Forge 100,000 on 10,000, no Engineer,
+    # no cards) show the real charge is exactly x10 - i.e. +900% additive.
+    - name: "Ultra Power Drain"
+      desc: "Master difficulty modifier. In-game text says +1,000%, but the real charged price is exactly 10x the base cost."
+      value: "900"
+  hp_perk:
+    name: "Fortification Health"
+    desc: "Universal Engineer-class D-pad Perk (Mechanic, Robotics Expert, Architect - same values for all three). Increases HP of fortifications you build."
+    values: ["10", "20", "30", "40", "50", "60", "70", "80", "90", "100"]

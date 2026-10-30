@@ -1,0 +1,461 @@
+---
+title: Weapon Randomizer
+---
+<div class="section-page">
+  <div class="section-page__header">
+    <h1 class="section-page__title">Weapon Randomizer</h1>
+  </div>
+
+  <p class="section-page__intro">Roll random loadouts from every weapon in the database.
+  Blacklist what you don't want, share a settings code, or save presets in your browser.
+  The same seed + settings always give the same result.</p>
+
+  <div class="wr-layout">
+    <!-- ── Settings ─────────────────────────────────────────── -->
+    <section class="wr-panel">
+      <h2 class="wr-panel__title">Settings</h2>
+
+      <div class="wr-row">
+        <span class="wr-label">Loadouts to roll</span>
+        <div class="wr-pips" role="group" aria-label="Number of loadouts">
+          <button type="button" class="class-card__level-pip class-card__level-pip--btn class-card__level-pip--active" data-rolls="1">1</button>
+          <button type="button" class="class-card__level-pip class-card__level-pip--btn" data-rolls="2">2</button>
+          <button type="button" class="class-card__level-pip class-card__level-pip--btn" data-rolls="3">3</button>
+          <button type="button" class="class-card__level-pip class-card__level-pip--btn" data-rolls="4">4</button>
+          <button type="button" class="class-card__level-pip class-card__level-pip--btn" data-rolls="5">5</button>
+        </div>
+      </div>
+
+      <div class="wr-row wr-row--checks">
+        <label class="wr-check"><input type="checkbox" id="wr-mw2" checked> Roll a second main weapon</label>
+        <label class="wr-check"><input type="checkbox" id="wr-pistol"> Roll pistol (off = class default pistol)</label>
+        <label class="wr-check"><input type="checkbox" id="wr-nade" checked> Roll grenade</label>
+        <label class="wr-check"><input type="checkbox" id="wr-dupes"> Allow the same weapon in different loadouts</label>
+      </div>
+      <p class="wr-hint">Main weapon 1 and 2 are never the same - you can't carry two of the same weapon.</p>
+
+      <div class="wr-row">
+        <label class="wr-label" for="wr-seed">Seed (optional - blank rolls a random one)</label>
+        <input type="text" id="wr-seed" class="wr-input" placeholder="e.g. brumak-42" maxlength="40">
+      </div>
+
+      <div class="wr-row">
+        <label class="wr-label" for="wr-name">Preset name</label>
+        <input type="text" id="wr-name" class="wr-input" placeholder="e.g. Gnashers only" maxlength="40">
+        <label class="wr-label" for="wr-desc">Description</label>
+        <input type="text" id="wr-desc" class="wr-input" placeholder="What is this setup for?" maxlength="120">
+      </div>
+
+      <div class="wr-actions">
+        <button type="button" class="wr-btn wr-btn--primary" id="wr-generate">Generate</button>
+        <button type="button" class="wr-btn" id="wr-save">Save preset</button>
+        <button type="button" class="wr-btn" id="wr-copy-settings">Copy settings code</button>
+      </div>
+
+      <div class="wr-row">
+        <label class="wr-label" for="wr-code">Load a code (settings or result)</label>
+        <div class="wr-inline">
+          <input type="text" id="wr-code" class="wr-input" placeholder="Paste a code...">
+          <button type="button" class="wr-btn" id="wr-load">Load</button>
+        </div>
+      </div>
+
+      <div class="wr-presets" id="wr-presets-wrap" hidden>
+        <h3 class="wr-panel__sub">Saved presets</h3>
+        <ul class="wr-preset-list" id="wr-presets"></ul>
+      </div>
+    </section>
+
+    <!-- ── Weapon pools ─────────────────────────────────────── -->
+    <section class="wr-panel">
+      <h2 class="wr-panel__title">Weapon pool</h2>
+      <p class="wr-hint">Click a weapon to blacklist it (crossed out = never rolled).</p>
+
+      <div class="wr-pool" data-pool="m">
+        <div class="wr-pool__head">
+          <h3 class="wr-panel__sub">Main weapons</h3>
+          <span class="wr-pool__bulk">
+            <button type="button" class="wr-mini" data-bulk="all">All</button>
+            <button type="button" class="wr-mini" data-bulk="none">None</button>
+          </span>
+        </div>
+        <div class="wr-chips"></div>
+      </div>
+
+      <div class="wr-pool" data-pool="p">
+        <div class="wr-pool__head">
+          <h3 class="wr-panel__sub">Pistols</h3>
+          <span class="wr-pool__bulk">
+            <button type="button" class="wr-mini" data-bulk="all">All</button>
+            <button type="button" class="wr-mini" data-bulk="none">None</button>
+          </span>
+        </div>
+        <div class="wr-chips"></div>
+      </div>
+
+      <div class="wr-pool" data-pool="g">
+        <div class="wr-pool__head">
+          <h3 class="wr-panel__sub">Grenades</h3>
+          <span class="wr-pool__bulk">
+            <button type="button" class="wr-mini" data-bulk="all">All</button>
+            <button type="button" class="wr-mini" data-bulk="none">None</button>
+          </span>
+        </div>
+        <div class="wr-chips"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ── Results ──────────────────────────────────────────── -->
+  <section class="wr-panel wr-results" id="wr-results-panel" hidden>
+    <h2 class="wr-panel__title">Result</h2>
+    <p class="wr-hint" id="wr-result-meta"></p>
+    <div class="wr-result-grid" id="wr-results"></div>
+    <div class="wr-row">
+      <label class="wr-label" for="wr-result-code">Result code (reproduces this exact roll)</label>
+      <div class="wr-inline">
+        <input type="text" id="wr-result-code" class="wr-input" readonly>
+        <button type="button" class="wr-btn" id="wr-copy-result">Copy</button>
+        <button type="button" class="wr-btn" id="wr-export">Export HTML</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── Data from the site ─────────────────────────────────── */
+  var MAINS = [{% for w in site.data.weapons.menu %}{% unless w.badge == "Pistol" %}{"n":"{{ w.name | replace: '"', '\"' }}","b":"{{ w.badge }}"},{% endunless %}{% endfor %}];
+  var PISTOLS = [{% for w in site.data.weapons.menu %}{% if w.badge == "Pistol" %}{"n":"{{ w.name | replace: '"', '\"' }}","b":"{{ w.badge }}"},{% endif %}{% endfor %}];
+  var NADES = [{% for w in site.data.fabricator.weapons %}{% if w.category == "Grenade" %}{"n":"{{ w.name | replace: '"', '\"' }}","b":"{{ w.category }}"},{% endif %}{% endfor %}];
+  var POOLS = { m: MAINS, p: PISTOLS, g: NADES };
+  var CODE_PREFIX = 'G5WR1.';
+  var LS_KEY = 'g5wr_presets';
+
+  /* ── Seeded PRNG (xmur3 + mulberry32) ───────────────────── */
+  function xmur3(str) {
+    var h = 1779033703 ^ str.length;
+    for (var i = 0; i < str.length; i++) {
+      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+      h = (h << 13) | (h >>> 19);
+    }
+    return function () {
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      return (h ^= h >>> 16) >>> 0;
+    };
+  }
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function rngFrom(seed) { var h = xmur3(seed); return mulberry32(h()); }
+  function randomSeed() {
+    var words = ['gnasher','lancer','brumak','kestrel','swarm','cog','emergence','hammer','imulsion','carmine'];
+    return words[Math.floor(Math.random() * words.length)] + '-' + Math.floor(Math.random() * 10000);
+  }
+
+  /* ── State ──────────────────────────────────────────────── */
+  var state = {
+    rolls: 1, mw2: true, pistol: false, nade: true, dupes: false,
+    seed: '', name: '', desc: '',
+    bl: { m: [], p: [], g: [] }
+  };
+  var lastResult = null; // { seed, loadouts: [...] }
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ── Codes (base64url JSON) ─────────────────────────────── */
+  function encodeCode(obj) {
+    var json = JSON.stringify(obj);
+    return CODE_PREFIX + btoa(unescape(encodeURIComponent(json)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function decodeCode(code) {
+    code = (code || '').trim();
+    if (code.indexOf(CODE_PREFIX) !== 0) return null;
+    var b64 = code.slice(CODE_PREFIX.length).replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    try { return JSON.parse(decodeURIComponent(escape(atob(b64)))); }
+    catch (e) { return null; }
+  }
+  function settingsObj(seedOverride) {
+    return {
+      v: 1, name: state.name, desc: state.desc,
+      seed: seedOverride !== undefined ? seedOverride : state.seed,
+      rolls: state.rolls, mw2: state.mw2, pistol: state.pistol,
+      nade: state.nade, dupes: state.dupes,
+      bl: { m: state.bl.m.slice(), p: state.bl.p.slice(), g: state.bl.g.slice() }
+    };
+  }
+  function applySettings(s) {
+    state.rolls = Math.min(5, Math.max(1, s.rolls | 0 || 1));
+    state.mw2 = !!s.mw2; state.pistol = !!s.pistol;
+    state.nade = !!s.nade; state.dupes = !!s.dupes;
+    state.seed = typeof s.seed === 'string' ? s.seed : '';
+    state.name = typeof s.name === 'string' ? s.name : '';
+    state.desc = typeof s.desc === 'string' ? s.desc : '';
+    state.bl = { m: [], p: [], g: [] };
+    if (s.bl) ['m','p','g'].forEach(function (k) {
+      (s.bl[k] || []).forEach(function (i) {
+        if (typeof i === 'number' && i >= 0 && i < POOLS[k].length) state.bl[k].push(i);
+      });
+    });
+    syncUI();
+  }
+
+  /* ── Generation ─────────────────────────────────────────── */
+  function allowed(k) {
+    return POOLS[k].map(function (w, i) { return i; })
+      .filter(function (i) { return state.bl[k].indexOf(i) === -1; });
+  }
+  function generate(seed) {
+    var rng = rngFrom(seed);
+    var pm = allowed('m'), pp = allowed('p'), pg = allowed('g');
+    var needMains = state.mw2 ? 2 : 1;
+    if (pm.length < needMains) return { error: 'Need at least ' + needMains + ' main weapon' + (needMains > 1 ? 's' : '') + ' in the pool.' };
+    if (state.pistol && pp.length < 1) return { error: 'Pistol rolling is on but every pistol is blacklisted.' };
+    if (state.nade && pg.length < 1) return { error: 'Grenade rolling is on but every grenade is blacklisted.' };
+
+    var usedM = [], usedP = [], usedG = [], wrapped = false;
+    function pick(pool, used, exclude) {
+      var cand = pool.filter(function (i) {
+        return (exclude || []).indexOf(i) === -1 && (state.dupes || used.indexOf(i) === -1);
+      });
+      if (!cand.length) { // pool exhausted across loadouts - wrap
+        wrapped = true;
+        cand = pool.filter(function (i) { return (exclude || []).indexOf(i) === -1; });
+      }
+      var i = cand[Math.floor(rng() * cand.length)];
+      used.push(i);
+      return i;
+    }
+
+    var loadouts = [];
+    for (var r = 0; r < state.rolls; r++) {
+      var lo = {};
+      var m1 = pick(pm, usedM);
+      lo.mw1 = POOLS.m[m1];
+      if (state.mw2) lo.mw2 = POOLS.m[pick(pm, usedM, [m1])];
+      lo.pistol = state.pistol ? POOLS.p[pick(pp, usedP)] : null;
+      if (state.nade) lo.nade = POOLS.g[pick(pg, usedG)];
+      loadouts.push(lo);
+    }
+    return { seed: seed, loadouts: loadouts, wrapped: wrapped };
+  }
+
+  /* ── Rendering ──────────────────────────────────────────── */
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function slotRow(label, w) {
+    if (w === null) return '<div class="wr-slot"><span class="wr-slot__label">' + label + '</span><span class="wr-slot__name wr-slot__name--default">Class default</span></div>';
+    if (!w) return '';
+    return '<div class="wr-slot"><span class="wr-slot__label">' + label + '</span><span class="wr-slot__name">' + esc(w.n) + '</span><span class="type-badge">' + esc(w.b) + '</span></div>';
+  }
+  function renderResult(res) {
+    lastResult = res;
+    $('wr-results-panel').hidden = false;
+    var meta = 'Seed: ' + esc(res.seed);
+    if (state.name) meta = esc(state.name) + (state.desc ? ' - ' + esc(state.desc) : '') + ' | ' + meta;
+    if (res.wrapped) meta += ' | Pool was smaller than the number of loadouts - some weapons repeat.';
+    $('wr-result-meta').innerHTML = meta;
+    $('wr-results').innerHTML = res.loadouts.map(function (lo, i) {
+      return '<div class="wr-loadout"><h3 class="wr-loadout__title">Loadout ' + (i + 1) + '</h3>'
+        + slotRow('Main 1', lo.mw1)
+        + (state.mw2 ? slotRow('Main 2', lo.mw2) : '')
+        + slotRow('Pistol', lo.pistol)
+        + (state.nade ? slotRow('Grenade', lo.nade) : '')
+        + '</div>';
+    }).join('');
+    $('wr-result-code').value = encodeCode(settingsObj(res.seed));
+    $('wr-results-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function buildChips() {
+    document.querySelectorAll('.wr-pool').forEach(function (poolEl) {
+      var k = poolEl.getAttribute('data-pool');
+      var wrap = poolEl.querySelector('.wr-chips');
+      wrap.innerHTML = POOLS[k].map(function (w, i) {
+        return '<button type="button" class="wr-chip" data-i="' + i + '" title="' + esc(w.b) + '">' + esc(w.n) + '</button>';
+      }).join('');
+    });
+  }
+  function syncUI() {
+    document.querySelectorAll('[data-rolls]').forEach(function (b) {
+      b.classList.toggle('class-card__level-pip--active', +b.getAttribute('data-rolls') === state.rolls);
+    });
+    $('wr-mw2').checked = state.mw2;
+    $('wr-pistol').checked = state.pistol;
+    $('wr-nade').checked = state.nade;
+    $('wr-dupes').checked = state.dupes;
+    $('wr-seed').value = state.seed;
+    $('wr-name').value = state.name;
+    $('wr-desc').value = state.desc;
+    document.querySelectorAll('.wr-pool').forEach(function (poolEl) {
+      var k = poolEl.getAttribute('data-pool');
+      poolEl.querySelectorAll('.wr-chip').forEach(function (chip) {
+        chip.classList.toggle('wr-chip--off', state.bl[k].indexOf(+chip.getAttribute('data-i')) !== -1);
+      });
+    });
+  }
+  function readInputs() {
+    state.mw2 = $('wr-mw2').checked;
+    state.pistol = $('wr-pistol').checked;
+    state.nade = $('wr-nade').checked;
+    state.dupes = $('wr-dupes').checked;
+    state.seed = $('wr-seed').value.trim();
+    state.name = $('wr-name').value.trim();
+    state.desc = $('wr-desc').value.trim();
+  }
+
+  /* ── Presets (localStorage) ─────────────────────────────── */
+  function loadPresets() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function savePresets(list) { localStorage.setItem(LS_KEY, JSON.stringify(list)); }
+  function renderPresets() {
+    var list = loadPresets();
+    $('wr-presets-wrap').hidden = !list.length;
+    $('wr-presets').innerHTML = list.map(function (p, i) {
+      return '<li class="wr-preset">'
+        + '<span class="wr-preset__info"><strong>' + esc(p.name || 'Unnamed') + '</strong>'
+        + (p.desc ? '<span class="wr-preset__desc">' + esc(p.desc) + '</span>' : '') + '</span>'
+        + '<span class="wr-preset__btns">'
+        + '<button type="button" class="wr-mini" data-preset-load="' + i + '">Load</button>'
+        + '<button type="button" class="wr-mini wr-mini--danger" data-preset-del="' + i + '">Delete</button>'
+        + '</span></li>';
+    }).join('');
+  }
+
+  /* ── Export ─────────────────────────────────────────────── */
+  function exportHTML() {
+    if (!lastResult) return;
+    var code = $('wr-result-code').value;
+    var rows = lastResult.loadouts.map(function (lo, i) {
+      var cells = [esc(lo.mw1.n)];
+      if (state.mw2) cells.push(esc(lo.mw2.n));
+      cells.push(lo.pistol ? esc(lo.pistol.n) : 'Class default');
+      if (state.nade) cells.push(esc(lo.nade.n));
+      return '<tr><td>' + (i + 1) + '</td><td>' + cells.join('</td><td>') + '</td></tr>';
+    }).join('');
+    var head = ['#', 'Main 1'];
+    if (state.mw2) head.push('Main 2');
+    head.push('Pistol');
+    if (state.nade) head.push('Grenade');
+    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>'
+      + esc(state.name || 'Weapon Randomizer result') + '</title><style>'
+      + 'body{font-family:Segoe UI,Arial,sans-serif;background:#16161c;color:#f0f0f0;padding:2rem;max-width:720px;margin:auto}'
+      + 'h1{color:#8c6d12}table{border-collapse:collapse;width:100%;margin:1rem 0}'
+      + 'td,th{border:1px solid #3a3a4a;padding:0.5rem 0.75rem;text-align:left}'
+      + 'th{background:#282834}code{background:#282834;padding:0.2rem 0.4rem;border-radius:4px;word-break:break-all}'
+      + '.muted{color:#9999aa}</style></head><body>'
+      + '<h1>' + esc(state.name || 'Weapon Randomizer') + '</h1>'
+      + (state.desc ? '<p>' + esc(state.desc) + '</p>' : '')
+      + '<p class="muted">Seed: ' + esc(lastResult.seed) + ' - generated by Gears 5 Database Weapon Randomizer</p>'
+      + '<table><thead><tr><th>' + head.join('</th><th>') + '</th></tr></thead><tbody>' + rows + '</tbody></table>'
+      + '<p class="muted">Result code:</p><p><code>' + esc(code) + '</code></p>'
+      + '</body></html>';
+    var blob = new Blob([html], { type: 'text/html' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (state.name ? state.name.replace(/[^a-z0-9-_ ]/gi, '').trim().replace(/\s+/g, '-').toLowerCase() : 'weapon-randomizer') + '-result.html';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
+  /* ── Wiring ─────────────────────────────────────────────── */
+  buildChips();
+  syncUI();
+  renderPresets();
+
+  document.querySelectorAll('[data-rolls]').forEach(function (b) {
+    b.addEventListener('click', function () { state.rolls = +b.getAttribute('data-rolls'); syncUI(); });
+  });
+
+  document.querySelectorAll('.wr-pool').forEach(function (poolEl) {
+    var k = poolEl.getAttribute('data-pool');
+    poolEl.addEventListener('click', function (e) {
+      var chip = e.target.closest('.wr-chip');
+      var bulk = e.target.closest('[data-bulk]');
+      if (chip) {
+        var i = +chip.getAttribute('data-i');
+        var at = state.bl[k].indexOf(i);
+        if (at === -1) state.bl[k].push(i); else state.bl[k].splice(at, 1);
+        syncUI();
+      } else if (bulk) {
+        state.bl[k] = bulk.getAttribute('data-bulk') === 'none'
+          ? POOLS[k].map(function (w, i) { return i; }) : [];
+        syncUI();
+      }
+    });
+  });
+
+  $('wr-generate').addEventListener('click', function () {
+    readInputs();
+    var seed = state.seed || randomSeed();
+    var res = generate(seed);
+    if (res.error) { alert(res.error); return; }
+    renderResult(res);
+  });
+
+  $('wr-copy-settings').addEventListener('click', function () {
+    readInputs();
+    navigator.clipboard.writeText(encodeCode(settingsObj())).then(function () {
+      $('wr-copy-settings').textContent = 'Copied!';
+      setTimeout(function () { $('wr-copy-settings').textContent = 'Copy settings code'; }, 1200);
+    });
+  });
+
+  $('wr-copy-result').addEventListener('click', function () {
+    navigator.clipboard.writeText($('wr-result-code').value).then(function () {
+      $('wr-copy-result').textContent = 'Copied!';
+      setTimeout(function () { $('wr-copy-result').textContent = 'Copy'; }, 1200);
+    });
+  });
+
+  $('wr-load').addEventListener('click', function () {
+    var s = decodeCode($('wr-code').value);
+    if (!s) { alert('That code is not valid.'); return; }
+    applySettings(s);
+    if (s.seed) { var res = generate(s.seed); if (!res.error) renderResult(res); }
+  });
+
+  $('wr-save').addEventListener('click', function () {
+    readInputs();
+    if (!state.name) { alert('Give the preset a name first.'); $('wr-name').focus(); return; }
+    var list = loadPresets();
+    var obj = settingsObj();
+    var at = list.findIndex(function (p) { return p.name === obj.name; });
+    if (at !== -1) list[at] = obj; else list.push(obj);
+    savePresets(list);
+    renderPresets();
+    $('wr-save').textContent = 'Saved!';
+    setTimeout(function () { $('wr-save').textContent = 'Save preset'; }, 1200);
+  });
+
+  $('wr-presets').addEventListener('click', function (e) {
+    var load = e.target.closest('[data-preset-load]');
+    var del = e.target.closest('[data-preset-del]');
+    var list = loadPresets();
+    if (load) applySettings(list[+load.getAttribute('data-preset-load')]);
+    if (del) {
+      list.splice(+del.getAttribute('data-preset-del'), 1);
+      savePresets(list);
+      renderPresets();
+    }
+  });
+
+  $('wr-export').addEventListener('click', exportHTML);
+})();
+</script>

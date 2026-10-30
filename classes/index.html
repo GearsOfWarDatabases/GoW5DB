@@ -1,0 +1,1014 @@
+---
+title: Classes
+---
+<div class="classes-page">
+{%- assign all_classes = site.classes | sort: "title" -%}
+{%- assign engineer_count = 0 -%}
+{%- assign repairing_count = 0 -%}
+{%- assign ammo_regen_count = 0 -%}
+{%- assign explosive_ammo_regen_count = 0 -%}
+{%- assign bleeding_count = 0 -%}
+{%- assign invisibility_count = 0 -%}
+{%- assign marking_count = 0 -%}
+{%- assign freeze_count = 0 -%}
+{%- assign shield_count = 0 -%}
+{%- assign summon_count = 0 -%}
+{%- assign melee_count = 0 -%}
+{%- assign stim_count = 0 -%}
+{%- assign hidden_count = 0 -%}
+{%- assign wpn_flashbang = 0 -%}
+{%- assign wpn_smoke_grenade = 0 -%}
+{%- assign wpn_lancer = 0 -%}
+{%- assign wpn_retro_lancer = 0 -%}
+{%- assign wpn_hammerburst = 0 -%}
+{%- assign wpn_claw_lmg = 0 -%}
+{%- assign wpn_enforcer = 0 -%}
+{%- assign wpn_gnasher = 0 -%}
+{%- assign wpn_overkill = 0 -%}
+{%- assign wpn_snub_pistol = 0 -%}
+{%- assign wpn_boltok = 0 -%}
+{%- assign wpn_talon = 0 -%}
+{%- assign wpn_markza = 0 -%}
+{%- assign wpn_longshot = 0 -%}
+{%- assign wpn_embar = 0 -%}
+{%- assign wpn_boomshot = 0 -%}
+{%- assign wpn_torque_bow = 0 -%}
+{%- assign wpn_dropshot = 0 -%}
+{%- assign wpn_repair_tool = 0 -%}
+{%- comment %} Pipe-delimited class-title lists, one per chip, powering the
+hover tooltip that lists which classes a chip actually covers. {% endcomment %}
+{%- assign engineer_classes = "" -%}
+{%- assign repairing_classes = "" -%}
+{%- assign ammo_regen_classes = "" -%}
+{%- assign explosive_ammo_regen_classes = "" -%}
+{%- assign bleeding_classes = "" -%}
+{%- assign invisibility_classes = "" -%}
+{%- assign marking_classes = "" -%}
+{%- assign freeze_classes = "" -%}
+{%- assign shield_classes = "" -%}
+{%- assign summon_classes = "" -%}
+{%- assign melee_classes = "" -%}
+{%- assign stim_classes = "" -%}
+{%- assign hidden_classes = "" -%}
+{%- assign wpn_flashbang_classes = "" -%}
+{%- assign wpn_smoke_grenade_classes = "" -%}
+{%- assign wpn_lancer_classes = "" -%}
+{%- assign wpn_retro_lancer_classes = "" -%}
+{%- assign wpn_hammerburst_classes = "" -%}
+{%- assign wpn_claw_lmg_classes = "" -%}
+{%- assign wpn_enforcer_classes = "" -%}
+{%- assign wpn_gnasher_classes = "" -%}
+{%- assign wpn_overkill_classes = "" -%}
+{%- assign wpn_snub_pistol_classes = "" -%}
+{%- assign wpn_boltok_classes = "" -%}
+{%- assign wpn_talon_classes = "" -%}
+{%- assign wpn_markza_classes = "" -%}
+{%- assign wpn_longshot_classes = "" -%}
+{%- assign wpn_embar_classes = "" -%}
+{%- assign wpn_boomshot_classes = "" -%}
+{%- assign wpn_torque_bow_classes = "" -%}
+{%- assign wpn_dropshot_classes = "" -%}
+{%- assign wpn_repair_tool_classes = "" -%}
+{%- comment %} Same category-then-title order the page itself renders in
+(Assault, Tank, Support, Promotional sections, alphabetical within each) -
+so the hover tooltip lists match reading order down the page, not a flat
+alphabetical list across all categories. {% endcomment %}
+{%- assign tip_order_categories = "Assault,Tank,Support,Promotional" | split: "," -%}
+{%- for tip_category in tip_order_categories -%}
+{%- assign tip_cat_classes = all_classes | where: "category", tip_category -%}
+{%- for c in tip_cat_classes -%}
+  {%- capture c_tip_span -%}<span class="classes-filter__chip-tip-cls classes-filter__chip-tip-cls--{{ c.category | slugify }}">{{ c.title }}</span>{%- endcapture -%}
+  {%- if c.engineer -%}
+    {%- assign engineer_count = engineer_count | plus: 1 -%}
+    {%- assign engineer_classes = engineer_classes | append: c_tip_span | append: "|" -%}
+  {%- endif -%}
+  {%- comment %} "Hidden" isn't a real trait entry either - a class counts
+  if it has its own undocumented/hidden trait (c.hidden, shown as a badge on
+  its hero page) OR at least one of its cards does (card.hidden). {% endcomment %}
+  {%- assign c_has_hidden = false -%}
+  {%- if c.hidden -%}{%- assign c_has_hidden = true -%}{%- endif -%}
+  {%- for card in c.cards -%}
+    {%- if card.hidden -%}{%- assign c_has_hidden = true -%}{%- endif -%}
+  {%- endfor -%}
+  {%- if c_has_hidden -%}
+    {%- assign hidden_count = hidden_count | plus: 1 -%}
+    {%- assign hidden_classes = hidden_classes | append: c_tip_span | append: "|" -%}
+  {%- endif -%}
+  {%- for t in c.traits -%}
+    {%- case t.name -%}
+      {%- when "Repairing" -%}{%- assign repairing_count = repairing_count | plus: 1 -%}{%- assign repairing_classes = repairing_classes | append: c_tip_span | append: "|" -%}
+      {%- when "Ammo Regeneration" -%}{%- assign ammo_regen_count = ammo_regen_count | plus: 1 -%}{%- assign ammo_regen_classes = ammo_regen_classes | append: c_tip_span | append: "|" -%}
+      {%- when "Explosive Ammo Regeneration" -%}{%- assign explosive_ammo_regen_count = explosive_ammo_regen_count | plus: 1 -%}{%- assign explosive_ammo_regen_classes = explosive_ammo_regen_classes | append: c_tip_span | append: "|" -%}
+      {%- when "Bleeding" -%}{%- assign bleeding_count = bleeding_count | plus: 1 -%}{%- assign bleeding_classes = bleeding_classes | append: c_tip_span | append: "|" -%}
+      {%- when "Invisibility" -%}{%- assign invisibility_count = invisibility_count | plus: 1 -%}{%- assign invisibility_classes = invisibility_classes | append: c_tip_span | append: "|" -%}
+      {%- when "Marking" -%}{%- assign marking_count = marking_count | plus: 1 -%}{%- assign marking_classes = marking_classes | append: c_tip_span | append: "|" -%}
+      {%- when "Freeze" -%}{%- assign freeze_count = freeze_count | plus: 1 -%}{%- assign freeze_classes = freeze_classes | append: c_tip_span | append: "|" -%}
+      {%- when "Shield" -%}{%- assign shield_count = shield_count | plus: 1 -%}{%- assign shield_classes = shield_classes | append: c_tip_span | append: "|" -%}
+      {%- when "Summon" -%}{%- assign summon_count = summon_count | plus: 1 -%}{%- assign summon_classes = summon_classes | append: c_tip_span | append: "|" -%}
+      {%- when "Melee" -%}{%- assign melee_count = melee_count | plus: 1 -%}{%- assign melee_classes = melee_classes | append: c_tip_span | append: "|" -%}
+      {%- when "Stim" -%}{%- assign stim_count = stim_count | plus: 1 -%}{%- assign stim_classes = stim_classes | append: c_tip_span | append: "|" -%}
+    {%- endcase -%}
+  {%- endfor -%}
+  {%- for w in c.weapons -%}
+    {%- case w.slug -%}
+      {%- when "flashbang" -%}{%- assign wpn_flashbang = wpn_flashbang | plus: 1 -%}{%- assign wpn_flashbang_classes = wpn_flashbang_classes | append: c_tip_span | append: "|" -%}
+      {%- when "smoke-grenade" -%}{%- assign wpn_smoke_grenade = wpn_smoke_grenade | plus: 1 -%}{%- assign wpn_smoke_grenade_classes = wpn_smoke_grenade_classes | append: c_tip_span | append: "|" -%}
+      {%- when "lancer" -%}{%- assign wpn_lancer = wpn_lancer | plus: 1 -%}{%- assign wpn_lancer_classes = wpn_lancer_classes | append: c_tip_span | append: "|" -%}
+      {%- when "retro-lancer" -%}{%- assign wpn_retro_lancer = wpn_retro_lancer | plus: 1 -%}{%- assign wpn_retro_lancer_classes = wpn_retro_lancer_classes | append: c_tip_span | append: "|" -%}
+      {%- when "hammerburst" -%}{%- assign wpn_hammerburst = wpn_hammerburst | plus: 1 -%}{%- assign wpn_hammerburst_classes = wpn_hammerburst_classes | append: c_tip_span | append: "|" -%}
+      {%- when "claw-lmg" -%}{%- assign wpn_claw_lmg = wpn_claw_lmg | plus: 1 -%}{%- assign wpn_claw_lmg_classes = wpn_claw_lmg_classes | append: c_tip_span | append: "|" -%}
+      {%- when "enforcer" -%}{%- assign wpn_enforcer = wpn_enforcer | plus: 1 -%}{%- assign wpn_enforcer_classes = wpn_enforcer_classes | append: c_tip_span | append: "|" -%}
+      {%- when "gnasher" -%}{%- assign wpn_gnasher = wpn_gnasher | plus: 1 -%}{%- assign wpn_gnasher_classes = wpn_gnasher_classes | append: c_tip_span | append: "|" -%}
+      {%- when "overkill" -%}{%- assign wpn_overkill = wpn_overkill | plus: 1 -%}{%- assign wpn_overkill_classes = wpn_overkill_classes | append: c_tip_span | append: "|" -%}
+      {%- when "snub-pistol" -%}{%- assign wpn_snub_pistol = wpn_snub_pistol | plus: 1 -%}{%- assign wpn_snub_pistol_classes = wpn_snub_pistol_classes | append: c_tip_span | append: "|" -%}
+      {%- when "boltok" -%}{%- assign wpn_boltok = wpn_boltok | plus: 1 -%}{%- assign wpn_boltok_classes = wpn_boltok_classes | append: c_tip_span | append: "|" -%}
+      {%- when "talon" -%}{%- assign wpn_talon = wpn_talon | plus: 1 -%}{%- assign wpn_talon_classes = wpn_talon_classes | append: c_tip_span | append: "|" -%}
+      {%- when "markza" -%}{%- assign wpn_markza = wpn_markza | plus: 1 -%}{%- assign wpn_markza_classes = wpn_markza_classes | append: c_tip_span | append: "|" -%}
+      {%- when "longshot" -%}{%- assign wpn_longshot = wpn_longshot | plus: 1 -%}{%- assign wpn_longshot_classes = wpn_longshot_classes | append: c_tip_span | append: "|" -%}
+      {%- when "embar" -%}{%- assign wpn_embar = wpn_embar | plus: 1 -%}{%- assign wpn_embar_classes = wpn_embar_classes | append: c_tip_span | append: "|" -%}
+      {%- when "boomshot" -%}{%- assign wpn_boomshot = wpn_boomshot | plus: 1 -%}{%- assign wpn_boomshot_classes = wpn_boomshot_classes | append: c_tip_span | append: "|" -%}
+      {%- when "torque-bow" -%}{%- assign wpn_torque_bow = wpn_torque_bow | plus: 1 -%}{%- assign wpn_torque_bow_classes = wpn_torque_bow_classes | append: c_tip_span | append: "|" -%}
+      {%- when "dropshot" -%}{%- assign wpn_dropshot = wpn_dropshot | plus: 1 -%}{%- assign wpn_dropshot_classes = wpn_dropshot_classes | append: c_tip_span | append: "|" -%}
+      {%- when "repair-tool" -%}{%- assign wpn_repair_tool = wpn_repair_tool | plus: 1 -%}{%- assign wpn_repair_tool_classes = wpn_repair_tool_classes | append: c_tip_span | append: "|" -%}
+    {%- endcase -%}
+  {%- endfor -%}
+{%- endfor -%}
+{%- endfor -%}
+  <details class="classes-filter-collapse xref-target" id="filters">
+    <summary class="classes-filter-collapse__summary">Filters</summary>
+  <div class="classes-filter" id="classes-filter">
+    <div class="classes-filter__row">
+      <span class="classes-filter__label">Traits:</span>
+      <label class="classes-filter__explicit" title="When on, a class must have ALL of the selected Trait chips instead of just any one of them.">
+        <input type="checkbox" id="traits-explicit" class="classes-filter__explicit-input"> Explicit
+      </label>
+      <button type="button" class="classes-filter__chip classes-filter__chip--trait classes-filter__chip--engineer" data-trait="Engineer">Engineer <span class="classes-filter__chip-count">({{ engineer_count }})</span><span class="classes-filter__chip-tip">{{ engineer_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--trait classes-filter__chip--repairing" data-trait="Repairing">Repairing <span class="classes-filter__chip-count">({{ repairing_count }})</span><span class="classes-filter__chip-tip">{{ repairing_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--trait classes-filter__chip--ammo-regen" data-trait="Ammo Regeneration">Ammo Regeneration <span class="classes-filter__chip-count">({{ ammo_regen_count }})</span><span class="classes-filter__chip-tip">{{ ammo_regen_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--trait classes-filter__chip--explosive-ammo-regen" data-trait="Explosive Ammo Regeneration">Explosive Ammo Regeneration <span class="classes-filter__chip-count">({{ explosive_ammo_regen_count }})</span><span class="classes-filter__chip-tip">{{ explosive_ammo_regen_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--trait classes-filter__chip--bleeding" data-trait="Bleeding">Bleeding <span class="classes-filter__chip-count">({{ bleeding_count }})</span><span class="classes-filter__chip-tip">{{ bleeding_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--trait classes-filter__chip--invisibility" data-trait="Invisibility">Invisibility <span class="classes-filter__chip-count">({{ invisibility_count }})</span><span class="classes-filter__chip-tip">{{ invisibility_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--trait classes-filter__chip--marking" data-trait="Marking">Marking <span class="classes-filter__chip-count">({{ marking_count }})</span><span class="classes-filter__chip-tip">{{ marking_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--trait classes-filter__chip--freeze" data-trait="Freeze">Freeze <span class="classes-filter__chip-count">({{ freeze_count }})</span><span class="classes-filter__chip-tip">{{ freeze_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--trait classes-filter__chip--shield" data-trait="Shield">Shield <span class="classes-filter__chip-count">({{ shield_count }})</span><span class="classes-filter__chip-tip">{{ shield_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--trait classes-filter__chip--summon" data-trait="Summon">Summon <span class="classes-filter__chip-count">({{ summon_count }})</span><span class="classes-filter__chip-tip">{{ summon_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--trait classes-filter__chip--melee" data-trait="Melee">Melee <span class="classes-filter__chip-count">({{ melee_count }})</span><span class="classes-filter__chip-tip">{{ melee_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--trait classes-filter__chip--stim" data-trait="Stim">Stim <span class="classes-filter__chip-count">({{ stim_count }})</span><span class="classes-filter__chip-tip">{{ stim_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--trait classes-filter__chip--hidden" data-trait="Hidden">Hidden <span class="classes-filter__chip-count">({{ hidden_count }})</span><span class="classes-filter__chip-tip">{{ hidden_classes | split: "|" | join: ", " }}<span class="classes-filter__chip-tip-note">A trait or card whose exact mechanics aren't shown in-game and had to be confirmed separately - open the "Hidden" badge on each class's own page to see what's actually hidden there.</span></span></button>
+    </div>
+    <div class="classes-filter__divider"></div>
+    <div class="classes-filter__row">
+      <span class="classes-filter__label">Weapons:</span>
+      <label class="classes-filter__explicit" title="When on, a class must have ALL of the selected Weapon chips instead of just any one of them.">
+        <input type="checkbox" id="weapons-explicit" class="classes-filter__explicit-input"> Explicit
+      </label>
+    </div>
+    {%- comment %} One row per Fabricator forge-cost tier (Grenades and
+    Pistols don't have a Forge Value, so they're their own tiers instead;
+    Repair Tool is grouped with Pistols, same as its in-game holster slot) -
+    matches the same grouping/coloring now used on the Fabricator page.
+    30 isn't currently carried by any class, so that row is simply absent
+    rather than shown empty. {% endcomment %}
+    <div class="classes-filter__row classes-filter__row--wtier">
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-grenade" data-weapon="Flashbang">Flashbang <span class="classes-filter__chip-count">({{ wpn_flashbang }})</span><span class="classes-filter__chip-tip">{{ wpn_flashbang_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-grenade" data-weapon="Smoke Grenade">Smoke Grenade <span class="classes-filter__chip-count">({{ wpn_smoke_grenade }})</span><span class="classes-filter__chip-tip">{{ wpn_smoke_grenade_classes | split: "|" | join: ", " }}</span></button>
+    </div>
+    <div class="classes-filter__row classes-filter__row--wtier">
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-pistol" data-weapon="Snub Pistol">Snub Pistol <span class="classes-filter__chip-count">({{ wpn_snub_pistol }})</span><span class="classes-filter__chip-tip">{{ wpn_snub_pistol_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-pistol" data-weapon="Boltok Pistol">Boltok <span class="classes-filter__chip-count">({{ wpn_boltok }})</span><span class="classes-filter__chip-tip">{{ wpn_boltok_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-pistol" data-weapon="Talon Autopistol">Talon <span class="classes-filter__chip-count">({{ wpn_talon }})</span><span class="classes-filter__chip-tip">{{ wpn_talon_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-pistol" data-weapon="Repair Tool">Repair Tool <span class="classes-filter__chip-count">({{ wpn_repair_tool }})</span><span class="classes-filter__chip-tip">{{ wpn_repair_tool_classes | split: "|" | join: ", " }}</span></button>
+    </div>
+    <div class="classes-filter__row classes-filter__row--wtier">
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-20" data-weapon="Lancer">Lancer <span class="classes-filter__chip-count">({{ wpn_lancer }})</span><span class="classes-filter__chip-tip">{{ wpn_lancer_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-20" data-weapon="Retro Lancer">Retro Lancer <span class="classes-filter__chip-count">({{ wpn_retro_lancer }})</span><span class="classes-filter__chip-tip">{{ wpn_retro_lancer_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-20" data-weapon="Hammerburst II">Hammerburst II <span class="classes-filter__chip-count">({{ wpn_hammerburst }})</span><span class="classes-filter__chip-tip">{{ wpn_hammerburst_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-20" data-weapon="Claw Light Machine Gun">Claw LMG <span class="classes-filter__chip-count">({{ wpn_claw_lmg }})</span><span class="classes-filter__chip-tip">{{ wpn_claw_lmg_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-20" data-weapon="Enforcer Submachine Gun">Enforcer <span class="classes-filter__chip-count">({{ wpn_enforcer }})</span><span class="classes-filter__chip-tip">{{ wpn_enforcer_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-20" data-weapon="Gnasher Shotgun">Gnasher <span class="classes-filter__chip-count">({{ wpn_gnasher }})</span><span class="classes-filter__chip-tip">{{ wpn_gnasher_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-20" data-weapon="Overkill Shotgun">Overkill <span class="classes-filter__chip-count">({{ wpn_overkill }})</span><span class="classes-filter__chip-tip">{{ wpn_overkill_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-20" data-weapon="Markza Mk 1 Marksman Rifle">Markza <span class="classes-filter__chip-count">({{ wpn_markza }})</span><span class="classes-filter__chip-tip">{{ wpn_markza_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-20" data-weapon="Longshot Sniper Rifle">Longshot <span class="classes-filter__chip-count">({{ wpn_longshot }})</span><span class="classes-filter__chip-tip">{{ wpn_longshot_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-20" data-weapon="EMBAR Railgun">EMBAR <span class="classes-filter__chip-count">({{ wpn_embar }})</span><span class="classes-filter__chip-tip">{{ wpn_embar_classes | split: "|" | join: ", " }}</span></button>
+    </div>
+    <div class="classes-filter__row classes-filter__row--wtier">
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-40" data-weapon="Boomshot Grenade Launcher">Boomshot <span class="classes-filter__chip-count">({{ wpn_boomshot }})</span><span class="classes-filter__chip-tip">{{ wpn_boomshot_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-40" data-weapon="Torque Bow">Torque Bow <span class="classes-filter__chip-count">({{ wpn_torque_bow }})</span><span class="classes-filter__chip-tip">{{ wpn_torque_bow_classes | split: "|" | join: ", " }}</span></button>
+      <button type="button" class="classes-filter__chip classes-filter__chip--weapon classes-filter__chip--wtier-40" data-weapon="Dropshot Munitions Launcher">Dropshot <span class="classes-filter__chip-count">({{ wpn_dropshot }})</span><span class="classes-filter__chip-tip">{{ wpn_dropshot_classes | split: "|" | join: ", " }}</span></button>
+    </div>
+    <div class="classes-filter__clear-row">
+      <button type="button" class="classes-filter__clear" id="classes-filter-clear-traits">Clear Traits Filter</button>
+      <button type="button" class="classes-filter__clear" id="classes-filter-clear-weapons">Clear Weapons Filter</button>
+      <button type="button" class="classes-filter__clear classes-filter__clear--all" id="classes-filter-clear-all">Clear All Filters</button>
+    </div>
+  </div>
+  </details>
+
+  {%- comment %} Same account-wide leveling curve shown on every class page
+  (_layouts/class.html's "Level Progress" section) - reused here as its own
+  collapsed-by-default toggle, same pattern as the Filters panel above it.
+  Every single level (1-20) already has at least one class unlocking a card
+  there in the real data, so every node gets the hover/click tooltip - no
+  need to special-case "universal" levels vs. the rest. {% endcomment %}
+  {%- assign xp_levels = site.data.leveling.xp_per_level -%}
+  {%- assign max_level = site.data.leveling.max_level -%}
+
+  <details class="level-progress-collapse xref-target" id="level-progress">
+    <summary class="level-progress-collapse__summary">Level Progress</summary>
+    <div class="level-progress-panel">
+      <p class="class-section__intro">Every class shares the same account-wide leveling curve, capped at <strong>Level {{ max_level }}</strong>.<br><mark class="kw kw--value">Hover</mark> or <mark class="kw kw--value">Click</mark> a level to see which class unlocks which card there.</p>
+      <div class="level-track" role="img" aria-label="Character level progress from 1 to {{ max_level }}, with the XP required between each level">
+        {%- for row in xp_levels %}
+        {%- assign lvl = row.level %}
+        {%- assign is_milestone = lvl | modulo: 5 %}
+        {%- capture lvl_card_count %}{% include level-unlock-count.html level=lvl %}{% endcapture -%}
+        {%- assign lvl_card_count = lvl_card_count | strip -%}
+        <div class="level-track__unit">
+          {%- comment %} The whole node is the hover/click target (not a
+          small icon on top of it) - easier to hit, and reads as "this
+          level" rather than "this tiny badge". {% endcomment %}
+          <div class="level-track__node level-track__node--unlock info-badge{% if lvl == 1 %} level-track__node--start{% elsif is_milestone == 0 %} level-track__node--milestone{% endif %}" tabindex="0">
+            <span>{{ lvl }}</span>
+            <span class="level-track__count" title="{{ lvl_card_count }} total unlocked across all classes at Level {{ lvl }}">{{ lvl_card_count }}</span>
+            {% include level-unlock-badge.html level=lvl %}
+          </div>
+          <div class="level-track__seg">
+            <span class="level-track__xp{% if row.xp == '?' %} level-track__xp--unknown{% endif %}">{{ row.xp }}</span>
+          </div>
+        </div>
+        {%- endfor %}
+        {%- capture cap_card_count %}{% include level-unlock-count.html level=max_level %}{% endcapture -%}
+        {%- assign cap_card_count = cap_card_count | strip -%}
+        {%- comment %} Wrapped in the same .level-track__unit + trailing
+        (blank) .level-track__seg as every row above, purely so this last
+        column looks exactly as "filled" to the row's own right edge as
+        every other column does - there's no Level 21 for a real segment to
+        lead to, but an empty filler line reads as a natural stopping point
+        instead of a lone circle stranded at the edge of an otherwise-empty
+        column (which is what simply nudging the node itself over there -
+        the first thing tried here - actually looked like). {% endcomment %}
+        <div class="level-track__unit">
+          <div class="level-track__node level-track__node--cap level-track__node--unlock info-badge" tabindex="0">
+            <span>{{ max_level }}</span>
+            <span class="level-track__count" title="{{ cap_card_count }} total unlocked across all classes at Level {{ max_level }}">{{ cap_card_count }}</span>
+            {% include level-unlock-badge.html level=max_level %}
+          </div>
+          <div class="level-track__seg"></div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- DEBUG / TEMPORARY - Honor level data is still being gathered from
+       screenshots (only levels 7-9 confirmed so far), this is just a
+       scratch spot to hold what's known while that's in progress. Reuses
+       the exact same collapsed-by-default <details> mechanism as Level
+       Progress right above (.level-progress-collapse/__summary,
+       .level-progress-panel - native [open], no JS needed) purely for the
+       free chevron+toggle styling, not because this is actually part of
+       Level Progress. Remove this whole <details> once Honor gets its own
+       real section/page. -->
+  <details class="level-progress-collapse" id="honor-debug">
+    <summary class="level-progress-collapse__summary">DEBUG / TEMPORARY - Honor</summary>
+    <div class="level-progress-panel">
+      <p class="class-section__intro">Account-wide Honor level - not tied to any one class. Incomplete: levels 0-9 confirmed from screenshots so far (see <code>ref/Squad &amp; Honor/</code>) - level 8's title alone still unknown, and anything past 9 still unknown. The square below a level is its Bonus XP, where confirmed. <mark class="kw kw--value">Hover</mark> a level for its title.</p>
+      <div class="honor-track" role="img" aria-label="Confirmed Honor levels: 0 Not yet an Ally, 1 New Ally, 2 Casual Ally, 3 United Ally, 4 Close Ally, 5 Veteran Ally, 6 Epic Ally, 7 Noble Ally, 8 unknown title, 9 Heroic Ally">
+        <div class="honor-track__unit">
+          <div class="honor-track__nodewrap xref-link--tip" tabindex="0">
+            <div class="honor-track__node"><span>0</span></div>
+            <span class="xref-tip">Not yet an Ally</span>
+          </div>
+          <div class="honor-track__seg"><span class="honor-track__xp">25</span></div>
+        </div>
+        <div class="honor-track__unit">
+          <div class="honor-track__nodewrap xref-link--tip" tabindex="0">
+            <div class="honor-track__node"><span>1</span></div>
+            <span class="honor-track__bonus"><span class="honor-track__bonus-pct">+2%</span><span class="honor-track__bonus-xp">XP</span></span>
+            <span class="xref-tip">New Ally</span>
+          </div>
+          <div class="honor-track__seg"><span class="honor-track__xp">125</span></div>
+        </div>
+        <div class="honor-track__unit">
+          <div class="honor-track__nodewrap xref-link--tip" tabindex="0">
+            <div class="honor-track__node"><span>2</span></div>
+            <span class="honor-track__bonus"><span class="honor-track__bonus-pct">+4%</span><span class="honor-track__bonus-xp">XP</span></span>
+            <span class="xref-tip">Casual Ally</span>
+          </div>
+          <div class="honor-track__seg"><span class="honor-track__xp">250</span></div>
+        </div>
+        <div class="honor-track__unit">
+          <div class="honor-track__nodewrap xref-link--tip" tabindex="0">
+            <div class="honor-track__node"><span>3</span></div>
+            <span class="honor-track__bonus"><span class="honor-track__bonus-pct">+6%</span><span class="honor-track__bonus-xp">XP</span></span>
+            <span class="xref-tip">United Ally</span>
+          </div>
+          <div class="honor-track__seg"><span class="honor-track__xp">750</span></div>
+        </div>
+        <div class="honor-track__unit">
+          <div class="honor-track__nodewrap xref-link--tip" tabindex="0">
+            <div class="honor-track__node"><span>4</span></div>
+            <span class="honor-track__bonus"><span class="honor-track__bonus-pct">+8%</span><span class="honor-track__bonus-xp">XP</span></span>
+            <span class="xref-tip">Close Ally</span>
+          </div>
+          <div class="honor-track__seg"><span class="honor-track__xp">1,000</span></div>
+        </div>
+        <div class="honor-track__unit">
+          <div class="honor-track__nodewrap xref-link--tip" tabindex="0">
+            <div class="honor-track__node"><span>5</span></div>
+            <span class="honor-track__bonus"><span class="honor-track__bonus-pct">+10%</span><span class="honor-track__bonus-xp">XP</span></span>
+            <span class="xref-tip">Veteran Ally</span>
+          </div>
+          <div class="honor-track__seg"><span class="honor-track__xp">2,500</span></div>
+        </div>
+        <div class="honor-track__unit">
+          <div class="honor-track__nodewrap xref-link--tip" tabindex="0">
+            <div class="honor-track__node"><span>6</span></div>
+            <span class="honor-track__bonus"><span class="honor-track__bonus-pct">+11%</span><span class="honor-track__bonus-xp">XP</span></span>
+            <span class="xref-tip">Epic Ally</span>
+          </div>
+          <div class="honor-track__seg"><span class="honor-track__xp">5,000</span></div>
+        </div>
+        <div class="honor-track__unit">
+          <div class="honor-track__nodewrap xref-link--tip" tabindex="0">
+            <div class="honor-track__node"><span>7</span></div>
+            <span class="honor-track__bonus"><span class="honor-track__bonus-pct">+12%</span><span class="honor-track__bonus-xp">XP</span></span>
+            <span class="xref-tip">Noble Ally</span>
+          </div>
+          <div class="honor-track__seg"><span class="honor-track__xp">7,500</span></div>
+        </div>
+        <div class="honor-track__unit">
+          <div class="honor-track__nodewrap xref-link--tip" tabindex="0">
+            <span class="honor-track__title-flag">Title ?</span>
+            <div class="honor-track__node"><span>8</span></div>
+            <span class="honor-track__bonus"><span class="honor-track__bonus-pct">+13%</span><span class="honor-track__bonus-xp">XP</span></span>
+            <span class="xref-tip">? (title not yet confirmed)</span>
+          </div>
+          <div class="honor-track__seg"><span class="honor-track__xp">10,000</span></div>
+        </div>
+        <div class="honor-track__unit">
+          <div class="honor-track__nodewrap xref-link--tip" tabindex="0">
+            <div class="honor-track__node"><span>9</span></div>
+            <span class="honor-track__bonus"><span class="honor-track__bonus-pct">+14%</span><span class="honor-track__bonus-xp">XP</span></span>
+            <span class="xref-tip">Heroic Ally</span>
+          </div>
+          <div class="honor-track__seg honor-track__seg--unknown"></div>
+        </div>
+        <div class="honor-track__nodewrap xref-link--tip" tabindex="0">
+          <div class="honor-track__node honor-track__node--unknown"><span>?</span></div>
+          <span class="xref-tip">Levels 10+ not yet confirmed - Honor appears to go well beyond 9 based on other players' profiles.</span>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- DEBUG / TEMPORARY - RE-UP progress curve, all 60 RE-UPs (see
+       _data/reup.yml - fully confirmed from a single source, unlike Honor
+       above). Reuses the exact same collapsed-by-default <details>
+       mechanism as Level Progress/Honor for the free chevron+toggle
+       styling, not because this is actually part of Level Progress.
+       Remove this whole <details> once RE-UP gets its own real
+       section/page. -->
+  <details class="level-progress-collapse" id="reup-debug">
+    <summary class="level-progress-collapse__summary">DEBUG / TEMPORARY - Re-up</summary>
+    <div class="level-progress-panel">
+      <p class="class-section__intro">Account-wide RE-UP progress - each RE-UP is a full character-level (1-100) reset that unlocks a reward. The small tag above a circle is that RE-UP's own in-game Roman numeral. <mark class="kw kw--value">Hover</mark> a RE-UP for its reward. Source: <a href="https://gearsutility.com/gears-5/re-up-rewards" target="_blank" rel="noopener">gearsutility.com</a>.</p>
+      <div class="reup-track" role="img" aria-label="RE-UP 1 through 60, with the Total XP required for each and its reward">
+        {%- assign reups = site.data.reup -%}
+        {%- for r in reups %}
+        <div class="reup-track__unit">
+          <div class="reup-track__node xref-link--tip" tabindex="0">
+            <span class="reup-track__roman" title="RE-UP {{ r.level }} shown in-game as {{ r.roman }}">{{ r.roman }}</span>
+            <span>{{ r.level }}</span>
+            <span class="xref-tip"><strong>{{ r.reward }}</strong><br>{{ r.xp_per_level | prepend: "XP per level: " }}<br>{{ r.total_xp | prepend: "Total XP: " }}</span>
+          </div>
+          {%- comment %} Always rendered, even for the very last RE-UP - a
+          blank filler line there (no XP label, since there's no RE-UP 61 for
+          one to lead to) keeps this last column looking as "filled" to the
+          row's own right edge as every other column, rather than a lone
+          circle stranded next to empty space (or, worse, yanked over to the
+          far edge with a jarring gap - the first two things tried here).
+          {% endcomment %}
+          <div class="reup-track__seg">{%- unless forloop.last %}<span class="reup-track__xp">{{ r.total_xp }}</span>{%- endunless %}</div>
+        </div>
+        {%- endfor %}
+      </div>
+    </div>
+  </details>
+
+  {%- comment %} Source content for the Level Progress tooltip's class-name
+  hover preview - one copy per class, rendered here ONCE and cloned into
+  whichever tooltip needs it by JS (see class-mini-preview.html for why:
+  duplicating a full class summary into every row of every level's tooltip
+  would multiply the page size a lot for no reason). {% endcomment %}
+  <div id="class-mini-previews" hidden>
+    {%- for c in all_classes -%}
+    <div id="class-preview-{{ c.slug }}">{% include class-mini-preview.html class=c %}</div>
+    {%- endfor -%}
+  </div>
+{%- comment %} Canonical weapon tiers for the "Weapons" row on each class-grid
+card below - same Grenade -> Pistol -> tier-20 -> tier-40 grouping/order as
+the Weapons filter chips above (classes-filter__row--wtier rows). Each tier
+gets rendered as its OWN row (.class-card-thumb__weapons inside
+.class-card-thumb__weapon-groups) rather than one flat wrapped list -
+otherwise flex-wrap freely mixes different-colored tiers onto the same
+line wherever they happen to fit, which reads as a jumble instead of
+grouped-and-color-coded. {% endcomment %}
+{%- assign wtier_grenade_slugs = "flashbang,smoke-grenade" | split: "," -%}
+{%- assign wtier_pistol_slugs = "snub-pistol,boltok,talon,repair-tool" | split: "," -%}
+{%- assign wtier_20_slugs = "lancer,retro-lancer,hammerburst,claw-lmg,enforcer,gnasher,overkill,markza,longshot,embar" | split: "," -%}
+{%- assign wtier_40_slugs = "boomshot,torque-bow,dropshot" | split: "," -%}
+{%- assign categories = "Assault,Tank,Support,Promotional" | split: "," -%}
+{%- for category in categories -%}
+  {%- assign cat_classes = all_classes | where: "category", category -%}
+  {%- if cat_classes.size > 0 %}
+  <section class="classes-section classes-section--{{ category | downcase }} xref-target" id="{{ category | downcase }}">
+    <div class="classes-section__header">
+      <h2 class="classes-section__title">
+        <span class="classes-section__title-text">{{ category }}</span>
+        <span class="classes-section__title-count">{{ cat_classes.size }}</span>
+      </h2>
+    </div>
+    <div class="classes-section__body">
+      <div class="classes-grid">
+        {%- for class in cat_classes %}
+        {%- assign class_has_hidden = false -%}
+        {%- if class.hidden -%}{%- assign class_has_hidden = true -%}{%- endif -%}
+        {%- for card in class.cards -%}
+          {%- if card.hidden -%}{%- assign class_has_hidden = true -%}{%- endif -%}
+        {%- endfor -%}
+        {%- capture class_traits -%}{%- if class.engineer -%}Engineer|{%- endif -%}{%- if class_has_hidden -%}Hidden|{%- endif -%}{%- for t in class.traits -%}{{ t.name }}|{%- endfor -%}{%- endcapture -%}
+        {%- capture class_weapons -%}{%- for w in class.weapons -%}{{ w.name }}|{%- endfor -%}{%- endcapture -%}
+        {%- comment %} Same weapon list class.weapons already provides, just
+        split into 4 tier-ordered lists instead of one flat list - concat-ing
+        each single-match "where" result (0 or 1 items) onto an empty array,
+        in each tier list's own sequence, is the standard Liquid way to sort
+        a small list against a fixed reference order. {% endcomment %}
+        {%- assign w_grenade = "" | split: "," -%}
+        {%- for wslug in wtier_grenade_slugs -%}
+          {%- assign wmatch = class.weapons | where: "slug", wslug -%}
+          {%- assign w_grenade = w_grenade | concat: wmatch -%}
+        {%- endfor -%}
+        {%- assign w_pistol = "" | split: "," -%}
+        {%- for wslug in wtier_pistol_slugs -%}
+          {%- assign wmatch = class.weapons | where: "slug", wslug -%}
+          {%- assign w_pistol = w_pistol | concat: wmatch -%}
+        {%- endfor -%}
+        {%- assign w_tier20 = "" | split: "," -%}
+        {%- for wslug in wtier_20_slugs -%}
+          {%- assign wmatch = class.weapons | where: "slug", wslug -%}
+          {%- assign w_tier20 = w_tier20 | concat: wmatch -%}
+        {%- endfor -%}
+        {%- assign w_tier40 = "" | split: "," -%}
+        {%- for wslug in wtier_40_slugs -%}
+          {%- assign wmatch = class.weapons | where: "slug", wslug -%}
+          {%- assign w_tier40 = w_tier40 | concat: wmatch -%}
+        {%- endfor -%}
+        {%- assign any_weapons = false -%}
+        {%- if w_grenade.size > 0 or w_pistol.size > 0 or w_tier20.size > 0 or w_tier40.size > 0 -%}{%- assign any_weapons = true -%}{%- endif -%}
+        <div class="class-card-thumb" data-traits="{{ class_traits }}" data-weapons="{{ class_weapons }}">
+          <a class="class-card-thumb__link" href="{{ class.url | relative_url }}" aria-label="{{ class.title }}"></a>
+          {%- assign icon_path = '/images/classes/icons/' | append: class.slug | append: '.png' %}
+          <img class="class-card-thumb__icon" src="{{ icon_path | relative_url }}" alt="{{ class.title }} icon" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+          <div class="class-card-thumb__placeholder" style="display:none;">{{ class.title | slice: 0 }}</div>
+          <span class="class-card-thumb__name">{{ class.title }}</span>
+          {%- assign class_has_traits = false -%}
+          {%- if class.engineer or class.traits.size > 0 -%}{%- assign class_has_traits = true -%}{%- endif -%}
+          {%- if any_weapons %}
+          <div class="class-card-thumb__divider"></div>
+          <div class="class-card-thumb__weapon-groups">
+            {%- if w_grenade.size > 0 %}
+            <div class="class-card-thumb__weapons">
+              {%- for w in w_grenade %}<span class="weapon-badge weapon-badge--wtier-grenade">{{ w.name }}</span>{%- endfor %}
+            </div>
+            {%- endif %}
+            {%- if w_pistol.size > 0 %}
+            <div class="class-card-thumb__weapons">
+              {%- for w in w_pistol %}<span class="weapon-badge weapon-badge--wtier-pistol">{{ w.name }}</span>{%- endfor %}
+            </div>
+            {%- endif %}
+            {%- if w_tier20.size > 0 %}
+            <div class="class-card-thumb__weapons">
+              {%- for w in w_tier20 %}<span class="weapon-badge weapon-badge--wtier-20">{{ w.name }}</span>{%- endfor %}
+            </div>
+            {%- endif %}
+            {%- if w_tier40.size > 0 %}
+            <div class="class-card-thumb__weapons">
+              {%- for w in w_tier40 %}<span class="weapon-badge weapon-badge--wtier-40">{{ w.name }}</span>{%- endfor %}
+            </div>
+            {%- endif %}
+          </div>
+          {%- endif %}
+          {%- if class_has_traits %}
+          <div class="class-card-thumb__divider"></div>
+          <div class="class-card-thumb__badges">
+            {%- if class.engineer %}
+            <span class="engineer-badge info-badge" tabindex="0"><span class="badge__label">Engineer</span><span class="engineer-badge__tip">Builds all fortifications at a <mark class="kw kw--value">15%</mark> discount and carries them faster.</span></span>
+            {%- endif %}
+            {%- for t in class.traits %}
+            <span class="trait-badge trait-badge--{{ t.name | slugify }} info-badge" tabindex="0"><span class="badge__label">{{ t.name }}</span><span class="trait-badge__tip">{% include render-desc.html text=t.note page=class %}</span></span>
+            {%- endfor %}
+          </div>
+          {%- endif %}
+        </div>
+        {%- endfor %}
+      </div>
+    </div>
+  </section>
+  {%- endif -%}
+{%- endfor %}
+
+<!-- DEBUG: per-class card data completeness audit, one table per class -->
+{%- assign site_any_missing = false -%}
+{%- for class in all_classes -%}
+  {%- for card in class.cards -%}
+    {%- if card.levels -%}
+      {%- for lvl in card.levels -%}
+        {%- if lvl.X == "?" or lvl.Y == "?" -%}{%- assign site_any_missing = true -%}{%- endif -%}
+      {%- endfor -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endfor -%}
+{%- if site_any_missing %}
+<section class="class-section class-audit">
+  <details class="fab-collapsible">
+    <summary class="class-audit__title" title="This only shows up when at least one class has a card with an unconfirmed (&quot;?&quot;) value at some level - it disappears once every level, on every class, is filled in.">[DEBUG] - Missing Card Information</summary>
+    {%- for class in all_classes -%}
+      {%- assign class_any_missing = false -%}
+      {%- for card in class.cards -%}
+        {%- if card.levels -%}
+          {%- for lvl in card.levels -%}
+            {%- if lvl.X == "?" or lvl.Y == "?" -%}{%- assign class_any_missing = true -%}{%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {%- if class_any_missing %}
+      <div class="class-audit__group">
+        <h3 class="class-audit__class-name">{{ class.title }}</h3>
+        <div class="settings-table__scroll">
+          <table class="settings-table class-audit__table">
+            <thead>
+              <tr>
+                <th>Card</th>
+                {%- for n in (1..6) %}<th>{{ n }}</th>{% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {%- for card in class.cards -%}
+              {%- if card.levels -%}
+              {%- assign card_max = card.levels | size -%}
+              <tr>
+                <td>{{ card.name }}</td>
+                {%- for n in (1..6) -%}
+                {%- if n <= card_max -%}
+                  {%- assign row_idx = n | minus: 1 -%}
+                  {%- assign lvl = card.levels[row_idx] -%}
+                  {%- assign lvl_confirmed = true -%}
+                  {%- if lvl.X == "?" -%}{%- assign lvl_confirmed = false -%}{%- endif -%}
+                  {%- if lvl.Y == "?" -%}{%- assign lvl_confirmed = false -%}{%- endif -%}
+                <td class="class-audit__cell{% if lvl_confirmed %} class-audit__cell--ok{% else %} class-audit__cell--missing{% endif %}">{% if lvl_confirmed %}&#9989;{% else %}&#10060;{% endif %}</td>
+                {%- else -%}
+                <td class="class-audit__cell class-audit__cell--na">&mdash;</td>
+                {%- endif -%}
+                {%- endfor %}
+              </tr>
+              {%- endif -%}
+              {%- endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {%- endif -%}
+    {%- endfor -%}
+  </details>
+</section>
+{%- endif %}
+</div>
+
+<script>
+(function () {
+  'use strict';
+  // Weapon chips and trait chips each behave like the map-page filter: click
+  // to toggle a chip on/off, no chips active in a group means "don't filter
+  // by this", and a card only shows if it matches at least one active chip
+  // in *every* group that has any active chips.
+  var filterBar = document.getElementById('classes-filter');
+  if (!filterBar) return;
+  var weaponChips = Array.prototype.slice.call(filterBar.querySelectorAll('.classes-filter__chip--weapon'));
+  var traitChips = Array.prototype.slice.call(filterBar.querySelectorAll('.classes-filter__chip--trait'));
+  var weaponsExplicit = document.getElementById('weapons-explicit');
+  var traitsExplicit = document.getElementById('traits-explicit');
+  var clearTraitsBtn = document.getElementById('classes-filter-clear-traits');
+  var clearWeaponsBtn = document.getElementById('classes-filter-clear-weapons');
+  var clearAllBtn = document.getElementById('classes-filter-clear-all');
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.class-card-thumb'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('.classes-section'));
+  var activeWeapons = [];
+  var activeTraits = [];
+  var filterDetails = document.getElementById('filters');
+  var levelDetails = document.getElementById('level-progress');
+
+  // Explicit (AND) vs default (OR) match for one card against one group's
+  // active selection: OR just needs one active chip present, Explicit needs
+  // every active chip present at once (i.e. only classes with that exact
+  // combination survive).
+  function groupOk(itemsAttrValue, activeList, explicit) {
+    var items = (itemsAttrValue || '').split('|').filter(Boolean);
+    if (activeList.length === 0) return true;
+    if (explicit) return activeList.every(function (v) { return items.indexOf(v) !== -1; });
+    return activeList.some(function (v) { return items.indexOf(v) !== -1; });
+  }
+
+  function apply() {
+    var traitsActive = activeTraits.length > 0 || traitsExplicit.checked;
+    var weaponsActive = activeWeapons.length > 0 || weaponsExplicit.checked;
+    clearTraitsBtn.classList.toggle('is-disabled', !traitsActive);
+    clearWeaponsBtn.classList.toggle('is-disabled', !weaponsActive);
+    clearAllBtn.classList.toggle('is-disabled', !(traitsActive || weaponsActive));
+
+    cards.forEach(function (c) {
+      var weaponOk = groupOk(c.getAttribute('data-weapons'), activeWeapons, weaponsExplicit.checked);
+      var traitOk = groupOk(c.getAttribute('data-traits'), activeTraits, traitsExplicit.checked);
+      c.classList.toggle('is-hidden-by-filter', !(weaponOk && traitOk));
+    });
+    sections.forEach(function (s) {
+      var visible = s.querySelectorAll('.class-card-thumb:not(.is-hidden-by-filter)').length;
+      s.classList.toggle('is-hidden-by-filter', visible === 0);
+    });
+
+    updateInvalid(traitChips, activeTraits, traitsExplicit.checked, 'data-trait', 'data-traits', activeWeapons, weaponsExplicit.checked, 'data-weapons');
+    updateInvalid(weaponChips, activeWeapons, weaponsExplicit.checked, 'data-weapon', 'data-weapons', activeTraits, traitsExplicit.checked, 'data-traits');
+
+    syncUrl();
+  }
+
+  // Mirrors the current filter selection AND the panel's open/closed state
+  // into the URL (? traits=, weapons=, tx=, wx=, plus a hash while a panel
+  // is open) so the whole thing - which chips, whether each group is in
+  // Explicit mode, and whether you'd even opened a panel - can be
+  // bookmarked or shared as a link. Uses replaceState rather than pushState
+  // so clicking through chips (or toggling a panel) doesn't spam the
+  // browser's back button with one entry per click.
+  //
+  // Only one #hash can exist in a URL at a time, so with two independently
+  // toggleable panels (Filters, Level Progress) this has to pick just one
+  // when both happen to be open - Filters wins ties since its own controls
+  // are what's actually being interacted with far more often. Either way,
+  // this only ever overwrites the hash with ITS OWN panels' state, never
+  // blanks out an unrelated hash some other feature might set.
+  function syncUrl() {
+    var params = new URLSearchParams(window.location.search);
+    if (activeTraits.length) { params.set('traits', activeTraits.join(',')); } else { params.delete('traits'); }
+    if (activeWeapons.length) { params.set('weapons', activeWeapons.join(',')); } else { params.delete('weapons'); }
+    if (traitsExplicit.checked) { params.set('tx', '1'); } else { params.delete('tx'); }
+    if (weaponsExplicit.checked) { params.set('wx', '1'); } else { params.delete('wx'); }
+    // Un-escape "," back from its percent-encoded form (%2C) - it's a
+    // valid, unreserved-enough query-string character and decodes back to
+    // itself either way, so this just keeps a shared link readable
+    // ("traits=Engineer,Bleeding" instead of "traits=Engineer%2CBleeding").
+    var qs = params.toString().replace(/%2C/g, ',');
+    var hash = '';
+    if (filterDetails && filterDetails.open) { hash = '#filters'; }
+    else if (levelDetails && levelDetails.open) { hash = '#level-progress'; }
+    var url = window.location.pathname + (qs ? '?' + qs : '') + hash;
+    window.history.replaceState(null, '', url);
+  }
+
+  // Reverse of syncUrl() - runs once on load, before the first apply(), so a
+  // shared/bookmarked link reproduces the exact same chip selection. Silently
+  // ignores any value that doesn't match a real chip (typo'd or stale link)
+  // rather than erroring.
+  function restoreFromUrl() {
+    var params = new URLSearchParams(window.location.search);
+    var urlTraits = params.get('traits');
+    var urlWeapons = params.get('weapons');
+    var any = false;
+
+    if (urlTraits) {
+      urlTraits.split(',').forEach(function (raw) {
+        var value = decodeURIComponent(raw);
+        var chip = traitChips.filter(function (c) { return c.getAttribute('data-trait') === value; })[0];
+        if (!chip) return;
+        activeTraits.push(value);
+        chip.classList.add('is-active');
+        any = true;
+      });
+    }
+    if (urlWeapons) {
+      urlWeapons.split(',').forEach(function (raw) {
+        var value = decodeURIComponent(raw);
+        var chip = weaponChips.filter(function (c) { return c.getAttribute('data-weapon') === value; })[0];
+        if (!chip) return;
+        activeWeapons.push(value);
+        chip.classList.add('is-active');
+        any = true;
+      });
+    }
+    if (params.get('tx') === '1') { traitsExplicit.checked = true; any = true; }
+    if (params.get('wx') === '1') { weaponsExplicit.checked = true; any = true; }
+
+    // A restored selection is pointless hidden behind a collapsed panel -
+    // open it so the visitor immediately sees what the link set up. If the
+    // page also has a #filters hash the sitewide xref-target script will
+    // open/scroll/flash it too; this just covers links that only carry the
+    // query string.
+    if (any && filterDetails) filterDetails.open = true;
+  }
+
+  // Greys out (and disables) any not-yet-selected chip in this group that no
+  // class could satisfy alongside the current filter state - i.e. picking it
+  // would leave zero results. Only runs while this group's own Explicit is
+  // on - OR mode never invalidates a chip by adding more (it only grows the
+  // match set), so there's nothing to grey there. While Explicit is on, the
+  // check still weighs the other group's current picks (those always AND
+  // against this group, regardless of that other group's own Explicit
+  // setting) alongside this group's own existing picks (joined as AND, per
+  // Explicit).
+  function updateInvalid(chips, activeList, explicit, chipAttr, cardAttr, otherActive, otherExplicit, otherCardAttr) {
+    chips.forEach(function (chip) {
+      var value = chip.getAttribute(chipAttr);
+      var isActive = activeList.indexOf(value) !== -1;
+      if (!explicit || isActive) {
+        chip.classList.remove('is-invalid');
+        return;
+      }
+      var hypothetical = activeList.concat([value]);
+      var possible = cards.some(function (card) {
+        return groupOk(card.getAttribute(cardAttr), hypothetical, true) &&
+               groupOk(card.getAttribute(otherCardAttr), otherActive, otherExplicit);
+      });
+      chip.classList.toggle('is-invalid', !possible);
+    });
+  }
+
+  function wireChips(chips, activeList, attr) {
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        if (chip.classList.contains('is-invalid')) return;
+        var value = chip.getAttribute(attr);
+        var idx = activeList.indexOf(value);
+        if (idx === -1) {
+          activeList.push(value);
+          chip.classList.add('is-active');
+        } else {
+          activeList.splice(idx, 1);
+          chip.classList.remove('is-active');
+        }
+        apply();
+      });
+    });
+  }
+
+  wireChips(weaponChips, activeWeapons, 'data-weapon');
+  wireChips(traitChips, activeTraits, 'data-trait');
+
+  weaponsExplicit.addEventListener('change', apply);
+  traitsExplicit.addEventListener('change', apply);
+
+  // Native 'toggle' fires on open AND close, whether the visitor clicked the
+  // summary themselves or something (restoreFromUrl, an xref-link) set
+  // .open programmatically - either way the URL should reflect it.
+  if (filterDetails) filterDetails.addEventListener('toggle', syncUrl);
+  if (levelDetails) levelDetails.addEventListener('toggle', syncUrl);
+
+  // A level-track node's tooltip defaults to centering under it - fine in
+  // the middle of the track, but Level 1 sits right at the track's left
+  // edge and Level 20 at its right, so a centered tooltip there would run
+  // straight off the edge of the viewport. <details> hides its content
+  // entirely while closed (no layout box to measure), so this can only run
+  // once the panel is actually open - on the 'toggle' that opens it, and
+  // again on resize while it stays open.
+  function positionLevelTips() {
+    if (!levelDetails || !levelDetails.open) return;
+    var margin = 8;
+    document.querySelectorAll('.level-track__node--unlock').forEach(function (node) {
+      node.classList.remove('level-track__node--tip-left', 'level-track__node--tip-right');
+      var tip = node.querySelector('.level-badge__tip');
+      if (!tip) return;
+      var rect = tip.getBoundingClientRect();
+      if (rect.left < margin) {
+        node.classList.add('level-track__node--tip-left');
+      } else if (rect.right > window.innerWidth - margin) {
+        node.classList.add('level-track__node--tip-right');
+      }
+    });
+  }
+  if (levelDetails) {
+    levelDetails.addEventListener('toggle', function () {
+      if (levelDetails.open) positionLevelTips();
+    });
+  }
+  window.addEventListener('resize', positionLevelTips);
+
+  // Card-art preview for level-track tooltip rows: one shared preview slot
+  // per tooltip (.level-badge__tip-preview), not one per row - a per-row
+  // preview would get clipped by the row list's own overflow-y: auto
+  // scrollbar. Swap its image in on hover/focus of any card link, and hide
+  // it again on mouseout/blur.
+  var LEVEL_PREVIEW_RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'heroic'];
+
+  // Both the card preview and the class preview open to the right of the
+  // *whole* tooltip box by default - opening above/below it used to run a
+  // tall preview like the class one clean off the top of the viewport
+  // whenever the tooltip itself was already sitting near the top of the
+  // page (Level 1/2, nothing above to push into). Flip to the left instead
+  // whenever the right side would run past the edge of the viewport.
+  function clampPreviewHorizontal(preview, leftClass) {
+    preview.classList.remove(leftClass);
+    var margin = 8;
+    var rect = preview.getBoundingClientRect();
+    if (rect.right > window.innerWidth - margin) {
+      preview.classList.add(leftClass);
+    }
+  }
+
+  // Which side it opens on (left/right, above) is separate from whether it
+  // actually fits top-to-bottom - a class summary can still be taller than
+  // whatever's left of the viewport below the tooltip, especially with the
+  // browser window itself on the shorter side. Rather than flipping to open
+  // above/below (the approach that kept clipping the top before), just slide
+  // the panel straight up by however much it's overflowing the bottom, so
+  // the whole thing - Weapons line included - ends up on-screen. Never slides
+  // it past the top edge; max-height + its own scrollbar still catch the
+  // rare case a panel is taller than the viewport itself.
+  function clampPreviewVertical(preview) {
+    preview.style.top = '';
+    var margin = 8;
+    var rect = preview.getBoundingClientRect();
+    var overflow = rect.bottom - (window.innerHeight - margin);
+    if (overflow > 0) {
+      var maxShift = Math.max(rect.top - margin, 0);
+      var shift = Math.min(overflow, maxShift);
+      if (shift > 0) preview.style.top = '-' + shift + 'px';
+    }
+  }
+
+  // Last-resort safety net for clampPreviewHorizontal above: flipping sides
+  // assumes ONE of left/right has room, but a wide class preview opening off
+  // a tooltip that's already pinned near the edge of a narrow window can
+  // overflow on both - which used to widen the whole page and let the
+  // browser auto-scroll sideways to follow the hover, taking the nav bar and
+  // the row list with it off to the left. Nudge the panel back inside the
+  // viewport horizontally so it can never push the page wider than the
+  // screen in the first place.
+  function clampPreviewIntoView(preview) {
+    preview.style.marginLeft = '';
+    var margin = 8;
+    var rect = preview.getBoundingClientRect();
+    var shift = 0;
+    if (rect.right > window.innerWidth - margin) {
+      shift = (window.innerWidth - margin) - rect.right;
+    } else if (rect.left < margin) {
+      shift = margin - rect.left;
+    }
+    if (shift !== 0) preview.style.marginLeft = shift + 'px';
+  }
+
+  // Only one preview slot should ever be open at once - hovering a card
+  // right after a class (or vice versa) without a clean mouseout in
+  // between could otherwise leave both visible and overlapping each other.
+  function hideOtherLevelPreviews(tip, exceptSelector) {
+    ['.level-badge__tip-preview', '.level-badge__tip-class-preview'].forEach(function (sel) {
+      if (sel === exceptSelector) return;
+      var other = tip.querySelector(sel);
+      if (other) other.classList.remove('is-visible');
+    });
+  }
+
+  function showLevelCardPreview(e) {
+    var link = e.target.closest && e.target.closest('.level-badge__tip-card[data-card-img]');
+    if (!link) return;
+    var tip = link.closest('.level-badge__tip');
+    var preview = tip && tip.querySelector('.level-badge__tip-preview');
+    if (!preview) return;
+    hideOtherLevelPreviews(tip, '.level-badge__tip-preview');
+    var img = preview.querySelector('img');
+    img.alt = link.textContent.trim();
+    var descSlot = preview.querySelector('.level-badge__tip-preview-desc');
+    if (descSlot) descSlot.innerHTML = link.getAttribute('data-card-desc') || '';
+    LEVEL_PREVIEW_RARITIES.forEach(function (r) { preview.classList.remove('level-badge__tip-preview--' + r); });
+    var rarity = link.getAttribute('data-card-rarity');
+    if (rarity) preview.classList.add('level-badge__tip-preview--' + rarity);
+    preview.classList.add('is-visible');
+    // The image is what actually gives this preview its height (the art's
+    // taller than the description text under it) - clamping now, before it's
+    // loaded, measures the box at whatever collapsed height it has with no
+    // image yet, so the panel can still end up running off-screen once the
+    // art pops in a moment later and the box suddenly grows. Clamp again on
+    // load so the final, correct size is what gets positioned.
+    clampPreviewHorizontal(preview, 'level-badge__tip-preview--left');
+    clampPreviewVertical(preview);
+    clampPreviewIntoView(preview);
+    img.onload = function () {
+      clampPreviewHorizontal(preview, 'level-badge__tip-preview--left');
+      clampPreviewVertical(preview);
+      clampPreviewIntoView(preview);
+    };
+    img.src = link.getAttribute('data-card-img');
+  }
+  function hideLevelCardPreview(e) {
+    var link = e.target.closest && e.target.closest('.level-badge__tip-card[data-card-img]');
+    if (!link) return;
+    var tip = link.closest('.level-badge__tip');
+    var preview = tip && tip.querySelector('.level-badge__tip-preview');
+    if (!preview) return;
+    // Moving straight off the link onto the preview panel itself shouldn't
+    // hide it - only actually leaving both should.
+    if (preview.contains(e.relatedTarget)) return;
+    preview.classList.remove('is-visible');
+    preview.style.top = '';
+    preview.style.marginLeft = '';
+  }
+  // Leaving the preview panel itself (not back onto the link) hides it too -
+  // needed now that hovering the panel is possible at all (see above).
+  function hideLevelCardPreviewFromPanel(e) {
+    var preview = e.target.closest && e.target.closest('.level-badge__tip-preview');
+    if (!preview) return;
+    var tip = preview.closest('.level-badge__tip');
+    var link = tip && tip.querySelector('.level-badge__tip-card[data-card-img]');
+    if (link && (preview.contains(e.relatedTarget) || e.relatedTarget === link)) return;
+    preview.classList.remove('is-visible');
+    preview.style.top = '';
+    preview.style.marginLeft = '';
+  }
+  document.addEventListener('mouseover', showLevelCardPreview);
+  document.addEventListener('mouseout', hideLevelCardPreview);
+  document.addEventListener('mouseout', hideLevelCardPreviewFromPanel);
+  document.addEventListener('focusin', showLevelCardPreview);
+  document.addEventListener('focusout', hideLevelCardPreview);
+
+  // Class-name hover preview: same shared-slot idea as the card preview
+  // above, but the source content isn't inline on the link - it's cloned
+  // from #class-preview-{slug} (one hidden copy per class, rendered once in
+  // #class-mini-previews rather than duplicated into every row of every
+  // level's tooltip - see class-mini-preview.html for why that matters).
+  function showLevelClassPreview(e) {
+    var link = e.target.closest && e.target.closest('.level-badge__tip-class[data-class-slug]');
+    if (!link) return;
+    var tip = link.closest('.level-badge__tip');
+    var preview = tip && tip.querySelector('.level-badge__tip-class-preview');
+    if (!preview) return;
+    var source = document.getElementById('class-preview-' + link.getAttribute('data-class-slug'));
+    if (!source) return;
+    hideOtherLevelPreviews(tip, '.level-badge__tip-class-preview');
+    preview.innerHTML = source.innerHTML;
+    preview.classList.add('is-visible');
+    clampPreviewHorizontal(preview, 'level-badge__tip-class-preview--left');
+    clampPreviewVertical(preview);
+    clampPreviewIntoView(preview);
+  }
+  function hideLevelClassPreview(e) {
+    var link = e.target.closest && e.target.closest('.level-badge__tip-class[data-class-slug]');
+    if (!link) return;
+    var tip = link.closest('.level-badge__tip');
+    var preview = tip && tip.querySelector('.level-badge__tip-class-preview');
+    if (!preview) return;
+    // Same deal as the card preview: moving from the link onto the panel
+    // itself (e.g. to scroll a tall class summary) shouldn't close it.
+    if (preview.contains(e.relatedTarget)) return;
+    preview.classList.remove('is-visible');
+    preview.style.top = '';
+    preview.style.marginLeft = '';
+  }
+  function hideLevelClassPreviewFromPanel(e) {
+    var preview = e.target.closest && e.target.closest('.level-badge__tip-class-preview');
+    if (!preview) return;
+    var tip = preview.closest('.level-badge__tip');
+    var link = tip && tip.querySelector('.level-badge__tip-class[data-class-slug]');
+    if (link && (preview.contains(e.relatedTarget) || e.relatedTarget === link)) return;
+    preview.classList.remove('is-visible');
+    preview.style.top = '';
+    preview.style.marginLeft = '';
+  }
+  document.addEventListener('mouseover', showLevelClassPreview);
+  document.addEventListener('mouseout', hideLevelClassPreview);
+  document.addEventListener('mouseout', hideLevelClassPreviewFromPanel);
+  document.addEventListener('focusin', showLevelClassPreview);
+  document.addEventListener('focusout', hideLevelClassPreview);
+
+  clearTraitsBtn.addEventListener('click', function () {
+    activeTraits.length = 0;
+    traitChips.forEach(function (c) { c.classList.remove('is-active'); });
+    traitsExplicit.checked = false;
+    apply();
+  });
+
+  clearWeaponsBtn.addEventListener('click', function () {
+    activeWeapons.length = 0;
+    weaponChips.forEach(function (c) { c.classList.remove('is-active'); });
+    weaponsExplicit.checked = false;
+    apply();
+  });
+
+  clearAllBtn.addEventListener('click', function () {
+    activeWeapons.length = 0;
+    activeTraits.length = 0;
+    weaponChips.concat(traitChips).forEach(function (c) { c.classList.remove('is-active'); });
+    weaponsExplicit.checked = false;
+    traitsExplicit.checked = false;
+    apply();
+  });
+
+  restoreFromUrl();
+  apply();
+})();
+</script>

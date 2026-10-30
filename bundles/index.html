@@ -1,0 +1,28 @@
+---
+title: Bundles
+---
+<div class="section-page">
+  <div class="section-page__header">
+    <h1 class="section-page__title">Bundles</h1>
+  </div>
+
+  <p class="section-page__intro">Store bundles, in release order. Item names are read from in-store screenshots, so a few may carry an OCR typo.</p>
+
+  <div class="bundles-list">
+    {%- assign sorted_bundles = site.data.bundles.list | sort: "number" %}
+    {%- for b in sorted_bundles %}
+    <details class="bundle-entry">
+      <summary class="bundle-entry__summary">
+        <span class="bundle-entry__num">{{ b.number }}</span>
+        <span class="bundle-entry__name">{{ b.name }}</span>
+        <span class="bundle-entry__count">{{ b.items.size }} items</span>
+      </summary>
+      <ul class="bundle-entry__items">
+        {%- for item in b.items %}
+        <li>{{ item }}</li>
+        {%- endfor %}
+      </ul>
+    </details>
+    {%- endfor %}
+  </div>
+</div>

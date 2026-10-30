@@ -1,0 +1,25 @@
+{%- comment %} Outputs just the count of distinct cards unlocking at a given
+level - e.g. Level 1 -> 1 (every class shares the same "Score Boost"),
+Level 2 -> 19 (a different card per class). Same slug-dedup logic as
+level-unlock-badge.html's row list, kept in sync with it on purpose so the
+little count badge on the level-track node always matches how many rows
+its tooltip actually lists.
+Usage: {% capture card_count %}{% include level-unlock-count.html level=lvl %}{% endcapture %}
+{%- assign card_count = card_count | strip -%} {%- endcomment %}
+{%- assign uc_level = include.level -%}
+{%- assign uc_slugs_seen = "," -%}
+{%- assign uc_count = 0 -%}
+{%- for c in site.classes -%}
+  {%- for card in c.cards -%}
+    {%- if card.unlock_level == uc_level -%}
+      {%- assign uc_needle = "," | append: card.slug | append: "," -%}
+      {%- assign uc_already_seen = false -%}
+      {%- if uc_slugs_seen contains uc_needle %}{%- assign uc_already_seen = true -%}{%- endif -%}
+      {%- unless uc_already_seen -%}
+        {%- assign uc_slugs_seen = uc_slugs_seen | append: card.slug | append: "," -%}
+        {%- assign uc_count = uc_count | plus: 1 -%}
+      {%- endunless -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endfor -%}
+{{- uc_count -}}

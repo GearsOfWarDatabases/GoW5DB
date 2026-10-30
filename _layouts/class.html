@@ -1,0 +1,796 @@
+---
+layout: default
+---
+
+<article class="class-page class-page--{{ page.category | downcase }}">
+
+  <div class="class-page__sticky">
+    <a class="class-page__sticky-cat" href="{{ '/classes/' | relative_url }}#{{ page.category | downcase }}" title="Jump to the {{ page.category }} classes">{{ page.category }}</a>
+    <span class="class-page__sticky-sep">-</span>
+    <a class="class-page__sticky-name" href="#" id="class-page-top-link" title="Back to top of the page">{{ page.title }}</a>
+  </div>
+
+  <div class="class-page__hero">
+    <div class="class-page__hero-inner">
+      <div class="class-page__icon-wrap">
+        {% assign icon_path = '/images/classes/icons/' | append: page.slug | append: '.png' %}
+        <img class="class-page__icon" src="{{ icon_path | relative_url }}" alt="{{ page.title }} icon" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+        <div class="class-page__icon-placeholder" style="display:none;">{{ page.title | slice: 0 }}</div>
+      </div>
+      <div class="class-page__hero-text">
+        <p class="class-page__role-tag">{{ page.role }}</p>
+        <h1 class="class-page__name">{{ page.title }}</h1>
+        <p class="class-page__description">{{ page.description }}</p>
+        {%- if page.engineer or page.hidden or page.traits.size > 0 %}
+        <div class="class-page__badges">
+          {% if page.engineer %}<span class="engineer-badge info-badge" tabindex="0">Engineer<span class="engineer-badge__tip">Builds all fortifications at a <mark class="kw kw--value">15%</mark> discount and carries them faster.</span></span>{% endif %}
+          {% if page.hidden %}<span class="hidden-badge info-badge" tabindex="0">Hidden<span class="hidden-badge__tip">{% include render-desc.html text=page.hidden page=page %}</span></span>{% endif %}
+          {%- for t in page.traits %}
+          <span class="trait-badge trait-badge--{{ t.name | slugify }} info-badge" tabindex="0">{{ t.name }}<span class="trait-badge__tip">{% include render-desc.html text=t.note page=page %}</span></span>
+          {%- endfor %}
+        </div>
+        {%- endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="class-page__body">
+
+    <!-- LEVEL PROGRESS -->
+    {%- assign xp_levels = site.data.leveling.xp_per_level -%}
+    {%- assign max_level = site.data.leveling.max_level -%}
+    <details class="class-section class-section--level level-progress-toggle" id="level-progress">
+      <summary class="class-section__title level-progress-toggle__summary">Level Progress</summary>
+      <div class="level-progress-toggle__panel">
+      <p class="class-section__intro">Every class shares the same account-wide leveling curve, capped at <strong>Level {{ max_level }}</strong>.<br><mark class="kw kw--value">Hover</mark> or <mark class="kw kw--value">Click</mark> a level to see what {{ page.title }} unlocks there.</p>
+
+      <div class="level-track" role="img" aria-label="Character level progress from 1 to {{ max_level }}, with the XP required between each level">
+        {%- for row in xp_levels %}
+        {%- assign lvl = row.level %}
+        {%- assign is_milestone = lvl | modulo: 5 %}
+        {%- assign lvl_cards = page.cards | where: "unlock_level", lvl -%}
+        {%- assign has_unlock = false -%}
+        {%- if lvl_cards.size > 0 -%}{%- assign has_unlock = true -%}{%- endif -%}
+        <div class="level-track__unit">
+          <div class="level-track__node{% if has_unlock %} level-track__node--unlock info-badge{% endif %}{% if lvl == 1 %} level-track__node--start{% elsif is_milestone == 0 %} level-track__node--milestone{% endif %}"{% if has_unlock %} tabindex="0"{% endif %}>
+            <span>{{ lvl }}</span>
+            {%- if has_unlock %}<span class="level-track__count" title="{{ lvl_cards.size }} unlocked for {{ page.title }} at Level {{ lvl }}">{{ lvl_cards.size }}</span>{% endif %}
+            {%- if has_unlock %}{% include class-level-unlock-badge.html level=lvl class=page %}{% endif %}
+          </div>
+          <div class="level-track__seg">
+            <span class="level-track__xp{% if row.xp == '?' %} level-track__xp--unknown{% endif %}">{{ row.xp }}</span>
+          </div>
+        </div>
+        {%- endfor %}
+        {%- assign cap_cards = page.cards | where: "unlock_level", max_level -%}
+        {%- assign cap_has_unlock = false -%}
+        {%- if cap_cards.size > 0 -%}{%- assign cap_has_unlock = true -%}{%- endif -%}
+        <div class="level-track__node level-track__node--cap{% if cap_has_unlock %} level-track__node--unlock info-badge{% endif %}"{% if cap_has_unlock %} tabindex="0"{% endif %}>
+          <span>{{ max_level }}</span>
+          {%- if cap_has_unlock %}<span class="level-track__count" title="{{ cap_cards.size }} unlocked for {{ page.title }} at Level {{ max_level }}">{{ cap_cards.size }}</span>{% endif %}
+          {%- if cap_has_unlock %}{% include class-level-unlock-badge.html level=max_level class=page %}{% endif %}
+        </div>
+      </div>
+      </div>
+    </details>
+
+    <!-- ABILITIES -->
+    <section class="class-section">
+      <h2 class="class-section__title">Abilities</h2>
+      <div class="abilities-grid">
+
+        <div class="ability-card ability-card--passive">
+          {% if page.engineer %}
+          <span class="ability-card__aka">a.k.a <span class="engineer-badge info-badge" tabindex="0">Engineer<span class="engineer-badge__tip">Builds all fortifications at a <mark class="kw kw--value">15%</mark> discount and carries them faster.</span></span></span>
+          {% endif %}
+          <div class="ability-card__img-wrap">
+            {% assign passive_img = '/images/abilities/' | append: page.slug | append: '-passive.png' %}
+            <img src="{{ passive_img | relative_url }}" alt="{{ page.passive.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+            <div class="ability-card__img-placeholder" style="display:none;">P</div>
+          </div>
+          <div class="ability-card__info">
+            <span class="ability-card__type">Passive</span>
+            <h3 class="ability-card__name">{{ page.passive.name }}</h3>
+            <p class="ability-card__desc">{% include render-desc.html text=page.passive.description page=page %}</p>
+          </div>
+        </div>
+
+        {%- assign same_ability = false -%}
+        {%- if page.active.name == page.ultimate.name and page.active.description == page.ultimate.description -%}
+          {%- assign same_ability = true -%}
+        {%- endif -%}
+
+        {%- if same_ability %}
+        <!-- Active and Ultimate are the exact same ability on this class (the
+             ultimate is just an empowered trigger of the active, not a
+             separate skill) - one card with a dual label reads truer to the
+             game than two visually-identical cards side by side. -->
+        <div class="ability-card ability-card--active ability-card--ultimate">
+          <div class="ability-card__img-wrap">
+            {% assign active_img = '/images/abilities/' | append: page.slug | append: '-active.png' %}
+            <img src="{{ active_img | relative_url }}" alt="{{ page.active.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+            <div class="ability-card__img-placeholder" style="display:none;">A</div>
+          </div>
+          <div class="ability-card__info">
+            <span class="ability-card__type ability-card__type--dual"><span class="ability-card__type-active">Active</span> / <span class="ability-card__type-ultimate">Ultimate</span></span>
+            <h3 class="ability-card__name">{{ page.active.name }}</h3>
+            <p class="ability-card__desc">{% include render-desc.html text=page.active.description page=page %}</p>
+            {% if page.active.duration %}<p class="ability-card__stat">Duration: {% include format-seconds.html value=page.active.duration %}</p>{% endif %}
+            {% if page.active.cooldown %}<p class="ability-card__stat">Cooldown: {% include format-seconds.html value=page.active.cooldown %}</p>{% endif %}
+          </div>
+        </div>
+        {%- else %}
+        <div class="ability-card ability-card--active">
+          <div class="ability-card__img-wrap">
+            {% assign active_img = '/images/abilities/' | append: page.slug | append: '-active.png' %}
+            <img src="{{ active_img | relative_url }}" alt="{{ page.active.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+            <div class="ability-card__img-placeholder" style="display:none;">A</div>
+          </div>
+          <div class="ability-card__info">
+            <span class="ability-card__type">Active Ability</span>
+            <h3 class="ability-card__name">{{ page.active.name }}</h3>
+            <p class="ability-card__desc">{% include render-desc.html text=page.active.description page=page %}</p>
+            {% if page.active.duration %}<p class="ability-card__stat">Duration: {% include format-seconds.html value=page.active.duration %}</p>{% endif %}
+            {% if page.active.cooldown %}<p class="ability-card__stat">Cooldown: {% include format-seconds.html value=page.active.cooldown %}</p>{% endif %}
+          </div>
+        </div>
+
+        <div class="ability-card ability-card--ultimate">
+          <div class="ability-card__img-wrap">
+            {% assign ult_img = '/images/abilities/' | append: page.slug | append: '-ultimate.png' %}
+            <img src="{{ ult_img | relative_url }}" alt="{{ page.ultimate.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+            <div class="ability-card__img-placeholder" style="display:none;">U</div>
+          </div>
+          <div class="ability-card__info">
+            <span class="ability-card__type">Ultimate</span>
+            <h3 class="ability-card__name">{{ page.ultimate.name }}</h3>
+            <p class="ability-card__desc">{% include render-desc.html text=page.ultimate.description page=page %}</p>
+            {% if page.ultimate.duration %}<p class="ability-card__stat">Duration: {% include format-seconds.html value=page.ultimate.duration %}</p>{% endif %}
+            {% if page.ultimate.cooldown %}<p class="ability-card__stat">Cooldown: {% include format-seconds.html value=page.ultimate.cooldown %}</p>{% endif %}
+          </div>
+        </div>
+        {%- endif %}
+
+      </div>
+    </section>
+
+    <!-- WEAPONS -->
+    {% if page.weapon_slots %}
+    <section class="class-section">
+      <div class="class-section__head">
+        <h2 class="class-section__title">Starting Weapons</h2>
+        <button type="button" class="perk-order-toggle" id="weapon-order-toggle" data-dpad-target="weapons-dpad" data-layout-param="weaponlayout">Toggle Weapon Order</button>
+      </div>
+      {%- comment %} Right/Left/Down/Up map to the game's own N1/N2/Pistol/
+      Grenade weapon-slot NAMES, not to physical left/right - see
+      weapon-slot.html for the platform (PC vs console) note on why. Same
+      3x3 cross grid as Perks below, reusing .dpad/.dpad--vertical wholesale
+      (id'd instead of relying on being "the .dpad on the page" - see the
+      toggle/URL-state script at the bottom of this file, which now has to
+      tell 2 separate .dpad instances apart). No center-cell total (weapons
+      don't have one shared numeric value the way perk ranks do), so that
+      cell just stays an empty spacer like the corners. {% endcomment %}
+      <div class="dpad dpad--vertical" id="weapons-dpad">
+
+        <!-- Row 1: empty / up (Grenade) / empty -->
+        <div class="dpad__empty"></div>
+        {% include weapon-slot.html weapon=page.weapon_slots.up dir="up" label="Grenade" %}
+        <div class="dpad__empty"></div>
+
+        <!-- Row 2: left (N2) / empty / right (N1) -->
+        {% include weapon-slot.html weapon=page.weapon_slots.left dir="left" label="Weapon Slot 2" %}
+        <div class="dpad__empty"></div>
+        {% include weapon-slot.html weapon=page.weapon_slots.right dir="right" label="Weapon Slot 1" %}
+
+        <!-- Row 3: empty / down (Pistol) / empty -->
+        <div class="dpad__empty"></div>
+        {% include weapon-slot.html weapon=page.weapon_slots.down dir="down" label="Pistol" %}
+        <div class="dpad__empty"></div>
+
+      </div>
+    </section>
+    {% elsif page.weapons %}
+    <section class="class-section">
+      <h2 class="class-section__title">Starting Weapons</h2>
+      <div class="weapons-grid">
+        {% for weapon in page.weapons %}
+        {%- assign w_entry = site.data.weapons.menu | where: "slug", weapon.slug | first -%}
+        {%- assign fab_entry = site.data.fabricator.weapons | where: "slug", weapon.slug | first -%}
+        <div class="weapon-card">
+          <div class="weapon-card__img-wrap">
+            {% assign w_img = '/images/weapons/' | append: weapon.slug | append: '.png' %}
+            <img src="{{ w_img | relative_url }}" alt="{{ weapon.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+            <div class="weapon-card__img-placeholder" style="display:none;">&#9876;</div>
+          </div>
+          <p class="weapon-card__name">{% if w_entry %}<a class="xref-link" href="{{ '/weapons/' | relative_url }}#{{ weapon.slug }}">{{ weapon.name }}</a>{% elsif fab_entry %}<a class="xref-link" href="{{ '/fabricator/' | relative_url }}#{{ weapon.slug }}">{{ weapon.name }}</a>{% else %}{{ weapon.name }}{% endif %}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- PERKS -->
+    {% if page.perks %}
+    <section class="class-section">
+      <div class="class-section__head">
+        <h2 class="class-section__title">Perks</h2>
+        <button type="button" class="perk-order-toggle" id="perk-order-toggle" data-dpad-target="perks-dpad" data-layout-param="perklayout">Toggle Perk Order</button>
+      </div>
+      {% assign perk_dirs = "up,right,down,left" | split: "," %}
+      {% assign perk_costs = site.data.perk_costs.costs %}
+      {% assign has_perk_values = false %}
+      {% for dir in perk_dirs %}{% assign p = page.perks[dir] %}{% if p.values %}{% assign has_perk_values = true %}{% endif %}{% endfor %}
+      <div class="dpad dpad--vertical" id="perks-dpad">
+
+        <!-- Row 1: empty / up / empty -->
+        <div class="dpad__empty"></div>
+        {% include perk-slot.html perk=page.perks.up dir="up" page=page %}
+        <div class="dpad__empty"></div>
+
+        <!-- Row 2: left / total cost / right -->
+        {% include perk-slot.html perk=page.perks.left dir="left" page=page %}
+        {% if has_perk_values %}
+        <div class="dpad__slot dpad__slot--center">
+          <span class="dpad__rank-label">Total</span>
+          <p class="dpad__total"><span class="fab-tile__icon fab-tile__icon--bolt">&#9889;&#xFE0E;</span> <strong id="dpad-total">0</strong></p>
+          <span class="dpad__total-note">for selected ranks</span>
+        </div>
+        {% else %}
+        <div class="dpad__empty"></div>
+        {% endif %}
+        {% include perk-slot.html perk=page.perks.right dir="right" page=page %}
+
+        <!-- Row 3: empty / down / empty -->
+        <div class="dpad__empty"></div>
+        {% include perk-slot.html perk=page.perks.down dir="down" page=page %}
+        <div class="dpad__empty"></div>
+
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- CLASS CARDS -->
+    {% if page.cards %}
+    <section class="class-section class-section--cards">
+      <h2 class="class-section__title">Class Cards</h2>
+      <div class="cards-grid">
+        {% for card in page.cards %}
+        <div class="class-card class-card--{{ card.rarity | downcase }}{% if card.type == 'skin' %} class-card--skin{% endif %}{% if card.art_fit == 'contain' %} class-card--art-contain{% endif %} xref-target" id="{{ card.slug }}" data-card>
+          <div class="class-card__img-wrap">
+            {% assign c_img = '/images/cards/' | append: page.slug | append: '-' | append: card.slug | append: '.png' %}
+            <img src="{{ c_img | relative_url }}" alt="{{ card.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';this.parentElement.classList.add('class-card__img-wrap--empty');" />
+            <div class="class-card__img-placeholder" style="display:none;">&#9632;</div>
+          </div>
+          <div class="class-card__info">
+            <div class="class-card__meta">
+              {% if card.rarity %}<span class="class-card__rarity class-card__rarity--{{ card.rarity | downcase }}">{{ card.rarity }}</span>{% endif %}
+              {% if card.unlock_level %}<span class="class-card__unlock">Unlocks at Level {{ card.unlock_level }}</span>{% endif %}
+            </div>
+            <div class="class-card__title-row">
+              <h3 class="class-card__name">{{ card.name }}</h3>
+              {% if card.hidden %}<span class="hidden-badge class-card__hidden info-badge" tabindex="0">Hidden<span class="hidden-badge__tip">{% include render-desc.html text=card.hidden page=page %}</span></span>{% endif %}
+            </div>
+
+            {% if card.type == 'skin' %}
+            {%- comment %} Cosmetic skins are not skill cards - no levels {% endcomment %}
+            <p class="class-card__desc">{% include render-desc.html text=card.description page=page %}</p>
+
+            {% elsif card.levels %}
+            {%- assign max_lvl = card.levels | size -%}
+            {%- comment -%}
+              Default displayed level: 1 if every level's data is fully
+              confirmed, otherwise the highest level that IS fully confirmed
+              (the "highest data card") - so a card missing its later ranks
+              opens on the last rank we actually have numbers for instead of
+              showing a bunch of "?" by default. Computed fresh every build
+              from the real per-level data, not a hand-set field, so it
+              can't go stale as more levels get confirmed over time.
+            {%- endcomment -%}
+            {%- assign all_confirmed = true -%}
+            {%- assign highest_confirmed = 0 -%}
+            {%- for lvl in card.levels -%}
+              {%- assign lvl_confirmed = true -%}
+              {%- if lvl.X == "?" -%}{%- assign lvl_confirmed = false -%}{%- endif -%}
+              {%- if lvl.Y == "?" -%}{%- assign lvl_confirmed = false -%}{%- endif -%}
+              {%- if lvl_confirmed -%}
+                {%- assign highest_confirmed = forloop.index -%}
+              {%- else -%}
+                {%- assign all_confirmed = false -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {%- if all_confirmed -%}
+              {%- assign sel = 1 -%}
+            {%- elsif highest_confirmed > 0 -%}
+              {%- assign sel = highest_confirmed -%}
+            {%- else -%}
+              {%- assign sel = 1 -%}
+            {%- endif -%}
+            {%- assign costs = site.data.card_costs.duplicates[card.rarity] -%}
+            {%- assign coin_rate = site.data.card_costs.coins_per_duplicate[card.rarity] -%}
+
+            <div class="class-card__panels level-stack">
+              {%- for lvl in card.levels %}
+              {%- assign i = forloop.index %}
+              <div class="class-card__panel" data-level-panel="{{ i }}" {% unless i == sel %}data-level-hidden{% endunless %}>
+                {%- capture xmark %}<mark class="kw kw--value{% if lvl.X == '?' %} kw--unknown{% endif %}{% if lvl.X contains '~' %} kw--estimated{% endif %}"{% if lvl.X contains '~' %} title="Estimated value - no card screenshot for this level yet"{% endif %}>{{ lvl.X }}</mark>{% endcapture -%}
+                {%- assign d = card.description | replace: '{X}', xmark -%}
+                {%- if lvl.Y -%}
+                  {%- capture ymark %}<mark class="kw kw--value{% if lvl.Y == '?' %} kw--unknown{% endif %}{% if lvl.Y contains '~' %} kw--estimated{% endif %}"{% if lvl.Y contains '~' %} title="Estimated value - no card screenshot for this level yet"{% endif %}>{{ lvl.Y }}</mark>{% endcapture -%}
+                  {%- assign d = d | replace: '{Y}', ymark -%}
+                {%- endif %}
+                <p class="class-card__desc">{% include render-desc.html text=d page=page %}</p>
+              </div>
+              {%- endfor %}
+            </div>
+
+            <div class="class-card__cost-slot level-stack">
+              {%- for lvl in card.levels %}
+              {%- assign i = forloop.index %}
+              {%- assign cost_idx = i | minus: 1 %}
+              {%- assign next_cost = costs[cost_idx] %}
+              {%- assign coin_rate_display = coin_rate | default: "?" %}
+              <p class="class-card__cost" data-level-panel="{{ i }}" {% unless i == sel %}data-level-hidden{% endunless %}>
+                {%- if costs and i < max_lvl and next_cost and next_cost != "?" -%}
+                Level {{ i | plus: 1 }}: Requires <strong>{{ next_cost }}</strong> Duplicate{% if next_cost != 1 %}s{% endif %} (<mark class="kw kw--value{% if coin_rate_display == '?' %} kw--unknown{% endif %}{% if coin_rate_display contains '~' %} kw--estimated{% endif %}"{% if coin_rate_display contains '~' %} title="Estimated value - not yet confirmed by a screenshot"{% endif %}>{{ coin_rate_display }}</mark> <span class="class-card__coin" title="Gear Coins per missing duplicate">&#129689;</span>)
+                {%- elsif i == max_lvl -%}
+                <span class="class-card__cost-max">Max level</span>
+                {%- endif -%}
+              </p>
+              {%- endfor %}
+            </div>
+
+            <div class="class-card__levels" role="group" aria-label="Card level">
+              {%- for lvl in card.levels %}
+              {%- assign i = forloop.index %}
+              <button type="button" class="class-card__level-pip class-card__level-pip--btn{% if i == sel %} class-card__level-pip--active{% endif %}" data-level="{{ i }}" title="Show level {{ i }} values">{{ i }}</button>
+              {%- endfor %}
+            </div>
+
+            {% else %}
+            {%- comment %} Legacy / simple cards without per-level data {% endcomment %}
+            <p class="class-card__desc">{% include render-desc.html text=card.description page=page %}</p>
+            {% if card.level_scaling %}<p class="class-card__scaling">{% include render-desc.html text=card.level_scaling page=page %}</p>{% endif %}
+            <div class="class-card__levels">
+              {% assign max_lvl = card.max_level | default: 6 %}
+              {% for i in (1..max_lvl) %}
+              <span class="class-card__level-pip" title="Level {{ i }}">{{ i }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- DEBUG: per-level data completeness audit for this class's cards -->
+    {%- assign any_missing = false -%}
+    {%- for card in page.cards -%}
+      {%- if card.levels -%}
+        {%- for lvl in card.levels -%}
+          {%- if lvl.X == "?" or lvl.Y == "?" -%}{%- assign any_missing = true -%}{%- endif -%}
+        {%- endfor -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {%- if any_missing %}
+    <section class="class-section class-audit">
+      <details class="fab-collapsible">
+        <summary class="class-audit__title" title="This only shows up when at least one card on this page still has an unconfirmed (&quot;?&quot;) value at some level - it disappears once every level is filled in.">[DEBUG] - Missing Card Information</summary>
+        <div class="settings-table__scroll">
+          <table class="settings-table class-audit__table">
+            <thead>
+              <tr>
+                <th>Card</th>
+                {%- for n in (1..6) %}<th>{{ n }}</th>{% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {%- for card in page.cards -%}
+              {%- if card.levels -%}
+              {%- assign card_max = card.levels | size -%}
+              <tr>
+                <td>{{ card.name }}</td>
+                {%- for n in (1..6) -%}
+                {%- if n <= card_max -%}
+                  {%- assign row_idx = n | minus: 1 -%}
+                  {%- assign lvl = card.levels[row_idx] -%}
+                  {%- assign lvl_confirmed = true -%}
+                  {%- if lvl.X == "?" -%}{%- assign lvl_confirmed = false -%}{%- endif -%}
+                  {%- if lvl.Y == "?" -%}{%- assign lvl_confirmed = false -%}{%- endif -%}
+                <td class="class-audit__cell{% if lvl_confirmed %} class-audit__cell--ok{% else %} class-audit__cell--missing{% endif %}">{% if lvl_confirmed %}&#9989;{% else %}&#10060;{% endif %}</td>
+                {%- else -%}
+                <td class="class-audit__cell class-audit__cell--na">&mdash;</td>
+                {%- endif -%}
+                {%- endfor %}
+              </tr>
+              {%- endif -%}
+              {%- endfor %}
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+    {%- endif %}
+
+    {{ content }}
+
+  </div><!-- /.class-page__body -->
+
+  <div class="class-page__back">
+    <a href="{{ '/classes/' | relative_url }}">&larr; All Classes</a>
+  </div>
+
+</article>
+
+<script>
+// Keep the sticky class bar pinned right below the (sticky) site header
+(function () {
+  var header = document.querySelector('.site-header');
+  function setH() { document.documentElement.style.setProperty('--header-h', header.offsetHeight + 'px'); }
+  if (header) { setH(); window.addEventListener('resize', setH); }
+
+  // Keep --header-h in sync while the nav collapse animation runs
+  var nav = document.querySelector('.site-nav');
+  if (nav) nav.addEventListener('transitionend', setH);
+
+  // Show the sticky class bar only once the hero has scrolled out of view,
+  // and condense the header to just the title while it's showing
+  var bar = document.querySelector('.class-page__sticky');
+  var hero = document.querySelector('.class-page__hero');
+  if (bar && hero && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      var scrolled = !entries[0].isIntersecting;
+      bar.classList.toggle('is-visible', scrolled);
+      if (header) {
+        header.classList.toggle('is-condensed', scrolled);
+        if (!scrolled) header.classList.remove('is-expanded');
+        setH();
+      }
+    }).observe(hero);
+  }
+
+  // "Menu" button re-opens the nav while condensed
+  var expand = document.querySelector('.site-header__expand');
+  if (expand && header) {
+    expand.addEventListener('click', function () {
+      header.classList.toggle('is-expanded');
+      setH();
+    });
+  }
+
+  // Sticky bar's class name jumps back to the top of this page (the
+  // category name is a normal cross-page link to the Classes roster).
+  var topLink = document.getElementById('class-page-top-link');
+  if (topLink) {
+    topLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+})();
+
+// Level Progress unlock tooltips - same edge-clamp + card-art preview system
+// as the main Classes page (classes/index.html), just scoped to this one
+// class's own cards instead of all 19 classes' worth. No second preview
+// type to juggle here (no class-name preview - we're already ON the class's
+// page), so this is a trimmed-down copy: no hideOtherLevelPreviews, no
+// vertical/horizontal split for two preview slots, just the one card-art
+// slot per tooltip.
+(function () {
+  'use strict';
+
+  // A tooltip centered under its node runs off the edge of the viewport for
+  // nodes near either end of the track (Level 1 sits at the track's left
+  // edge, Level 20 at its right). Unlike the main Classes page's version,
+  // this section is never hidden behind a <details> toggle, so it only
+  // needs to run once on load and again on resize.
+  function positionLevelTips() {
+    var margin = 8;
+    document.querySelectorAll('.class-section--level .level-track__node--unlock').forEach(function (node) {
+      node.classList.remove('level-track__node--tip-left', 'level-track__node--tip-right');
+      var tip = node.querySelector('.level-badge__tip');
+      if (!tip) return;
+      var rect = tip.getBoundingClientRect();
+      if (rect.left < margin) {
+        node.classList.add('level-track__node--tip-left');
+      } else if (rect.right > window.innerWidth - margin) {
+        node.classList.add('level-track__node--tip-right');
+      }
+    });
+  }
+  positionLevelTips();
+  window.addEventListener('resize', positionLevelTips);
+
+  var LEVEL_PREVIEW_RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'heroic'];
+
+  // Opens to the right of the tooltip by default, flips to the left once
+  // the right side would run past the edge of the viewport - see the same
+  // function in classes/index.html for the fuller history of why this is
+  // horizontal-only rather than flipping above/below.
+  function clampPreviewHorizontal(preview, leftClass) {
+    preview.classList.remove(leftClass);
+    var margin = 8;
+    var rect = preview.getBoundingClientRect();
+    if (rect.right > window.innerWidth - margin) {
+      preview.classList.add(leftClass);
+    }
+  }
+
+  // Slides the panel straight up by however much it overflows the bottom of
+  // the viewport, without changing which side it opens on. Never slides it
+  // past the top edge.
+  function clampPreviewVertical(preview) {
+    preview.style.top = '';
+    var margin = 8;
+    var rect = preview.getBoundingClientRect();
+    var overflow = rect.bottom - (window.innerHeight - margin);
+    if (overflow > 0) {
+      var maxShift = Math.max(rect.top - margin, 0);
+      var shift = Math.min(overflow, maxShift);
+      if (shift > 0) preview.style.top = '-' + shift + 'px';
+    }
+  }
+
+  // Last-resort safety net for clampPreviewHorizontal above - nudges the
+  // panel back inside the viewport horizontally so it can never widen the
+  // whole page (and drag the browser's own scroll position sideways with
+  // it) even when flipping sides alone isn't enough room.
+  function clampPreviewIntoView(preview) {
+    preview.style.marginLeft = '';
+    var margin = 8;
+    var rect = preview.getBoundingClientRect();
+    var shift = 0;
+    if (rect.right > window.innerWidth - margin) {
+      shift = (window.innerWidth - margin) - rect.right;
+    } else if (rect.left < margin) {
+      shift = margin - rect.left;
+    }
+    if (shift !== 0) preview.style.marginLeft = shift + 'px';
+  }
+
+  function showLevelCardPreview(e) {
+    var link = e.target.closest && e.target.closest('.level-badge__tip-card[data-card-img]');
+    if (!link) return;
+    var tip = link.closest('.level-badge__tip');
+    var preview = tip && tip.querySelector('.level-badge__tip-preview');
+    if (!preview) return;
+    var img = preview.querySelector('img');
+    img.alt = link.textContent.trim();
+    var descSlot = preview.querySelector('.level-badge__tip-preview-desc');
+    if (descSlot) descSlot.innerHTML = link.getAttribute('data-card-desc') || '';
+    LEVEL_PREVIEW_RARITIES.forEach(function (r) { preview.classList.remove('level-badge__tip-preview--' + r); });
+    var rarity = link.getAttribute('data-card-rarity');
+    if (rarity) preview.classList.add('level-badge__tip-preview--' + rarity);
+    preview.classList.add('is-visible');
+    // Re-clamp on load too - measuring before the art's actually loaded
+    // catches the box at whatever collapsed height it has with no image
+    // yet, so the panel can still end up running off-screen once the art
+    // pops in a moment later and the box suddenly grows.
+    clampPreviewHorizontal(preview, 'level-badge__tip-preview--left');
+    clampPreviewVertical(preview);
+    clampPreviewIntoView(preview);
+    img.onload = function () {
+      clampPreviewHorizontal(preview, 'level-badge__tip-preview--left');
+      clampPreviewVertical(preview);
+      clampPreviewIntoView(preview);
+    };
+    img.src = link.getAttribute('data-card-img');
+  }
+  function hideLevelCardPreview(e) {
+    var link = e.target.closest && e.target.closest('.level-badge__tip-card[data-card-img]');
+    if (!link) return;
+    var tip = link.closest('.level-badge__tip');
+    var preview = tip && tip.querySelector('.level-badge__tip-preview');
+    if (!preview) return;
+    // Moving straight off the link onto the preview panel itself shouldn't
+    // hide it - only actually leaving both should (needed to reach/scroll
+    // the panel itself, same as the main Classes page).
+    if (preview.contains(e.relatedTarget)) return;
+    preview.classList.remove('is-visible');
+    preview.style.top = '';
+    preview.style.marginLeft = '';
+  }
+  function hideLevelCardPreviewFromPanel(e) {
+    var preview = e.target.closest && e.target.closest('.level-badge__tip-preview');
+    if (!preview) return;
+    var tip = preview.closest('.level-badge__tip');
+    var link = tip && tip.querySelector('.level-badge__tip-card[data-card-img]');
+    if (link && (preview.contains(e.relatedTarget) || e.relatedTarget === link)) return;
+    preview.classList.remove('is-visible');
+    preview.style.top = '';
+    preview.style.marginLeft = '';
+  }
+  document.addEventListener('mouseover', showLevelCardPreview);
+  document.addEventListener('mouseout', hideLevelCardPreview);
+  document.addEventListener('mouseout', hideLevelCardPreviewFromPanel);
+  document.addEventListener('focusin', showLevelCardPreview);
+  document.addEventListener('focusout', hideLevelCardPreview);
+})();
+
+document.querySelectorAll('[data-card]').forEach(function (card) {
+  var pips = card.querySelectorAll('.class-card__level-pip--btn');
+  pips.forEach(function (pip) {
+    pip.addEventListener('click', function () {
+      var lvl = pip.getAttribute('data-level');
+      card.querySelectorAll('[data-level-panel]').forEach(function (panel) {
+        panel.toggleAttribute('data-level-hidden', panel.getAttribute('data-level-panel') !== lvl);
+      });
+      pips.forEach(function (p) {
+        p.classList.toggle('class-card__level-pip--active', p === pip);
+      });
+    });
+  });
+});
+
+// Total Energy for the selected perk ranks (center of the d-pad)
+(function () {
+  var totalEl = document.getElementById('dpad-total');
+  if (!totalEl) return;
+  var costs = [{% for c in site.data.perk_costs.costs %}{{ c | remove: "'" | remove: ',' }}{% unless forloop.last %},{% endunless %}{% endfor %}];
+  var cum = [0];
+  costs.forEach(function (c, i) { cum.push(cum[i] + c); });
+  function update() {
+    var t = 0;
+    document.querySelectorAll('.dpad .dpad__slot[data-card]').forEach(function (slot) {
+      var active = slot.querySelector('.class-card__level-pip--active');
+      if (active) t += cum[parseInt(active.getAttribute('data-level'), 10)] || 0;
+    });
+    totalEl.textContent = t.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+  document.querySelectorAll('.dpad .class-card__level-pip--btn').forEach(function (b) {
+    b.addEventListener('click', function () { setTimeout(update, 0); });
+  });
+  update();
+})();
+
+// Toggle between cross layout and vertical list (East | West | North | South)
+// - generic over every [data-dpad-target] button on the page. Perks and
+// Weapons each have their own toggle + .dpad now (see the URL-state block
+// below for why a single hardcoded pair stopped being enough once there
+// were two).
+(function () {
+  document.querySelectorAll('[data-dpad-target]').forEach(function (btn) {
+    var dpad = document.getElementById(btn.getAttribute('data-dpad-target'));
+    if (!dpad) return;
+    btn.addEventListener('click', function () {
+      dpad.classList.toggle('dpad--vertical');
+    });
+  });
+})();
+
+// ── URL state ──────────────────────────────────────────────────────────
+// Same pattern as the Classes filter page and the Fabricator page: mirror
+// every selectable option on this page - which card level and perk rank is
+// showing, whether the perk d-pad is in cross or vertical layout, and
+// whether Level Progress is open - into the URL so a specific view (a
+// particular card at a particular level, a perk at a particular rank) can
+// be bookmarked or shared as a link. Uses replaceState so clicking through
+// pips doesn't spam the browser's back button with one entry per click.
+(function () {
+  'use strict';
+
+  // One entry per [data-dpad-target] toggle button on the page (Perks,
+  // Weapons) - each tracks its OWN dpad element and its OWN URL param name
+  // (data-layout-param), instead of the single hardcoded dpad/btn/
+  // "perklayout" this used to be before Weapons got its own cross grid too.
+  var toggles = Array.prototype.map.call(document.querySelectorAll('[data-dpad-target]'), function (btn) {
+    return {
+      btn: btn,
+      dpad: document.getElementById(btn.getAttribute('data-dpad-target')),
+      param: btn.getAttribute('data-layout-param')
+    };
+  }).filter(function (t) { return t.dpad && t.param; });
+
+  function setListParam(params, name, entries) {
+    if (entries.length) { params.set(name, entries.join(',')); } else { params.delete(name); }
+  }
+
+  // [data-card] covers both a real class-card AND a perk d-pad slot with
+  // ranked values (see perk-slot.html) - the same bare attribute the
+  // existing pip-click-handler above already uses to find both. Cards have
+  // a stable id (their slug); perk slots don't, so one gets built here from
+  // their direction class instead. Each element's SERVER-RENDERED starting
+  // pip is captured now, before any restore or click touches it - cards
+  // don't all default to level 1 (see the "highest confirmed level" logic
+  // further up), so there's no single shared default to diff against later
+  // the way Fabricator's tiles (which really do all default to "1") have.
+  var tracked = [];
+  document.querySelectorAll('[data-card]').forEach(function (el) {
+    var key = el.id;
+    if (!key) {
+      var dirClass = Array.prototype.filter.call(el.classList, function (c) {
+        return c.indexOf('dpad__slot--') === 0;
+      })[0];
+      key = dirClass ? 'perk-' + dirClass.replace('dpad__slot--', '') : null;
+    }
+    if (!key) return;
+    var active = el.querySelector('.class-card__level-pip--active');
+    tracked.push({ el: el, key: key, defaultLevel: active ? active.getAttribute('data-level') : '0' });
+  });
+
+  var levelDetails = document.getElementById('level-progress');
+
+  function syncUrl() {
+    var params = new URLSearchParams(window.location.search);
+
+    var cardEntries = [];
+    var perkEntries = [];
+    tracked.forEach(function (t) {
+      var active = t.el.querySelector('.class-card__level-pip--active');
+      var val = active ? active.getAttribute('data-level') : '0';
+      if (val === t.defaultLevel) return;
+      if (t.key.indexOf('perk-') === 0) { perkEntries.push(t.key.slice(5) + ':' + val); }
+      else { cardEntries.push(t.key + ':' + val); }
+    });
+    setListParam(params, 'cl', cardEntries);
+    setListParam(params, 'pk', perkEntries);
+
+    toggles.forEach(function (t) {
+      if (!t.dpad.classList.contains('dpad--vertical')) { params.set(t.param, 'cross'); }
+      else { params.delete(t.param); }
+    });
+
+    // Same %3A/%2C un-escaping as the Fabricator page - both are valid,
+    // unreserved-enough query-string characters and decode back to
+    // themselves either way, so this just keeps a shared link readable
+    // ("cl=optimizer:3" instead of "cl=optimizer%3A3").
+    var qs = params.toString().replace(/%3A/g, ':').replace(/%2C/g, ',');
+    var hash = (levelDetails && levelDetails.open) ? '#level-progress' : '';
+    var url = window.location.pathname + (qs ? '?' + qs : '') + hash;
+    window.history.replaceState(null, '', url);
+  }
+
+  function findByKey(key) {
+    var found = null;
+    tracked.forEach(function (t) { if (!found && t.key === key) found = t.el; });
+    return found;
+  }
+
+  function applyPairs(raw, prefix) {
+    if (!raw) return;
+    raw.split(',').forEach(function (entry) {
+      var idx = entry.indexOf(':');
+      if (idx === -1) return;
+      var el = findByKey(prefix + entry.slice(0, idx));
+      var value = entry.slice(idx + 1);
+      if (!el) return;
+      var pipBtn = null;
+      el.querySelectorAll('.class-card__level-pip--btn').forEach(function (b) {
+        if (!pipBtn && b.getAttribute('data-level') === value) pipBtn = b;
+      });
+      if (pipBtn) pipBtn.click();
+    });
+  }
+
+  // Reverse of syncUrl() - runs once on load, before anything is wired up
+  // to call syncUrl() itself, so a shared/bookmarked link reproduces the
+  // exact same card levels, perk ranks, and layout. Silently ignores any
+  // value that doesn't match a real card/perk/level (typo'd or stale link)
+  // rather than erroring. Level Progress' own open state is restored by the
+  // sitewide #page-xref-target script (see footer.html) reacting to the
+  // #level-progress hash - it already force-opens the <details> and
+  // scrolls/flashes it, so there's nothing to duplicate here.
+  function restoreFromUrl() {
+    var params = new URLSearchParams(window.location.search);
+    applyPairs(params.get('cl'), '');
+    applyPairs(params.get('pk'), 'perk-');
+    toggles.forEach(function (t) {
+      if (params.get(t.param) === 'cross' && t.dpad.classList.contains('dpad--vertical')) {
+        t.btn.click();
+      }
+    });
+  }
+
+  restoreFromUrl();
+
+  tracked.forEach(function (t) {
+    t.el.querySelectorAll('.class-card__level-pip--btn').forEach(function (b) {
+      b.addEventListener('click', function () { syncUrl(); });
+    });
+  });
+  toggles.forEach(function (t) { t.btn.addEventListener('click', syncUrl); });
+  if (levelDetails) levelDetails.addEventListener('toggle', syncUrl);
+})();
+</script>

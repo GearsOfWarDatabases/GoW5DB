@@ -113,3 +113,9 @@ version. See [LICENSE](LICENSE).
 Gears 5, its names, images and other game content belong to Microsoft and The
 Coalition. They are used here for reference in a non-commercial fan project and
 are not covered by this license.
+
+## Made with
+
+Made with the help of [Claude](https://claude.ai), Anthropic's AI assistant:
+written and reviewed together with it, then tested and published by [Ryan
+Turner (TheSCREWEDSoftware)](https://github.com/TheSCREWEDSoftware).

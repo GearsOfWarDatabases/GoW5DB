@@ -67,7 +67,10 @@ and also fills in the revision line in the header's top left corner (see
   included here as a git submodule. The site doesn't need it to build (it is
   excluded in `_config.yml`, and the deploy workflow doesn't fetch it). To get
   it: `git clone --recurse-submodules` this repository, or
-  `git submodule update --init` in an existing clone.
+  `git submodule update --init` in an existing clone. The Reference update
+  workflow moves it to GoW5DB-Reference's newest commit every day at 04:00 UTC
+  (or by hand: Actions > Reference update > Run workflow) and redeploys the
+  site when it moved.
 
 ## Adding content
 

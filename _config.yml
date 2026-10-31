@@ -23,7 +23,7 @@ eday_notice:
   link_text: "GearsOfWarDatabases"
   url: "https://github.com/orgs/GearsOfWarDatabases/repositories"
 # Where the footer's revision links to when Actions doesn't say (GitHub Pages builds set it from GITHUB_REPOSITORY)
-repository_url: "https://github.com/TheSCREWEDSoftware/GoW5DB"
+repository_url: "https://github.com/GearsOfWarDatabases/GoW5DB"
 
 # Section groups drive the navbar and homepage cards
 nav_groups:

@@ -1,3 +1,10 @@
+<p align="center">
+  <img src=".github/logo.png" width="112" alt="">
+</p>
+<p align="center">
+  <img src=".github/banner.png" alt="">
+</p>
+
 # GoW5DB - Gears 5 Database
 
 A fan-made Jekyll site with a complete Gears 5 reference: characters, weapons,

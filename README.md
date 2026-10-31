@@ -16,7 +16,7 @@ Live site: <https://gearsofwardatabases.github.io/GoW5DB/>, built and deployed
 automatically to GitHub Pages on every push to `main` (see
 `.github/workflows/deploy.yml`). Many things are still to be finished and
 polished. E-Day is coming soon: see
-[GearsOfWarDatabases](https://github.com/orgs/GearsOfWarDatabases/repositories).
+[Gears of War Databases](https://gearsofwardatabases.github.io/).
 
 Made by: Xbox [MissJamball#7618](https://www.xbox.com/play/user/MissJamball7618) /
 GitHub [Ryan Turner (TheSCREWEDSoftware)](https://github.com/TheSCREWEDSoftware).

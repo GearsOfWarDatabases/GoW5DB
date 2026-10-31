@@ -12,7 +12,7 @@ classes, marks, maps, gamemodes, the Fabricator, enemies, banners,
 bloodsprays, executions, expressions, esports, bundles, DLC, and Iron. Not
 affiliated with The Coalition or Xbox Game Studios.
 
-Live site: <https://thescrewedsoftware.github.io/GoW5DB/>, built and deployed
+Live site: <https://gearsofwardatabases.github.io/GoW5DB/>, built and deployed
 automatically to GitHub Pages on every push to `main` (see
 `.github/workflows/deploy.yml`). Many things are still to be finished and
 polished. E-Day is coming soon: see
